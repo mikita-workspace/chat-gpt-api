@@ -6,7 +6,8 @@ import { AdminsModule } from 'src/admins/admins.module';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { LocalStrategy } from './local.strategy';
+import { JwtStrategy, LocalStrategy } from './strategies';
+
 @Module({
   imports: [
     AdminsModule,
@@ -22,7 +23,7 @@ import { LocalStrategy } from './local.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

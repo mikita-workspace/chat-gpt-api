@@ -1,9 +1,9 @@
-import { Controller, Post, Req, UseFilters, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, UseFilters, UseGuards } from '@nestjs/common';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AuthService } from './auth.service';
 import { RequestWithAdmin } from './auth.types';
-import { LocalAuthGuard } from './local-auth.guard';
+import { JwtAuthGuard, LocalAuthGuard } from './guard';
 
 @Controller('api/auth')
 @UseFilters(new HttpExceptionFilter())
@@ -14,5 +14,11 @@ export class AuthController {
   @Post('login')
   async login(@Req() req: RequestWithAdmin) {
     return this.authService.login(req.admin);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Req() req: RequestWithAdmin) {
+    return req.admin;
   }
 }

@@ -23,10 +23,10 @@ export class AdminsController {
 
   @Post()
   async create(@Body() createAdminDto: CreateAdminDto) {
-    const admin = await this.adminsService.findOneByEmail(createAdminDto.email);
+    const existAdmin = await this.adminsService.findOneByEmail(createAdminDto.email);
 
-    if (admin) {
-      throw new ConflictException('Admin already exist');
+    if (existAdmin) {
+      throw new ConflictException(`AdminId: ${existAdmin.adminId} already exist`);
     }
 
     return this.adminsService.create(createAdminDto);
@@ -42,7 +42,7 @@ export class AdminsController {
     const admin = await this.adminsService.findOne(adminId);
 
     if (!admin) {
-      throw new NotFoundException('Admin not found');
+      throw new NotFoundException(`AdminId: ${adminId} not found`);
     }
 
     return admin;
@@ -53,7 +53,7 @@ export class AdminsController {
     const admin = await this.adminsService.findOne(adminId);
 
     if (!admin) {
-      throw new NotFoundException('Admin not found');
+      throw new NotFoundException(`AdminId: ${adminId} not found`);
     }
 
     return this.adminsService.update(adminId, updateAdminDto);
@@ -64,7 +64,7 @@ export class AdminsController {
     const admin = await this.adminsService.findOne(adminId);
 
     if (!admin) {
-      throw new NotFoundException('Admin not found');
+      throw new NotFoundException(`AdminId: ${adminId} not found`);
     }
 
     return this.adminsService.remove(adminId);

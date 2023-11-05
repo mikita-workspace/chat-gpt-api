@@ -23,10 +23,10 @@ export class AdminsController {
 
   @Post()
   async create(@Body() createAdminDto: CreateAdminDto) {
-    const existAdmin = await this.adminsService.findOneByEmail(createAdminDto.email);
+    const admin = await this.adminsService.findOneByEmail(createAdminDto.email);
 
-    if (existAdmin) {
-      throw new ConflictException(`AdminId: ${existAdmin.adminId} already exist`);
+    if (admin) {
+      throw new ConflictException(`AdminId: ${admin.adminId} already exist`);
     }
 
     return this.adminsService.create(createAdminDto);

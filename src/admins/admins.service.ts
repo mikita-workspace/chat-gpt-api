@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -11,7 +12,10 @@ export class AdminsService {
   constructor(@InjectModel(Admin.name) private readonly adminModel: Model<Admin>) {}
 
   async create(createAdminDto: CreateAdminDto): Promise<Admin> {
-    return new this.adminModel(createAdminDto).save();
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(createAdminDto.password, salt);
+
+    return new this.adminModel({ ...createAdminDto, password: hashedPassword }).save();
   }
 
   async findAll(): Promise<Admin[]> {
@@ -19,18 +23,20 @@ export class AdminsService {
   }
 
   async findOne(adminId: string): Promise<Admin> {
-    return this.adminModel.findOne({ adminId }, { new: true });
+    return this.adminModel.findOne({ adminId }).exec();
   }
 
   async findOneByEmail(email: string): Promise<Admin> {
-    return this.adminModel.findOne({ email }, { new: true });
+    return this.adminModel.findOne({ email }).exec();
   }
 
   async update(adminId: string, updateAdminDto: UpdateAdminDto): Promise<Admin> {
-    return this.adminModel.findOneAndUpdate({ adminId }, { ...updateAdminDto }, { new: true });
+    return this.adminModel
+      .findOneAndUpdate({ adminId }, { ...updateAdminDto }, { new: true })
+      .exec();
   }
 
   async remove(adminId: string) {
-    return this.adminModel.deleteOne({ adminId }, { new: true });
+    return this.adminModel.deleteOne({ adminId });
   }
 }

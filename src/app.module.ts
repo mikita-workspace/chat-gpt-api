@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AdminsModule } from './admins/admins.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { configuration } from './config';
 import { MongoDBModule } from './database';
 
@@ -16,6 +17,7 @@ import { MongoDBModule } from './database';
     }),
     MongoDBModule,
     AdminsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

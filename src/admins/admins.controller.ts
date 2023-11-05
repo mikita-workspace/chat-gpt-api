@@ -1,0 +1,72 @@
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  UseFilters,
+} from '@nestjs/common';
+import { HttpExceptionFilter } from 'src/common/exceptions';
+
+import { AdminsService } from './admins.service';
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
+
+@Controller('api/admins')
+@UseFilters(new HttpExceptionFilter())
+export class AdminsController {
+  constructor(private readonly adminsService: AdminsService) {}
+
+  @Post()
+  async create(@Body() createAdminDto: CreateAdminDto) {
+    const admin = await this.adminsService.findOneByEmail(createAdminDto.email);
+
+    if (admin) {
+      throw new ConflictException('Admin already exist');
+    }
+
+    return this.adminsService.create(createAdminDto);
+  }
+
+  @Get()
+  async findAll() {
+    return this.adminsService.findAll();
+  }
+
+  @Get(':adminId')
+  async findOne(@Param('adminId') adminId: string) {
+    const admin = await this.adminsService.findOne(adminId);
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    return admin;
+  }
+
+  @Patch(':adminId')
+  async update(@Param('adminId') adminId: string, @Body() updateAdminDto: UpdateAdminDto) {
+    const admin = await this.adminsService.findOne(adminId);
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    return this.adminsService.update(adminId, updateAdminDto);
+  }
+
+  @Delete(':adminId')
+  async remove(@Param('adminId') adminId: string) {
+    const admin = await this.adminsService.findOne(adminId);
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    return this.adminsService.remove(adminId);
+  }
+}

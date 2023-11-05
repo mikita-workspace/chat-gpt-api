@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { AdminsModule } from './admins/admins.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { configuration } from './config';
 import { MongoDBModule } from './database';
-import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -14,8 +14,8 @@ import { UsersModule } from './users/users.module';
       isGlobal: true,
       load: [configuration],
     }),
-    UsersModule,
     MongoDBModule,
+    AdminsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

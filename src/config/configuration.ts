@@ -6,4 +6,7 @@ export const configuration = () => ({
       databaseName: process.env.MONGODB_NAME || 'local',
     },
   },
+  jwt: {
+    secret: process.env.JWT_SECRET || '',
+  },
 });

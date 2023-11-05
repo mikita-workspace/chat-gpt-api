@@ -7,6 +7,7 @@ export const configuration = () => ({
     },
   },
   jwt: {
-    secret: process.env.JWT_SECRET || '',
+    access_exp: process.env.JWT_ACCESS_TOKEN_SECRET || 60,
+    access_secret: process.env.JWT_ACCESS_TOKEN_SECRET || '',
   },
 });

@@ -31,6 +31,17 @@ export class Admin {
 
   @Prop({ type: String, default: '' })
   username: string;
+
+  @Prop({
+    type: Object,
+    default: { is_banned: false, ban_reason: '', banned_at: getTimestamp() },
+    required: true,
+  })
+  state: {
+    ban_reason: string;
+    banned_at: number;
+    is_banned: boolean;
+  };
 }
 
 export const AdminSchema = SchemaFactory.createForClass(Admin);

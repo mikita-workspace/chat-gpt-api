@@ -4,7 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  Logger,
   NotFoundException,
   Param,
   Patch,
@@ -47,9 +46,6 @@ export class AdminsController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const admin = await this.adminsService.findOne(id);
-
-    Logger.log(admin);
-    Logger.log(id);
 
     if (!admin) {
       throw new NotFoundException(`${id} not found`);

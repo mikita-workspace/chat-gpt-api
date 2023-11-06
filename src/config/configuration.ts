@@ -1,4 +1,7 @@
 export const configuration = () => ({
+  api: {
+    name: process.env.API_NAME || '',
+  },
   port: parseInt(process.env.PORT, 10) || 5050,
   mongodb: {
     database: {

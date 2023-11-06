@@ -1,13 +1,21 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Req, UseFilters } from '@nestjs/common';
 
 import { AppService } from './app.service';
+import { HttpExceptionFilter } from './common/exceptions';
+import { getTimestamp } from './common/utils';
 
-@Controller()
+@UseFilters(new HttpExceptionFilter())
+@Controller('api')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getInitial(@Req() req: Request) {
+    return {
+      statusCode: HttpStatus.OK,
+      message: this.appService.getInitial(),
+      timestamp: getTimestamp(),
+      path: req.url,
+    };
   }
 }

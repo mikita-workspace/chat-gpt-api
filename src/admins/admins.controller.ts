@@ -95,7 +95,7 @@ export class AdminsController {
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN)
-  @Get('add-role')
+  @Post('add-role')
   async addRole(@Body() addRoleAdminDto: AddRoleAdminDto) {
     const { adminId: id } = addRoleAdminDto;
 
@@ -109,7 +109,7 @@ export class AdminsController {
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
-  @Get('ban')
+  @Post('ban')
   async ban(@Body() banAdminDto: BanAdminDto) {
     const { adminId: id } = banAdminDto;
 

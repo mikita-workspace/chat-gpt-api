@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AdminsModule } from 'src/admins/admins.module';
+import { AuthModule } from 'src/auth/auth.module';
+import { configuration } from 'src/config';
+import { MongoDBModule } from 'src/database';
 
-import { AdminsModule } from './admins/admins.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { configuration } from './config';
-import { MongoDBModule } from './database';
 
 @Module({
   imports: [

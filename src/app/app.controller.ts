@@ -1,8 +1,8 @@
 import { Controller, Get, HttpStatus, Req, UseFilters } from '@nestjs/common';
+import { HttpExceptionFilter } from 'src/common/exceptions';
+import { getTimestamp } from 'src/common/utils';
 
 import { AppService } from './app.service';
-import { HttpExceptionFilter } from './common/exceptions';
-import { getTimestamp } from './common/utils';
 
 @UseFilters(new HttpExceptionFilter())
 @Controller('api')

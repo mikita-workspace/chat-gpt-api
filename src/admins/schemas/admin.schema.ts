@@ -10,7 +10,7 @@ export type AdminDocument = HydratedDocument<Admin>;
 @Schema()
 export class Admin {
   @Prop({ unique: true, default: uuidv4(), required: true })
-  adminId: string;
+  admin_id: string;
 
   @Prop({ unique: true, required: true })
   email: string;
@@ -19,7 +19,7 @@ export class Admin {
   password: string;
 
   @Prop({ type: String, default: getTimestamp(), required: true })
-  createdAt: number;
+  created_at: number;
 
   @Prop({
     type: String,

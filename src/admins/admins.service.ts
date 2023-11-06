@@ -26,7 +26,7 @@ export class AdminsService {
   }
 
   async findOne(adminId: string): Promise<Admin> {
-    return this.adminModel.findOne({ adminId }).exec();
+    return this.adminModel.findOne({ admin_id: adminId }).exec();
   }
 
   async findOneByEmail(email: string): Promise<Admin> {
@@ -35,11 +35,11 @@ export class AdminsService {
 
   async update(adminId: string, updateAdminDto: UpdateAdminDto): Promise<Admin> {
     return this.adminModel
-      .findOneAndUpdate({ adminId }, { ...updateAdminDto }, { new: true })
+      .findOneAndUpdate({ admin_id: adminId }, { ...updateAdminDto }, { new: true })
       .exec();
   }
 
   async remove(adminId: string) {
-    return this.adminModel.deleteOne({ adminId });
+    return this.adminModel.deleteOne({ admin_id: adminId });
   }
 }

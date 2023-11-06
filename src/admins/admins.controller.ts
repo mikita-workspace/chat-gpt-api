@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   NotFoundException,
   Param,
   Patch,
@@ -12,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { RolesAuth } from 'src/auth/decorators';
-import { JwtAuthGuard, RolesAuthGuard } from 'src/auth/guard';
+import { RolesAuthGuard } from 'src/auth/guard';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminsService } from './admins.service';
@@ -20,8 +21,9 @@ import { AdminRoles } from './constants';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 
-@UseGuards(JwtAuthGuard)
 @UseFilters(new HttpExceptionFilter())
+@RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+@UseGuards(RolesAuthGuard)
 @Controller('api/admins')
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}
@@ -31,49 +33,61 @@ export class AdminsController {
     const admin = await this.adminsService.findOneByEmail(createAdminDto.email);
 
     if (admin) {
-      throw new ConflictException(`AdminId: ${admin.adminId} already exist`);
+      throw new ConflictException(`${admin.admin_id} already exist`);
     }
 
     return this.adminsService.create(createAdminDto);
   }
 
-  @RolesAuth(AdminRoles.ADMIN)
-  @UseGuards(RolesAuthGuard)
   @Get()
   async findAll() {
     return this.adminsService.findAll();
   }
 
-  @Get(':adminId')
-  async findOne(@Param('adminId') adminId: string) {
-    const admin = await this.adminsService.findOne(adminId);
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    const admin = await this.adminsService.findOne(id);
+
+    Logger.log(admin);
+    Logger.log(id);
 
     if (!admin) {
-      throw new NotFoundException(`AdminId: ${adminId} not found`);
+      throw new NotFoundException(`${id} not found`);
     }
 
     return admin;
   }
 
-  @Patch(':adminId')
-  async update(@Param('adminId') adminId: string, @Body() updateAdminDto: UpdateAdminDto) {
-    const admin = await this.adminsService.findOne(adminId);
+  @Get('email/:email')
+  async findOneByEmail(@Param('email') email: string) {
+    const admin = await this.adminsService.findOneByEmail(email);
 
     if (!admin) {
-      throw new NotFoundException(`AdminId: ${adminId} not found`);
+      throw new NotFoundException(`${email} not found`);
     }
 
-    return this.adminsService.update(adminId, updateAdminDto);
+    return admin;
   }
 
-  @Delete(':adminId')
-  async remove(@Param('adminId') adminId: string) {
-    const admin = await this.adminsService.findOne(adminId);
+  @Patch(':id')
+  async update(@Param('id') id: string, @Body() updateAdminDto: UpdateAdminDto) {
+    const admin = await this.adminsService.findOne(id);
 
     if (!admin) {
-      throw new NotFoundException(`AdminId: ${adminId} not found`);
+      throw new NotFoundException(`${id} not found`);
     }
 
-    return this.adminsService.remove(adminId);
+    return this.adminsService.update(id, updateAdminDto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    const admin = await this.adminsService.findOne(id);
+
+    if (!admin) {
+      throw new NotFoundException(`${id} not found`);
+    }
+
+    return this.adminsService.remove(id);
   }
 }

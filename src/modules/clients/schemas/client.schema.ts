@@ -30,16 +30,16 @@ export class Client {
   @Prop({
     type: Object,
     default: {
-      gpt_tokens: ClientTokensRate.BASE,
       dalle_images: ClientImagesRate.BASE,
       expire_at: getTimestampPlusDays(MONTH_IN_DAYS),
+      gpt_tokens: ClientTokensRate.BASE,
     },
     required: true,
   })
   rate: {
-    gpt_tokens: number;
     dalle_images: number;
     expire_at: number;
+    gpt_tokens: number;
   };
 
   @Prop({ type: Array, default: [ModelGPT.GPT_3_5_TURBO], required: true })

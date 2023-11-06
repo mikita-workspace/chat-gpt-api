@@ -16,10 +16,10 @@ export class ClientImages {
 
   @Prop({ type: Array, default: [], required: true })
   dalle_messages: {
-    prompt: string;
-    image_links: string[];
     created_at: number;
     feedback: ClientFeedback;
+    image_links: string[];
+    prompt: string;
   }[];
 }
 

@@ -16,9 +16,9 @@ export class ClientMessages {
 
   @Prop({ type: Array, default: [], required: true })
   gpt_messages: {
-    gpt_format: { content: string; role: string };
     created_at: number;
     feedback: ClientFeedback;
+    gpt_format: { content: string; role: string };
   }[];
 }
 

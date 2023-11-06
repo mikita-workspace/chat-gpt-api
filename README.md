@@ -5,7 +5,7 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/mikita-kandratsyeu/chat-gpt-bot?style=for-the-badge)](https://github.com/mikita-kandratsyeu/chat-gpt-bot/releases)
 [![Bot API](https://img.shields.io/badge/Bot%20API-6.7-blue?logo=telegram&style=for-the-badge&labelColor=000&color=3b82f6&)](https://core.telegram.org/bots/api)
 ## Description
-An **API** service for an intelligent bot capable of responding to various user requests, including voice input.
+An [**API**](https://elements.getpostman.com/redirect?entityId=11550896-7b15ed5b-e344-4749-b867-479d730ec4a1&entityType=collection) service for an intelligent bot capable of responding to various user requests, including voice input.
 ## Getting Started
 ```bash
 yarn build

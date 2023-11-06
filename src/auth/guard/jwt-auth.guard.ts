@@ -2,7 +2,7 @@ import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/com
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 
-import { TokenTypes } from '../auth.constants';
+import { TokenTypes } from '../constants';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -15,7 +15,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(context: ExecutionContext) {
     try {
       const request = context.switchToHttp().getRequest();
-
       const authHeader = request.headers.authorization;
 
       const bearer = authHeader.split(' ')[0];
@@ -28,7 +27,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       const admin = this.jwtService.verify(token);
       request.admin = admin;
 
-      return request.admin;
+      return true;
     } catch (error) {
       throw new UnauthorizedException();
     }

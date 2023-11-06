@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 import { getTimestamp } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AdminRoles } from '../admins.constants';
+import { AdminRoles } from '../constants';
 
 export type AdminDocument = HydratedDocument<Admin>;
 
@@ -21,7 +21,12 @@ export class Admin {
   @Prop({ type: String, default: getTimestamp(), required: true })
   createdAt: number;
 
-  @Prop({ type: String, enum: AdminRoles, default: AdminRoles.MODERATOR, required: true })
+  @Prop({
+    type: String,
+    enum: AdminRoles,
+    default: AdminRoles.MODERATOR,
+    required: true,
+  })
   role: AdminRoles;
 
   @Prop({ type: String, default: '' })

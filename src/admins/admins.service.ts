@@ -15,7 +15,10 @@ export class AdminsService {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(createAdminDto.password, salt);
 
-    return new this.adminModel({ ...createAdminDto, password: hashedPassword }).save();
+    return new this.adminModel({
+      ...createAdminDto,
+      password: hashedPassword,
+    }).save();
   }
 
   async findAll(): Promise<Admin[]> {

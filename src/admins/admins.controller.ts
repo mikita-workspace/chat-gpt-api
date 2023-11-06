@@ -11,16 +11,18 @@ import {
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guard';
+import { RolesAuth } from 'src/auth/decorators';
+import { JwtAuthGuard, RolesAuthGuard } from 'src/auth/guard';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminsService } from './admins.service';
+import { AdminRoles } from './constants';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 
-@Controller('api/admins')
 @UseGuards(JwtAuthGuard)
 @UseFilters(new HttpExceptionFilter())
+@Controller('api/admins')
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}
 
@@ -35,6 +37,8 @@ export class AdminsController {
     return this.adminsService.create(createAdminDto);
   }
 
+  @RolesAuth(AdminRoles.ADMIN)
+  @UseGuards(RolesAuthGuard)
   @Get()
   async findAll() {
     return this.adminsService.findAll();

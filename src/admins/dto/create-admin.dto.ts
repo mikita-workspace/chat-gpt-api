@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
-import { PASSWORD_REGEXP } from '../admins.constants';
+import { ADMIN_PASSWORD_REGEXP } from '../constants';
 
 export class CreateAdminDto {
   @IsNotEmpty()
@@ -10,7 +10,7 @@ export class CreateAdminDto {
   @IsString()
   @MinLength(4)
   @MaxLength(20)
-  @Matches(PASSWORD_REGEXP, {
+  @Matches(ADMIN_PASSWORD_REGEXP, {
     message: 'Weak password',
   })
   password: string;

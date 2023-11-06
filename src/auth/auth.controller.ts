@@ -2,8 +2,8 @@ import { Controller, Get, Post, Req, UseFilters, UseGuards } from '@nestjs/commo
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AuthService } from './auth.service';
-import { RequestWithAdmin } from './auth.types';
 import { JwtAuthGuard, LocalAuthGuard } from './guard';
+import { RequestWithAdmin } from './types';
 
 @Controller('api/auth')
 @UseFilters(new HttpExceptionFilter())

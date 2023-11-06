@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Admin } from 'src/admins/schemas';
+import { Admin } from 'src/modules/admins/schemas';
 
 export interface RequestWithAdmin extends Request {
   admin: Admin;

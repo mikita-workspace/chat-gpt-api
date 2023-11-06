@@ -11,9 +11,9 @@ import {
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
-import { RolesAuth } from 'src/auth/decorators';
-import { RolesAuthGuard } from 'src/auth/guard';
 import { HttpExceptionFilter } from 'src/common/exceptions';
+import { RolesAuth } from 'src/modules/auth/decorators';
+import { RolesAuthGuard } from 'src/modules/auth/guard';
 
 import { AdminsService } from './admins.service';
 import { AdminRoles } from './constants';

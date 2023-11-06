@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { AdminsService } from 'src/admins/admins.service';
-import { Admin } from 'src/admins/schemas';
 import { getTimestampPlusSeconds } from 'src/common/utils';
+import { AdminsService } from 'src/modules/admins/admins.service';
+import { Admin } from 'src/modules/admins/schemas';
 
 @Injectable()
 export class AuthService {

@@ -4,7 +4,7 @@ import { ModelGPT, MONTH_IN_DAYS } from 'src/common/constants';
 import { getTimestamp, getTimestampPlusDays } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
-import { ClientImages, ClientTokens } from '../constants';
+import { ClientImagesRate, ClientTokensRate } from '../constants';
 import { ClientImages } from './client-images.schema';
 import { ClientMessages } from './client-messages.schema';
 
@@ -30,13 +30,13 @@ export class Client {
   @Prop({
     type: Object,
     default: {
-      gpt_tokens: ClientTokens.BASE,
-      dalle_images: ClientImages.BASE,
+      gpt_tokens: ClientTokensRate.BASE,
+      dalle_images: ClientImagesRate.BASE,
       expire_at: getTimestampPlusDays(MONTH_IN_DAYS),
     },
     required: true,
   })
-  restriction: {
+  rate: {
     gpt_tokens: number;
     dalle_images: number;
     expire_at: number;

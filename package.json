@@ -2,7 +2,7 @@
   "name": "chat-gpt-api",
   "version": "0.0.1",
   "repository": "git@github.com:mikita-workspace/chat-gpt-api.git",
-  "description": "Pied Piper | GPT API",
+  "description": "NovaChat | GPT API",
   "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",
   "private": true,
   "license": "Apache-2.0",

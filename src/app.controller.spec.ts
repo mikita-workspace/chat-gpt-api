@@ -16,7 +16,7 @@ describe('AppController', () => {
         ConfigModule.forRoot({
           ignoreEnvVars: true,
           ignoreEnvFile: true,
-          load: [() => ({ api: { name: 'Pied Piper | GPT API' } })],
+          load: [() => ({ api: { name: 'NovaChat | GPT API' } })],
         }),
       ],
     }).compile();
@@ -31,7 +31,7 @@ describe('AppController', () => {
 
     const mockInitialJson = {
       statusCode: 200,
-      message: 'Pied Piper | GPT API',
+      message: 'NovaChat | GPT API',
       timestamp: getUnixTime(new Date()),
       path: '/v1/api',
     };

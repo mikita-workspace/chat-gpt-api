@@ -1,4 +1,4 @@
-# [Pied Piper | GPT API](https://elements.getpostman.com/redirect?entityId=11550896-7b15ed5b-e344-4749-b867-479d730ec4a1&entityType=collection)
+# [NovaChat | GPT API](https://elements.getpostman.com/redirect?entityId=11550896-7b15ed5b-e344-4749-b867-479d730ec4a1&entityType=collection)
 
 [![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/mikita-kandratsyeu/chat-gpt-bot/ci.yml?branch=main&style=for-the-badge)](https://github.com/mikita-kandratsyeu/chat-gpt-bot/actions)
 [![GitHub last commit](https://img.shields.io/github/last-commit/mikita-kandratsyeu/chat-gpt-bot?style=for-the-badge)](https://github.com/mikita-kandratsyeu/chat-gpt-bot/commits/main)

@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AdminsService } from 'src/admins/admins.service';
 import { Admin } from 'src/admins/schemas';
-import { getModifiedTimestamp } from 'src/common/utils';
+import { getTimestampPlusSeconds } from 'src/common/utils';
 
 @Injectable()
 export class AuthService {
@@ -31,10 +31,7 @@ export class AuthService {
 
     return {
       access_token: this.jwtService.sign(payload),
-      expires_at: getModifiedTimestamp(
-        new Date(),
-        Number(this.configService.get('jwt.access_exp')),
-      ),
+      expires_at: getTimestampPlusSeconds(Number(this.configService.get('jwt.access_exp'))),
     };
   }
 }

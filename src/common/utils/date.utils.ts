@@ -1,9 +1,15 @@
-import { addSeconds, getUnixTime } from 'date-fns';
+import { addDays, addSeconds, getUnixTime } from 'date-fns';
 
 export const getTimestamp = (date = new Date()) => getUnixTime(date);
 
-export const getModifiedTimestamp = (date = new Date(), extraSeconds = 0) => {
-  const modifiedDate = addSeconds(date, extraSeconds);
+export const getTimestampPlusSeconds = (sec = 0, startDate = new Date()) => {
+  const newDate = addSeconds(startDate, sec);
 
-  return getTimestamp(modifiedDate);
+  return getTimestamp(newDate);
+};
+
+export const getTimestampPlusDays = (days = 0, startDate = new Date()) => {
+  const newDate = addDays(startDate, days);
+
+  return getTimestamp(newDate);
 };

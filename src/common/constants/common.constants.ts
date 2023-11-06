@@ -3,3 +3,5 @@ export enum ModelGPT {
   GPT_3_5_TURBO = 'gpt-3.5-turbo',
   WHISPER_1 = 'whisper-1',
 }
+
+export const MONTH_IN_DAYS = 30;

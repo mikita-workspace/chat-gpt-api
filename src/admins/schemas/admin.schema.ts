@@ -9,10 +9,10 @@ export type AdminDocument = HydratedDocument<Admin>;
 
 @Schema()
 export class Admin {
-  @Prop({ unique: true, default: uuidv4(), required: true })
+  @Prop({ type: String, unique: true, default: uuidv4(), required: true })
   admin_id: string;
 
-  @Prop({ unique: true, required: true })
+  @Prop({ type: String, unique: true, required: true })
   email: string;
 
   @Prop({ required: true })
@@ -39,7 +39,7 @@ export class Admin {
   })
   state: {
     ban_reason: string;
-    banned_at: number;
+    updated_at: number;
     is_banned: boolean;
   };
 }

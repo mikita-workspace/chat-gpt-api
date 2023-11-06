@@ -8,7 +8,7 @@ import { BanAdminDto } from './dto/ban-admin.dto';
 import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { Admin } from './schemas/admin.schema';
+import { Admin } from './schemas';
 
 @Injectable()
 export class AdminsService {

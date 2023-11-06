@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AdminsService } from 'src/admins/admins.service';
-import { Admin } from 'src/admins/schemas/admin.schema';
+import { Admin } from 'src/admins/schemas';
 import { getModifiedTimestamp } from 'src/common/utils';
 
 @Injectable()

@@ -4,7 +4,7 @@ import { AuthModule } from 'src/auth/auth.module';
 
 import { AdminsController } from './admins.controller';
 import { AdminsService } from './admins.service';
-import { Admin, AdminSchema } from './schemas/admin.schema';
+import { Admin, AdminSchema } from './schemas';
 
 @Module({
   imports: [

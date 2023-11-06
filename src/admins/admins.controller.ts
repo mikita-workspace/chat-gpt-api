@@ -9,7 +9,9 @@ import {
   Patch,
   Post,
   UseFilters,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guard';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminsService } from './admins.service';
@@ -17,6 +19,7 @@ import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 
 @Controller('api/admins')
+@UseGuards(JwtAuthGuard)
 @UseFilters(new HttpExceptionFilter())
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}

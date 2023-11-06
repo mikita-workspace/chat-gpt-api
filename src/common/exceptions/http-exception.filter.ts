@@ -1,6 +1,8 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
 import { Request, Response } from 'express';
 
+import { getTimestamp } from '../utils';
+
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
@@ -14,7 +16,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: status,
       error: exceptionResponse.error,
       message: exceptionResponse.message,
-      timestamp: new Date().toISOString(),
+      timestamp: getTimestamp(),
       path: request.url,
     });
   }

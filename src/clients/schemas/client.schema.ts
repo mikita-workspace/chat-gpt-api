@@ -43,7 +43,7 @@ export class Client {
   };
 
   @Prop({ type: Array, default: [ModelGPT.GPT_3_5_TURBO], required: true })
-  available_gpt_models: string[];
+  gpt_models: Array<keyof typeof ModelGPT>;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'ClientMessages' })
   gpt_messages: ClientMessages;

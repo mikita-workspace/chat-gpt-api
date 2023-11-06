@@ -8,10 +8,10 @@ export class CreateAdminDto {
   email: string;
 
   @IsString()
-  @MinLength(4)
-  @MaxLength(20)
   @Matches(ADMIN_PASSWORD_REGEXP, {
     message: 'Weak password',
   })
+  @MaxLength(20)
+  @MinLength(4)
   password: string;
 }

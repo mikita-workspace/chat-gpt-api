@@ -17,8 +17,8 @@ import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminsService } from './admins.service';
 import { AdminRoles } from './constants';
-import { AddRoleAdminDto } from './dto/add-role-admin.dto';
 import { BanAdminDto } from './dto/ban-admin.dto';
+import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 
@@ -95,8 +95,8 @@ export class AdminsController {
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN)
-  @Post('add-role')
-  async addRole(@Body() addRoleAdminDto: AddRoleAdminDto) {
+  @Post('change-role')
+  async addRole(@Body() addRoleAdminDto: ChangeRoleAdminDto) {
     const { adminId: id } = addRoleAdminDto;
 
     const admin = await this.adminsService.findOne(id);
@@ -105,12 +105,12 @@ export class AdminsController {
       throw new NotFoundException(`${id} not found`);
     }
 
-    return this.adminsService.addRole(addRoleAdminDto);
+    return this.adminsService.changeRole(addRoleAdminDto);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
-  @Post('ban')
-  async ban(@Body() banAdminDto: BanAdminDto) {
+  @Post('block')
+  async block(@Body() banAdminDto: BanAdminDto) {
     const { adminId: id } = banAdminDto;
 
     const admin = await this.adminsService.findOne(id);
@@ -119,6 +119,18 @@ export class AdminsController {
       throw new NotFoundException(`${id} not found`);
     }
 
-    return this.adminsService.ban(banAdminDto);
+    return this.adminsService.block(banAdminDto);
+  }
+
+  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @Post('unblock/:id')
+  async unblock(@Param('id') id: string) {
+    const admin = await this.adminsService.findOne(id);
+
+    if (!admin) {
+      throw new NotFoundException(`${id} not found`);
+    }
+
+    return this.adminsService.unblock(id);
   }
 }

@@ -4,8 +4,8 @@ import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { getTimestamp } from 'src/common/utils';
 
-import { AddRoleAdminDto } from './dto/add-role-admin.dto';
 import { BanAdminDto } from './dto/ban-admin.dto';
+import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { Admin } from './schemas/admin.schema';
@@ -46,18 +46,26 @@ export class AdminsService {
     return this.adminModel.deleteOne({ admin_id: adminId });
   }
 
-  async addRole(addRoleAdminDto: AddRoleAdminDto) {
+  async changeRole(addRoleAdminDto: ChangeRoleAdminDto) {
     const { adminId, role } = addRoleAdminDto;
 
     return this.adminModel.findOneAndUpdate({ admin_id: adminId }, { role }, { new: true });
   }
 
-  async ban(banAdminDto: BanAdminDto) {
+  async block(banAdminDto: BanAdminDto) {
     const { adminId, banReason } = banAdminDto;
 
     return this.adminModel.findOneAndUpdate(
       { admin_id: adminId },
-      { ban_reason: banReason, banned_at: getTimestamp() },
+      { state: { ban_reason: banReason, updated_at: getTimestamp(), is_banned: true } },
+      { new: true },
+    );
+  }
+
+  async unblock(adminId: string) {
+    return this.adminModel.findOneAndUpdate(
+      { admin_id: adminId },
+      { state: { ban_reason: '', updated_at: getTimestamp(), is_banned: false } },
       { new: true },
     );
   }

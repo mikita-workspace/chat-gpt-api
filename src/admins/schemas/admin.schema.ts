@@ -34,7 +34,7 @@ export class Admin {
 
   @Prop({
     type: Object,
-    default: { is_banned: false, ban_reason: '', banned_at: getTimestamp() },
+    default: { is_banned: false, ban_reason: '', updated_at: getTimestamp() },
     required: true,
   })
   state: {

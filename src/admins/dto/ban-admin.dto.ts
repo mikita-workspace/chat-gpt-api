@@ -1,9 +1,10 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class BanAdminDto {
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   readonly adminId: string;
+  @IsNotEmpty()
   @IsString()
   readonly banReason: string;
 }

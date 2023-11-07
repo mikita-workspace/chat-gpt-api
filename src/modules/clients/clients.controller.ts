@@ -17,6 +17,7 @@ import { RolesAuth } from '../auth/decorators';
 import { JwtAuthGuard, RolesAuthGuard } from '../auth/guard';
 import { RequestWithAdmin } from '../auth/types';
 import { ClientsService } from './clients.service';
+import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
@@ -26,7 +27,6 @@ import { UpdateClientDto } from './dto/update-client.dto';
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
   @Post()
   async create(@Body() createClientDto: CreateClientDto) {
     return this.clientsService.create(createClientDto);
@@ -59,5 +59,11 @@ export class ClientsController {
   @Get('availability/:id')
   async availability(@Param('id') id: string) {
     return this.clientsService.availability(Number(id));
+  }
+
+  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @Post('change-state')
+  async changeState(@Body() changeStateClientDto: ChangeStateClientDto) {
+    return this.clientsService.changeState(changeStateClientDto);
   }
 }

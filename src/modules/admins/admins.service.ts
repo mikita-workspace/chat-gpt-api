@@ -83,11 +83,9 @@ export class AdminsService {
   async changeRole(changeRoleAdminDto: ChangeRoleAdminDto) {
     const { adminId, role } = changeRoleAdminDto;
 
-    const admin = await this.adminModel.findOneAndUpdate(
-      { admin_id: adminId },
-      { role },
-      { new: true },
-    );
+    const admin = await this.adminModel
+      .findOneAndUpdate({ admin_id: adminId }, { role }, { new: true })
+      .exec();
 
     if (!admin) {
       throw new NotFoundException(`${adminId} not found`);
@@ -97,24 +95,26 @@ export class AdminsService {
   }
 
   async changeState(changeStateAdminDto: ChangeStateAdminDto) {
-    const { adminId: admin_id, blockReason, isBlocked: is_blocked } = changeStateAdminDto;
+    const { adminId: admin_id, blockReason = '', isBlocked: is_blocked } = changeStateAdminDto;
 
-    const admin = await this.adminModel.findOneAndUpdate(
-      { admin_id },
-      {
-        state: {
-          block_reason: is_blocked ? blockReason || '' : '',
-          updated_at: getTimestamp(),
-          is_blocked,
+    const admin = await this.adminModel
+      .findOneAndUpdate(
+        { admin_id },
+        {
+          state: {
+            block_reason: is_blocked ? blockReason : '',
+            updated_at: getTimestamp(),
+            is_blocked,
+          },
         },
-      },
-      { new: true },
-    );
+        { new: true },
+      )
+      .exec();
 
     if (!admin) {
       throw new NotFoundException(`${admin_id} not found`);
     }
 
-    return admin;
+    return admin.state;
   }
 }

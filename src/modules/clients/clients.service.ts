@@ -6,9 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { getTimestamp, isBoolean } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
+import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './schemas';
@@ -24,7 +26,7 @@ export class ClientsService {
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Client> {
-    const { telegramId: telegram_id } = createClientDto;
+    const { telegramId: telegram_id, username } = createClientDto;
 
     const client = await this.clientModel.findOne({ telegram_id }).exec();
 
@@ -36,12 +38,13 @@ export class ClientsService {
       telegram_id,
       client_messages_id: uuidv4(),
     });
+
     const newClientImages = await this.clientImagesModel.create({
       telegram_id,
       client_images_id: uuidv4(),
     });
 
-    const newClient = new this.clientModel({ telegram_id });
+    const newClient = new this.clientModel({ telegram_id, username });
 
     newClient.set('gpt_messages', newClientMessages._id);
     newClient.set('dalle_images', newClientImages._id);
@@ -116,6 +119,36 @@ export class ClientsService {
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
     }
+
+    return client.state;
+  }
+
+  async changeState(changeStateClientDto: ChangeStateClientDto) {
+    const {
+      blockReason = '',
+      isApproved: is_approved,
+      isBlocked: is_blocked,
+      telegramId: telegram_id,
+    } = changeStateClientDto;
+
+    if (Number.isNaN(telegram_id)) {
+      throw new BadRequestException('The Telegram ID does not match the numeric type');
+    }
+
+    const client = await this.clientModel.findOne({ telegram_id }).exec();
+
+    if (!client) {
+      throw new NotFoundException(`${telegram_id} not found`);
+    }
+
+    client.state = {
+      block_reason: is_blocked ? blockReason : '',
+      is_approved: isBoolean(is_approved) ? is_approved : client.state.is_approved,
+      is_blocked: isBoolean(is_blocked) ? is_blocked : client.state.is_blocked,
+      updated_at: getTimestamp(),
+    };
+
+    await client.save();
 
     return client.state;
   }

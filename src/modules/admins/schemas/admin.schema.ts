@@ -34,13 +34,13 @@ export class Admin {
 
   @Prop({
     type: Object,
-    default: { is_banned: false, ban_reason: '', updated_at: getTimestamp() },
+    default: { is_blocked: false, block_reason: '', updated_at: getTimestamp() },
     required: true,
   })
   state: {
-    ban_reason: string;
+    block_reason: string;
     updated_at: number;
-    is_banned: boolean;
+    is_blocked: boolean;
   };
 }
 

@@ -37,13 +37,18 @@ export class Client {
 
   @Prop({
     type: Object,
-    default: { is_approved: false, is_banned: false, ban_reason: '', updated_at: getTimestamp() },
+    default: {
+      block_reason: '',
+      is_approved: false,
+      is_blocked: false,
+      updated_at: getTimestamp(),
+    },
     required: true,
   })
   state: {
-    ban_reason: string;
+    block_reason: string;
     is_approved: boolean;
-    is_banned: boolean;
+    is_blocked: boolean;
     updated_at: number;
   };
 

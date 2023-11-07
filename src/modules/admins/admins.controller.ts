@@ -15,8 +15,8 @@ import { RolesAuthGuard } from 'src/modules/auth/guard';
 
 import { AdminsService } from './admins.service';
 import { AdminRoles } from './constants';
-import { BanAdminDto } from './dto/ban-admin.dto';
 import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
+import { ChangeStateAdminDto } from './dto/change-state-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 
@@ -64,19 +64,13 @@ export class AdminsController {
 
   @RolesAuth(AdminRoles.SUPER_ADMIN)
   @Post('change-role')
-  async changeRole(@Body() addRoleAdminDto: ChangeRoleAdminDto) {
-    return this.adminsService.changeRole(addRoleAdminDto);
+  async changeRole(@Body() changeRoleAdminDto: ChangeRoleAdminDto) {
+    return this.adminsService.changeRole(changeRoleAdminDto);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
-  @Post('block')
-  async block(@Body() banAdminDto: BanAdminDto) {
-    return this.adminsService.block(banAdminDto);
-  }
-
-  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
-  @Post('unblock/:id')
-  async unblock(@Param('id') id: string) {
-    return this.adminsService.unblock(id);
+  @Post('change-state')
+  async changeState(@Body() changeStateAdminDto: ChangeStateAdminDto) {
+    return this.adminsService.changeState(changeStateAdminDto);
   }
 }

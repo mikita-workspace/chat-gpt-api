@@ -34,7 +34,7 @@ export class ClientsService {
       .exec();
   }
 
-  remove(clientId: number) {
+  remove(clientId: string) {
     return this.clientModel.deleteOne({ client_id: clientId });
   }
 }

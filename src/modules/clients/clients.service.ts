@@ -27,10 +27,23 @@ export class ClientsService {
       throw new ConflictException(`${telegram_id} already exist`);
     }
 
-    await this.clientMessagesModel.create({ telegram_id, client_messages_id: uuidv4() });
-    await this.clientImagesModel.create({ telegram_id, client_images_id: uuidv4() });
+    const newClientMessages = await this.clientMessagesModel.create({
+      telegram_id,
+      client_messages_id: uuidv4(),
+    });
+    const newClientImages = await this.clientImagesModel.create({
+      telegram_id,
+      client_images_id: uuidv4(),
+    });
 
-    return new this.clientModel({ telegram_id }).save();
+    const newClient = new this.clientModel({ telegram_id });
+
+    newClient.set('gpt_messages', newClientMessages._id);
+    newClient.set('dalle_images', newClientImages._id);
+
+    await newClient.save();
+
+    return newClient;
   }
 
   async findAll(role: `${AdminRoles}`): Promise<Client[]> {

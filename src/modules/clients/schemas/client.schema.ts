@@ -50,11 +50,11 @@ export class Client {
   @Prop({ type: Array, default: [ModelGPT.GPT_3_5_TURBO], required: true })
   gpt_models: Array<keyof typeof ModelGPT>;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientMessages.name })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientMessages.name, required: true })
   gpt_messages: ClientMessages;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientImages.name })
-  dalle_messages: ClientImages;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientImages.name, required: true })
+  dalle_images: ClientImages;
 }
 
 export const ClientSchema = SchemaFactory.createForClass(Client);

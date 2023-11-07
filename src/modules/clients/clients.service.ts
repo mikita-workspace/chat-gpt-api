@@ -1,15 +1,22 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './schemas';
+import { ClientImages } from './schemas/client-images.schema';
+import { ClientMessages } from './schemas/client-messages.schema';
 
 @Injectable()
 export class ClientsService {
-  constructor(@InjectModel(Client.name) private readonly clientModel: Model<Client>) {}
+  constructor(
+    @InjectModel(Client.name) private readonly clientModel: Model<Client>,
+    @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
+    @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
+  ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Client> {
     const { telegramId: telegram_id } = createClientDto;
@@ -20,13 +27,16 @@ export class ClientsService {
       throw new ConflictException(`${telegram_id} already exist`);
     }
 
+    await this.clientMessagesModel.create({ telegram_id, client_messages_id: uuidv4() });
+    await this.clientImagesModel.create({ telegram_id, client_images_id: uuidv4() });
+
     return new this.clientModel({ telegram_id }).save();
   }
 
   async findAll(role: `${AdminRoles}`): Promise<Client[]> {
-    // TODO: Filtered clients for moderator (only approved users)
-    console.log(role);
-    return this.clientModel.find().exec();
+    const filter = role === AdminRoles.MODERATOR ? { state: { is_approved: true } } : {};
+
+    return this.clientModel.find(filter).exec();
   }
 
   async findOne(telegramId: number): Promise<Client> {
@@ -71,6 +81,9 @@ export class ClientsService {
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
     }
+
+    await this.clientMessagesModel.deleteOne({ telegram_id: telegramId });
+    await this.clientImagesModel.deleteOne({ telegram_id: telegramId });
 
     return client;
   }

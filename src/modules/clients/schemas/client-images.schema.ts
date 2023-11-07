@@ -11,8 +11,8 @@ export class ClientImages {
   @Prop({ type: String, unique: true, default: uuidv4(), required: true })
   client_images_id: string;
 
-  @Prop({ type: String, unique: true, required: true })
-  telegram_id: string;
+  @Prop({ type: Number, unique: true, required: true })
+  telegram_id: number;
 
   @Prop({ type: Array, default: [], required: true })
   dalle_messages: {

@@ -1,13 +1,12 @@
 import {
   Body,
-  ConflictException,
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   Patch,
   Post,
+  Req,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
@@ -16,6 +15,7 @@ import { HttpExceptionFilter } from 'src/common/exceptions';
 import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
 import { JwtAuthGuard, RolesAuthGuard } from '../auth/guard';
+import { RequestWithAdmin } from '../auth/types';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -29,66 +29,30 @@ export class ClientsController {
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
   @Post()
   async create(@Body() createClientDto: CreateClientDto) {
-    const client = await this.clientsService.findOneByTelegramId(createClientDto.telegramId);
-
-    if (client) {
-      throw new ConflictException(`${createClientDto.telegramId} already exist`);
-    }
-
     return this.clientsService.create(createClientDto);
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll() {
-    return this.clientsService.findAll();
+  async findAll(@Req() req: RequestWithAdmin) {
+    return this.clientsService.findAll(req.admin.role);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const client = await this.clientsService.findOne(id);
-
-    if (!client) {
-      throw new NotFoundException(`${id} not found`);
-    }
-
-    return client;
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('telegram/:id')
-  async findOneByEmail(@Param('id') id: string) {
-    const client = await this.clientsService.findOneByTelegramId(Number(id));
-
-    if (!client) {
-      throw new NotFoundException(`${id} not found`);
-    }
-
-    return client;
+    return this.clientsService.findOne(Number(id));
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateClientDto: UpdateClientDto) {
-    const client = await this.clientsService.findOne(id);
-
-    if (!client) {
-      throw new NotFoundException(`${id} not found`);
-    }
-
-    return this.clientsService.update(id, updateClientDto);
+    return this.clientsService.update(Number(id), updateClientDto);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    const client = await this.clientsService.findOne(id);
-
-    if (!client) {
-      throw new NotFoundException(`${id} not found`);
-    }
-
-    return this.clientsService.remove(id);
+    return this.clientsService.remove(Number(id));
   }
 }

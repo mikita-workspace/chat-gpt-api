@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import { ModelGPT, MONTH_IN_DAYS } from 'src/common/constants';
 import { getTimestamp, getTimestampPlusDays } from 'src/common/utils';
-import { v4 as uuidv4 } from 'uuid';
 
 import { ClientImagesRate, ClientTokensRate } from '../constants';
 import { ClientImages } from './client-images.schema';
@@ -12,23 +11,14 @@ export type ClientDocument = HydratedDocument<Client>;
 
 @Schema({ versionKey: false })
 export class Client {
-  @Prop({ type: String, unique: true, default: uuidv4(), required: true })
-  client_id: string;
-
   @Prop({ type: Number, unique: true, required: true })
   telegram_id: number;
 
   @Prop({ type: Number, default: getTimestamp(), required: true })
   created_at: number;
 
-  @Prop({ type: Number, default: getTimestamp(), required: true })
-  updated_at: number;
-
   @Prop({ type: String, default: '' })
   username: string;
-
-  @Prop({ type: Boolean, default: false, required: true })
-  is_approved: boolean;
 
   @Prop({
     type: Object,
@@ -47,13 +37,14 @@ export class Client {
 
   @Prop({
     type: Object,
-    default: { is_banned: false, ban_reason: '', updated_at: getTimestamp() },
+    default: { is_approved: false, is_banned: false, ban_reason: '', updated_at: getTimestamp() },
     required: true,
   })
   state: {
     ban_reason: string;
-    updated_at: number;
+    is_approved: boolean;
     is_banned: boolean;
+    updated_at: number;
   };
 
   @Prop({ type: Array, default: [ModelGPT.GPT_3_5_TURBO], required: true })

@@ -12,7 +12,7 @@ export class ClientMessages {
   client_messages_id: string;
 
   @Prop({ type: String, unique: true, required: true })
-  client_id: string;
+  telegram_id: string;
 
   @Prop({ type: Array, default: [], required: true })
   gpt_messages: {

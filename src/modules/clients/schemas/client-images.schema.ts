@@ -12,7 +12,7 @@ export class ClientImages {
   client_images_id: string;
 
   @Prop({ type: String, unique: true, required: true })
-  client_id: string;
+  telegram_id: string;
 
   @Prop({ type: Array, default: [], required: true })
   dalle_messages: {

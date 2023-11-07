@@ -38,7 +38,7 @@ export class AdminsService {
 
   async update(adminId: string, updateAdminDto: UpdateAdminDto): Promise<Admin> {
     return this.adminModel
-      .findOneAndUpdate({ admin_id: adminId }, { ...updateAdminDto }, { new: true })
+      .findOneAndUpdate({ admin_id: adminId }, updateAdminDto, { new: true })
       .exec();
   }
 

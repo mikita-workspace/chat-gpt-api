@@ -11,7 +11,9 @@ export class ClientsService {
   constructor(@InjectModel(Client.name) private readonly clientModel: Model<Client>) {}
 
   async create(createClientDto: CreateClientDto): Promise<Client> {
-    return new this.clientModel(createClientDto).save();
+    const { telegramId: telegram_id } = createClientDto;
+
+    return new this.clientModel({ telegram_id }).save();
   }
 
   async findAll(): Promise<Client[]> {

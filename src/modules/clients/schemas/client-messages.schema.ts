@@ -6,7 +6,7 @@ import { ClientFeedback } from '../constants';
 
 export type ClientMessagesDocument = HydratedDocument<ClientMessages>;
 
-@Schema()
+@Schema({ versionKey: false })
 export class ClientMessages {
   @Prop({ type: String, unique: true, default: uuidv4(), required: true })
   client_messages_id: string;

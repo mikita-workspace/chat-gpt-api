@@ -7,7 +7,7 @@ import { AdminRoles } from '../constants';
 
 export type AdminDocument = HydratedDocument<Admin>;
 
-@Schema()
+@Schema({ versionKey: false })
 export class Admin {
   @Prop({ type: String, unique: true, default: uuidv4(), required: true })
   admin_id: string;
@@ -18,7 +18,7 @@ export class Admin {
   @Prop({ type: String, required: true })
   password: string;
 
-  @Prop({ type: String, default: getTimestamp(), required: true })
+  @Prop({ type: Number, default: getTimestamp(), required: true })
   created_at: number;
 
   @Prop({

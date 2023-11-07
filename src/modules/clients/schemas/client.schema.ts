@@ -10,7 +10,7 @@ import { ClientMessages } from './client-messages.schema';
 
 export type ClientDocument = HydratedDocument<Client>;
 
-@Schema()
+@Schema({ versionKey: false })
 export class Client {
   @Prop({ type: String, unique: true, default: uuidv4(), required: true })
   client_id: string;
@@ -18,7 +18,7 @@ export class Client {
   @Prop({ type: Number, unique: true, required: true })
   telegram_id: number;
 
-  @Prop({ type: String, default: getTimestamp(), required: true })
+  @Prop({ type: Number, default: getTimestamp(), required: true })
   created_at: number;
 
   @Prop({ type: Number, default: getTimestamp(), required: true })

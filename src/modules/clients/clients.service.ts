@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
@@ -54,7 +59,7 @@ export class ClientsService {
 
   async findOne(telegramId: number): Promise<Client> {
     if (Number.isNaN(telegramId)) {
-      throw new NotFoundException(`telegramId is not Number`);
+      throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
     const client = await this.clientModel.findOne({ telegram_id: telegramId }).exec();
@@ -68,7 +73,7 @@ export class ClientsService {
 
   async update(telegramId: number, updateClientDto: UpdateClientDto) {
     if (Number.isNaN(telegramId)) {
-      throw new NotFoundException(`telegramId is not Number`);
+      throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
     const client = await this.clientModel
@@ -84,7 +89,7 @@ export class ClientsService {
 
   async remove(telegramId: number) {
     if (Number.isNaN(telegramId)) {
-      throw new NotFoundException(`telegramId is not Number`);
+      throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
     const client = await this.clientModel
@@ -99,5 +104,19 @@ export class ClientsService {
     await this.clientImagesModel.deleteOne({ telegram_id: telegramId });
 
     return client;
+  }
+
+  async availability(telegramId: number) {
+    if (Number.isNaN(telegramId)) {
+      throw new BadRequestException('The Telegram ID does not match the numeric type');
+    }
+
+    const client = await this.clientModel.findOne({ telegram_id: telegramId }).exec();
+
+    if (!client) {
+      throw new NotFoundException(`${telegramId} not found`);
+    }
+
+    return client.state;
   }
 }

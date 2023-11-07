@@ -55,4 +55,9 @@ export class ClientsController {
   async remove(@Param('id') id: string) {
     return this.clientsService.remove(Number(id));
   }
+
+  @Get('availability/:id')
+  async availability(@Param('id') id: string) {
+    return this.clientsService.availability(Number(id));
+  }
 }

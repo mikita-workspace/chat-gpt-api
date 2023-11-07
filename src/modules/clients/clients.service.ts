@@ -20,7 +20,7 @@ export class ClientsService {
     return this.clientModel.find().exec();
   }
 
-  findOne(clientId: string): Promise<Client> {
+  async findOne(clientId: string): Promise<Client> {
     return this.clientModel.findOne({ client_id: clientId }).exec();
   }
 
@@ -28,13 +28,13 @@ export class ClientsService {
     return this.clientModel.findOne({ telegram_id: telegramId }).exec();
   }
 
-  update(clientId: string, updateClientDto: UpdateClientDto) {
+  async update(clientId: string, updateClientDto: UpdateClientDto) {
     return this.clientModel
       .findOneAndUpdate({ client_id: clientId }, updateClientDto, { new: true })
       .exec();
   }
 
-  remove(clientId: string) {
+  async remove(clientId: string) {
     return this.clientModel.deleteOne({ client_id: clientId });
   }
 }

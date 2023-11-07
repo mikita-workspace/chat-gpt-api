@@ -96,7 +96,7 @@ export class AdminsController {
 
   @RolesAuth(AdminRoles.SUPER_ADMIN)
   @Post('change-role')
-  async addRole(@Body() addRoleAdminDto: ChangeRoleAdminDto) {
+  async changeRole(@Body() addRoleAdminDto: ChangeRoleAdminDto) {
     const { adminId: id } = addRoleAdminDto;
 
     const admin = await this.adminsService.findOne(id);

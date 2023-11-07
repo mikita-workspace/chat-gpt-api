@@ -27,6 +27,9 @@ export class Client {
   @Prop({ type: String, default: '' })
   username: string;
 
+  @Prop({ type: Boolean, default: false, required: true })
+  is_approved: boolean;
+
   @Prop({
     type: Object,
     default: {
@@ -40,6 +43,17 @@ export class Client {
     dalle_images: number;
     expire_at: number;
     gpt_tokens: number;
+  };
+
+  @Prop({
+    type: Object,
+    default: { is_banned: false, ban_reason: '', updated_at: getTimestamp() },
+    required: true,
+  })
+  state: {
+    ban_reason: string;
+    updated_at: number;
+    is_banned: boolean;
   };
 
   @Prop({ type: Array, default: [ModelGPT.GPT_3_5_TURBO], required: true })

@@ -61,9 +61,12 @@ export class ClientsController {
     return this.clientsService.availability(Number(id));
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @UseGuards(JwtAuthGuard)
   @Post('change-state')
-  async changeState(@Body() changeStateClientDto: ChangeStateClientDto) {
-    return this.clientsService.changeState(changeStateClientDto);
+  async changeState(
+    @Body() changeStateClientDto: ChangeStateClientDto,
+    @Req() req: RequestWithAdmin,
+  ) {
+    return this.clientsService.changeState(changeStateClientDto, req.admin.role);
   }
 }

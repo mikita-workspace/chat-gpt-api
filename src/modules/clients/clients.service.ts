@@ -129,7 +129,7 @@ export class ClientsService {
     return client.state;
   }
 
-  async changeState(changeStateClientDto: ChangeStateClientDto) {
+  async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {
     const {
       blockReason = '',
       isApproved,
@@ -146,7 +146,10 @@ export class ClientsService {
 
     client.state = {
       blockReason,
-      isApproved: isBoolean(isApproved) ? isApproved : client.state.isApproved,
+      isApproved:
+        isBoolean(isApproved) && role !== AdminRoles.MODERATOR
+          ? isApproved
+          : client.state.isApproved,
       isBlocked: isBoolean(isBlocked) ? isBlocked : client.state.isBlocked,
       updatedAt: getTimestampUnix(),
     };

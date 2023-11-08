@@ -145,7 +145,7 @@ export class ClientsService {
     }
 
     client.state = {
-      blockReason: telegramId ? blockReason : '',
+      blockReason,
       isApproved: isBoolean(isApproved) ? isApproved : client.state.isApproved,
       isBlocked: isBoolean(isBlocked) ? isBlocked : client.state.isBlocked,
       updatedAt: getTimestampUnix(),

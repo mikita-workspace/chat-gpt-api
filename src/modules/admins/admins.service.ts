@@ -100,7 +100,7 @@ export class AdminsService {
         { adminId },
         {
           state: {
-            blockReason: isBlocked ? blockReason : '',
+            blockReason,
             isBlocked,
             updatedAt: getTimestampUnix(),
           },

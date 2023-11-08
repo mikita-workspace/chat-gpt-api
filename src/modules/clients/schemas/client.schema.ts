@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import { ModelGPT, MONTH_IN_DAYS } from 'src/common/constants';
-import { getTimestamp, getTimestampPlusDays } from 'src/common/utils';
+import { getTimestampPlusDays, getTimestampUnix } from 'src/common/utils';
 
 import { ClientImagesRate, ClientTokensRate } from '../constants';
 import { ClientImages } from './client-images.schema';
@@ -14,7 +14,7 @@ export class Client {
   @Prop({ type: Number, unique: true, required: true })
   telegram_id: number;
 
-  @Prop({ type: Number, default: getTimestamp(), required: true })
+  @Prop({ type: Number, default: getTimestampUnix(), required: true })
   created_at: number;
 
   @Prop({ type: String, default: '' })
@@ -41,7 +41,7 @@ export class Client {
       block_reason: '',
       is_approved: false,
       is_blocked: false,
-      updated_at: getTimestamp(),
+      updated_at: getTimestampUnix(),
     },
     required: true,
   })

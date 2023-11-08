@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { getTimestamp, isBoolean } from 'src/common/utils';
+import { getTimestampUnix, isBoolean } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
@@ -25,7 +25,7 @@ export class ClientsService {
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
   ) {}
 
-  async create(createClientDto: CreateClientDto): Promise<Client> {
+  async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
     const { telegramId: telegram_id, username } = createClientDto;
 
     const client = await this.clientModel.findOne({ telegram_id }).exec();
@@ -51,7 +51,11 @@ export class ClientsService {
 
     await newClient.save();
 
-    return newClient;
+    return {
+      created_at: newClient.created_at,
+      telegram_id: newClient.telegram_id,
+      username: newClient.username,
+    };
   }
 
   async findAll(role: `${AdminRoles}`): Promise<Client[]> {
@@ -145,7 +149,7 @@ export class ClientsService {
       block_reason: is_blocked ? blockReason : '',
       is_approved: isBoolean(is_approved) ? is_approved : client.state.is_approved,
       is_blocked: isBoolean(is_blocked) ? is_blocked : client.state.is_blocked,
-      updated_at: getTimestamp(),
+      updated_at: getTimestampUnix(),
     };
 
     await client.save();

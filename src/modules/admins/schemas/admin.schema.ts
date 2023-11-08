@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { getTimestamp } from 'src/common/utils';
+import { getTimestampUnix } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../constants';
@@ -18,7 +18,7 @@ export class Admin {
   @Prop({ type: String, required: true })
   password: string;
 
-  @Prop({ type: Number, default: getTimestamp(), required: true })
+  @Prop({ type: Number, default: getTimestampUnix(), required: true })
   created_at: number;
 
   @Prop({
@@ -34,7 +34,7 @@ export class Admin {
 
   @Prop({
     type: Object,
-    default: { is_blocked: false, block_reason: '', updated_at: getTimestamp() },
+    default: { is_blocked: false, block_reason: '', updated_at: getTimestampUnix() },
     required: true,
   })
   state: {

@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
-import { getTimestamp } from 'src/common/utils';
+import { getTimestampUnix } from 'src/common/utils';
 
 import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
 import { ChangeStateAdminDto } from './dto/change-state-admin.dto';
@@ -103,7 +103,7 @@ export class AdminsService {
         {
           state: {
             block_reason: is_blocked ? blockReason : '',
-            updated_at: getTimestamp(),
+            updated_at: getTimestampUnix(),
             is_blocked,
           },
         },

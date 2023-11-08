@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { getTimestampUnix, isBoolean } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
+import { TelegramService } from '../telegram/telegram.service';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -21,10 +23,11 @@ export class ClientsService {
     @InjectModel(Client.name) private readonly clientModel: Model<Client>,
     @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
+    @Inject(TelegramService) private readonly telegramService: TelegramService,
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
-    const { telegramId, username } = createClientDto;
+    const { telegramId, username, languageCode } = createClientDto;
 
     const client = await this.clientModel.findOne({ telegramId }).exec();
 
@@ -42,7 +45,7 @@ export class ClientsService {
       clientImagesId: uuidv4(),
     });
 
-    const newClient = new this.clientModel({ telegramId, username });
+    const newClient = new this.clientModel({ languageCode, telegramId, username });
 
     newClient.set('gptMessages', newClientMessages._id);
     newClient.set('dalleImages', newClientImages._id);
@@ -51,6 +54,7 @@ export class ClientsService {
 
     return {
       createdAt: newClient.createdAt,
+      languageCode: newClient.languageCode,
       telegramId: newClient.telegramId,
       username: newClient.username,
     };
@@ -126,10 +130,6 @@ export class ClientsService {
   async changeState(changeStateClientDto: ChangeStateClientDto) {
     const { blockReason = '', isApproved, isBlocked, telegramId } = changeStateClientDto;
 
-    if (Number.isNaN(telegramId)) {
-      throw new BadRequestException('The Telegram ID does not match the numeric type');
-    }
-
     const client = await this.clientModel.findOne({ telegramId }).exec();
 
     if (!client) {
@@ -144,6 +144,10 @@ export class ClientsService {
     };
 
     await client.save();
+
+    if (isApproved) {
+      await this.telegramService.sendTelegramMessage(telegramId, 'test message');
+    }
 
     return client.state;
   }

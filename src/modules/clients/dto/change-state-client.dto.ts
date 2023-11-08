@@ -1,16 +1,16 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class ChangeStateClientDto {
   @IsNotEmpty()
-  @IsString()
-  readonly telegramId: string;
+  @IsNumber()
+  readonly telegramId: number;
   @IsOptional()
   @IsString()
-  readonly blockReason: string;
+  readonly blockReason?: string;
   @IsBoolean()
   @IsOptional()
-  readonly isBlocked: boolean;
+  readonly isBlocked?: boolean;
   @IsBoolean()
   @IsOptional()
-  readonly isApproved: boolean;
+  readonly isApproved?: boolean;
 }

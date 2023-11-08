@@ -6,7 +6,7 @@ export class ChangeStateAdminDto {
   readonly adminId: string;
   @IsOptional()
   @IsString()
-  readonly blockReason: string;
+  readonly blockReason?: string;
   @IsBoolean()
   @IsNotEmpty()
   readonly isBlocked: boolean;

@@ -3,8 +3,11 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 export class CreateClientDto {
   @IsNotEmpty()
   @IsNumber()
-  telegramId: number;
+  readonly telegramId: number;
+  @IsNotEmpty()
+  @IsString()
+  readonly languageCode: string;
   @IsOptional()
   @IsString()
-  username: string;
+  readonly username?: string;
 }

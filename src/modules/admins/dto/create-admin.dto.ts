@@ -5,13 +5,11 @@ import { ADMIN_PASSWORD_REGEXP } from '../constants';
 export class CreateAdminDto {
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  readonly email: string;
 
   @IsString()
-  @Matches(ADMIN_PASSWORD_REGEXP, {
-    message: 'Weak password',
-  })
+  @Matches(ADMIN_PASSWORD_REGEXP)
   @MaxLength(20)
   @MinLength(4)
-  password: string;
+  readonly password: string;
 }

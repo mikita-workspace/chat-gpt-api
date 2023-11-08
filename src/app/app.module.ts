@@ -5,6 +5,7 @@ import { MongoDBModule } from 'src/database';
 import { AdminsModule } from 'src/modules/admins/admins.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { ClientsModule } from 'src/modules/clients/clients.module';
+import { TelegramModule } from 'src/modules/telegram/telegram.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -20,6 +21,7 @@ import { AppService } from './app.service';
     AuthModule,
     ClientsModule,
     MongoDBModule,
+    TelegramModule,
   ],
   controllers: [AppController],
   providers: [AppService],

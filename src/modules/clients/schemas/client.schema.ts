@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { ModelGPT, MONTH_IN_DAYS } from 'src/common/constants';
+import { LanguageCodes, ModelGPT, MONTH_IN_DAYS } from 'src/common/constants';
 import { getTimestampPlusDays, getTimestampUnix } from 'src/common/utils';
 
 import { ClientImagesRate, ClientTokensRate } from '../constants';
@@ -19,6 +19,9 @@ export class Client {
 
   @Prop({ type: String, default: '' })
   username: string;
+
+  @Prop({ type: String, default: LanguageCodes.ENGLISH, required: true })
+  languageCode: string;
 
   @Prop({
     type: Object,

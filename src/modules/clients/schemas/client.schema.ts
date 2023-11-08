@@ -12,10 +12,10 @@ export type ClientDocument = HydratedDocument<Client>;
 @Schema({ versionKey: false })
 export class Client {
   @Prop({ type: Number, unique: true, required: true })
-  telegram_id: number;
+  telegramId: number;
 
   @Prop({ type: Number, default: getTimestampUnix(), required: true })
-  created_at: number;
+  createdAt: number;
 
   @Prop({ type: String, default: '' })
   username: string;
@@ -23,43 +23,43 @@ export class Client {
   @Prop({
     type: Object,
     default: {
-      dalle_images: ClientImagesRate.BASE,
-      expire_at: getTimestampPlusDays(MONTH_IN_DAYS),
-      gpt_tokens: ClientTokensRate.BASE,
+      dalleImages: ClientImagesRate.BASE,
+      expireAt: getTimestampPlusDays(MONTH_IN_DAYS),
+      gptTokens: ClientTokensRate.BASE,
     },
     required: true,
   })
   rate: {
-    dalle_images: number;
-    expire_at: number;
-    gpt_tokens: number;
+    dalleImages: number;
+    expireAt: number;
+    gptTokens: number;
   };
 
   @Prop({
     type: Object,
     default: {
-      block_reason: '',
-      is_approved: false,
-      is_blocked: false,
-      updated_at: getTimestampUnix(),
+      blockReason: '',
+      isApproved: false,
+      isBlocked: false,
+      updatedAt: getTimestampUnix(),
     },
     required: true,
   })
   state: {
-    block_reason: string;
-    is_approved: boolean;
-    is_blocked: boolean;
-    updated_at: number;
+    blockReason: string;
+    isApproved: boolean;
+    isBlocked: boolean;
+    updatedAt: number;
   };
 
   @Prop({ type: Array, default: [ModelGPT.GPT_3_5_TURBO], required: true })
-  gpt_models: Array<keyof typeof ModelGPT>;
+  gptModels: Array<keyof typeof ModelGPT>;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientMessages.name, required: true })
-  gpt_messages: ClientMessages;
+  gptMessages: ClientMessages;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientImages.name, required: true })
-  dalle_images: ClientImages;
+  dalleImages: ClientImages;
 }
 
 export const ClientSchema = SchemaFactory.createForClass(Client);

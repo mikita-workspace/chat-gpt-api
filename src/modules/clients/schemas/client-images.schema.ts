@@ -9,16 +9,16 @@ export type ClientImagesSchemaDocument = HydratedDocument<ClientImages>;
 @Schema({ versionKey: false })
 export class ClientImages {
   @Prop({ type: String, unique: true, default: uuidv4(), required: true })
-  client_images_id: string;
+  clientImagesId: string;
 
   @Prop({ type: Number, unique: true, required: true })
-  telegram_id: number;
+  telegramId: number;
 
   @Prop({ type: Array, default: [], required: true })
-  dalle_images: {
-    created_at: number;
+  dalleImages: {
+    createdAt: number;
     feedback: ClientFeedback;
-    image_links: string[];
+    imageLinks: string[];
     prompt: string;
   }[];
 }

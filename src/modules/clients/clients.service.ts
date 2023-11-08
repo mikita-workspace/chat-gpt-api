@@ -13,9 +13,7 @@ import { AdminRoles } from '../admins/constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
-import { Client } from './schemas';
-import { ClientImages } from './schemas/client-images.schema';
-import { ClientMessages } from './schemas/client-messages.schema';
+import { Client, ClientImages, ClientMessages } from './schemas';
 
 @Injectable()
 export class ClientsService {
@@ -26,40 +24,40 @@ export class ClientsService {
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
-    const { telegramId: telegram_id, username } = createClientDto;
+    const { telegramId, username } = createClientDto;
 
-    const client = await this.clientModel.findOne({ telegram_id }).exec();
+    const client = await this.clientModel.findOne({ telegramId }).exec();
 
     if (client) {
-      throw new ConflictException(`${telegram_id} already exist`);
+      throw new ConflictException(`${telegramId} already exist`);
     }
 
     const newClientMessages = await this.clientMessagesModel.create({
-      telegram_id,
-      client_messages_id: uuidv4(),
+      telegramId,
+      clientMessagesId: uuidv4(),
     });
 
     const newClientImages = await this.clientImagesModel.create({
-      telegram_id,
-      client_images_id: uuidv4(),
+      telegramId,
+      clientImagesId: uuidv4(),
     });
 
-    const newClient = new this.clientModel({ telegram_id, username });
+    const newClient = new this.clientModel({ telegramId, username });
 
-    newClient.set('gpt_messages', newClientMessages._id);
-    newClient.set('dalle_images', newClientImages._id);
+    newClient.set('gptMessages', newClientMessages._id);
+    newClient.set('dalleImages', newClientImages._id);
 
     await newClient.save();
 
     return {
-      created_at: newClient.created_at,
-      telegram_id: newClient.telegram_id,
+      createdAt: newClient.createdAt,
+      telegramId: newClient.telegramId,
       username: newClient.username,
     };
   }
 
   async findAll(role: `${AdminRoles}`): Promise<Client[]> {
-    const filter = role === AdminRoles.MODERATOR ? { state: { is_approved: true } } : {};
+    const filter = role === AdminRoles.MODERATOR ? { state: { isApproved: true } } : {};
 
     return this.clientModel.find(filter).exec();
   }
@@ -69,7 +67,7 @@ export class ClientsService {
       throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
-    const client = await this.clientModel.findOne({ telegram_id: telegramId }).exec();
+    const client = await this.clientModel.findOne({ telegramId }).exec();
 
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
@@ -84,7 +82,7 @@ export class ClientsService {
     }
 
     const client = await this.clientModel
-      .findOneAndUpdate({ telegram_id: telegramId }, updateClientDto, { new: true })
+      .findOneAndUpdate({ telegramId }, updateClientDto, { new: true })
       .exec();
 
     if (!client) {
@@ -99,16 +97,14 @@ export class ClientsService {
       throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
-    const client = await this.clientModel
-      .findOneAndDelete({ telegram_id: telegramId }, { new: true })
-      .exec();
+    const client = await this.clientModel.findOneAndDelete({ telegramId }, { new: true }).exec();
 
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
     }
 
-    await this.clientMessagesModel.deleteOne({ telegram_id: telegramId });
-    await this.clientImagesModel.deleteOne({ telegram_id: telegramId });
+    await this.clientMessagesModel.deleteOne({ telegramId });
+    await this.clientImagesModel.deleteOne({ telegramId });
 
     return client;
   }
@@ -118,7 +114,7 @@ export class ClientsService {
       throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
-    const client = await this.clientModel.findOne({ telegram_id: telegramId }).exec();
+    const client = await this.clientModel.findOne({ telegramId }).exec();
 
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
@@ -128,28 +124,23 @@ export class ClientsService {
   }
 
   async changeState(changeStateClientDto: ChangeStateClientDto) {
-    const {
-      blockReason = '',
-      isApproved: is_approved,
-      isBlocked: is_blocked,
-      telegramId: telegram_id,
-    } = changeStateClientDto;
+    const { blockReason = '', isApproved, isBlocked, telegramId } = changeStateClientDto;
 
-    if (Number.isNaN(telegram_id)) {
+    if (Number.isNaN(telegramId)) {
       throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
-    const client = await this.clientModel.findOne({ telegram_id }).exec();
+    const client = await this.clientModel.findOne({ telegramId }).exec();
 
     if (!client) {
-      throw new NotFoundException(`${telegram_id} not found`);
+      throw new NotFoundException(`${telegramId} not found`);
     }
 
     client.state = {
-      block_reason: is_blocked ? blockReason : '',
-      is_approved: isBoolean(is_approved) ? is_approved : client.state.is_approved,
-      is_blocked: isBoolean(is_blocked) ? is_blocked : client.state.is_blocked,
-      updated_at: getTimestampUnix(),
+      blockReason: telegramId ? blockReason : '',
+      isApproved: isBoolean(isApproved) ? isApproved : client.state.isApproved,
+      isBlocked: isBoolean(isBlocked) ? isBlocked : client.state.isBlocked,
+      updatedAt: getTimestampUnix(),
     };
 
     await client.save();

@@ -10,7 +10,7 @@ export type AdminDocument = HydratedDocument<Admin>;
 @Schema({ versionKey: false })
 export class Admin {
   @Prop({ type: String, unique: true, default: uuidv4(), required: true })
-  admin_id: string;
+  adminId: string;
 
   @Prop({ type: String, unique: true, required: true })
   email: string;
@@ -19,7 +19,7 @@ export class Admin {
   password: string;
 
   @Prop({ type: Number, default: getTimestampUnix(), required: true })
-  created_at: number;
+  createdAt: number;
 
   @Prop({
     type: String,
@@ -34,13 +34,13 @@ export class Admin {
 
   @Prop({
     type: Object,
-    default: { is_blocked: false, block_reason: '', updated_at: getTimestampUnix() },
+    default: { blockReason: '', updatedAt: getTimestampUnix(), isBlocked: false },
     required: true,
   })
   state: {
-    block_reason: string;
-    updated_at: number;
-    is_blocked: boolean;
+    blockReason: string;
+    updatedAt: number;
+    isBlocked: boolean;
   };
 }
 

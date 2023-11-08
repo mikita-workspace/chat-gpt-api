@@ -20,7 +20,7 @@ export class AdminsService {
     const admin = await this.adminModel.findOne({ email });
 
     if (admin) {
-      throw new ConflictException(`${admin.admin_id} already exist`);
+      throw new ConflictException(`${admin.adminId} already exist`);
     }
 
     const salt = await bcrypt.genSalt();
@@ -37,7 +37,7 @@ export class AdminsService {
   }
 
   async findOne(adminId: string): Promise<Admin> {
-    const admin = await this.adminModel.findOne({ admin_id: adminId }).exec();
+    const admin = await this.adminModel.findOne({ adminId }).exec();
 
     if (!admin) {
       throw new NotFoundException(`${adminId} not found`);
@@ -58,7 +58,7 @@ export class AdminsService {
 
   async update(adminId: string, updateAdminDto: UpdateAdminDto): Promise<Admin> {
     const admin = await this.adminModel
-      .findOneAndUpdate({ admin_id: adminId }, updateAdminDto, { new: true })
+      .findOneAndUpdate({ adminId }, updateAdminDto, { new: true })
       .exec();
 
     if (!admin) {
@@ -69,9 +69,7 @@ export class AdminsService {
   }
 
   async remove(adminId: string) {
-    const admin = await this.adminModel
-      .findOneAndDelete({ admin_id: adminId }, { new: true })
-      .exec();
+    const admin = await this.adminModel.findOneAndDelete({ adminId }, { new: true }).exec();
 
     if (!admin) {
       throw new NotFoundException(`${adminId} not found`);
@@ -84,7 +82,7 @@ export class AdminsService {
     const { adminId, role } = changeRoleAdminDto;
 
     const admin = await this.adminModel
-      .findOneAndUpdate({ admin_id: adminId }, { role }, { new: true })
+      .findOneAndUpdate({ adminId }, { role }, { new: true })
       .exec();
 
     if (!admin) {
@@ -95,16 +93,16 @@ export class AdminsService {
   }
 
   async changeState(changeStateAdminDto: ChangeStateAdminDto) {
-    const { adminId: admin_id, blockReason = '', isBlocked: is_blocked } = changeStateAdminDto;
+    const { adminId, blockReason = '', isBlocked } = changeStateAdminDto;
 
     const admin = await this.adminModel
       .findOneAndUpdate(
-        { admin_id },
+        { adminId },
         {
           state: {
-            block_reason: is_blocked ? blockReason : '',
-            updated_at: getTimestampUnix(),
-            is_blocked,
+            blockReason: isBlocked ? blockReason : '',
+            isBlocked,
+            updatedAt: getTimestampUnix(),
           },
         },
         { new: true },
@@ -112,7 +110,7 @@ export class AdminsService {
       .exec();
 
     if (!admin) {
-      throw new NotFoundException(`${admin_id} not found`);
+      throw new NotFoundException(`${adminId} not found`);
     }
 
     return admin.state;

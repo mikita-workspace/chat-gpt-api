@@ -9,16 +9,16 @@ export type ClientMessagesDocument = HydratedDocument<ClientMessages>;
 @Schema({ versionKey: false })
 export class ClientMessages {
   @Prop({ type: String, unique: true, default: uuidv4(), required: true })
-  client_messages_id: string;
+  clientMessagesId: string;
 
   @Prop({ type: Number, unique: true, required: true })
-  telegram_id: number;
+  telegramId: number;
 
   @Prop({ type: Array, default: [], required: true })
-  gpt_messages: {
-    created_at: number;
+  gptMessages: {
+    createdAt: number;
     feedback: ClientFeedback;
-    gpt_format: { content: string; role: string };
+    gptFormat: { content: string; role: string };
   }[];
 }
 

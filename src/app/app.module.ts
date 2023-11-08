@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import * as path from 'path';
+import { LanguageCodes } from 'src/common/constants';
 import { configuration } from 'src/config';
 import { MongoDBModule } from 'src/database';
 import { AdminsModule } from 'src/modules/admins/admins.module';
@@ -16,6 +19,14 @@ import { AppService } from './app.service';
       envFilePath: `.env.${process.env.NODE_ENV}`,
       isGlobal: true,
       load: [configuration],
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: LanguageCodes.ENGLISH,
+      loaderOptions: {
+        path: path.join(__dirname, '../i18n/'),
+        watch: true,
+      },
+      resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
     }),
     AdminsModule,
     AuthModule,

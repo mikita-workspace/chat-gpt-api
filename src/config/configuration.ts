@@ -3,6 +3,7 @@ export const configuration = () => ({
     name: process.env.API_NAME || '',
   },
   externalApis: {
+    github: 'https://api.github.com',
     telegram: 'https://api.telegram.org',
   },
   tokens: {

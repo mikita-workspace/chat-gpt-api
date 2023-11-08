@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { I18nService } from 'nestjs-i18n';
 import { getTimestampUnix, isBoolean } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -24,6 +25,7 @@ export class ClientsService {
     @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
     @Inject(TelegramService) private readonly telegramService: TelegramService,
+    private readonly i18n: I18nService,
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
@@ -128,7 +130,13 @@ export class ClientsService {
   }
 
   async changeState(changeStateClientDto: ChangeStateClientDto) {
-    const { blockReason = '', isApproved, isBlocked, telegramId } = changeStateClientDto;
+    const {
+      blockReason = '',
+      isApproved,
+      isBlocked,
+      telegramId,
+      enableNotification = false,
+    } = changeStateClientDto;
 
     const client = await this.clientModel.findOne({ telegramId }).exec();
 
@@ -145,8 +153,10 @@ export class ClientsService {
 
     await client.save();
 
-    if (isApproved) {
-      await this.telegramService.sendTelegramMessage(telegramId, 'test message');
+    if (isApproved && enableNotification) {
+      const message = this.i18n.t('locale.client.auth-approved', { lang: client.languageCode });
+
+      await this.telegramService.sendTelegramMessage(telegramId, message);
     }
 
     return client.state;

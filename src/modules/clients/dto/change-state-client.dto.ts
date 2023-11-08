@@ -13,4 +13,7 @@ export class ChangeStateClientDto {
   @IsBoolean()
   @IsOptional()
   readonly isApproved?: boolean;
+  @IsBoolean()
+  @IsOptional()
+  readonly enableNotification?: boolean;
 }

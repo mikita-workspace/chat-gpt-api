@@ -1,6 +1,6 @@
 import { Controller, Get, HttpStatus, Req, UseFilters } from '@nestjs/common';
 import { HttpExceptionFilter } from 'src/common/exceptions';
-import { getTimestamp } from 'src/common/utils';
+import { getTimestampUnix } from 'src/common/utils';
 
 import { AppService } from './app.service';
 
@@ -14,7 +14,7 @@ export class AppController {
     return {
       statusCode: HttpStatus.OK,
       message: this.appService.getInitial(),
-      timestamp: getTimestamp(),
+      timestamp: getTimestampUnix(),
       path: req.url,
     };
   }

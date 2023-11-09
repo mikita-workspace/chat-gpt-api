@@ -18,4 +18,4 @@ export const isExpiredDate = (expiredAt: number | string) =>
   compareAsc(new Date(), new Date(expiredAt)) > 0;
 
 export const expiresIn = (expiredAt: number | string) =>
-  differenceInMilliseconds(new Date(), new Date(expiredAt));
+  Math.abs(differenceInMilliseconds(new Date(), new Date(expiredAt)));

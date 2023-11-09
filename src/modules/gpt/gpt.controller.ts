@@ -4,6 +4,7 @@ import { HttpExceptionFilter } from 'src/common/exceptions';
 import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
 import { RolesAuthGuard } from '../auth/guard';
+import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptService } from './gpt.service';
@@ -28,5 +29,10 @@ export class GptController {
   @Post('transcriptions')
   async transcriptions(@Body() getTranslationDto: GetTranslationDto) {
     return this.gptService.transcriptions(getTranslationDto);
+  }
+
+  @Post('chatCompletions')
+  async chatCompletions(@Body() chatCompletionDto: ChatCompletionDto) {
+    return this.gptService.chatCompletions(chatCompletionDto);
   }
 }

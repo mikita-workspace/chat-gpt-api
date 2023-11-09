@@ -15,7 +15,6 @@ import { createReadStream } from 'fs';
 import * as https from 'https';
 import { Model } from 'mongoose';
 import { OpenAI } from 'openai';
-import { ChatCompletionMessageParam } from 'openai/resources';
 import { catchError, firstValueFrom } from 'rxjs';
 import { expiresIn, removeFile } from 'src/common/utils';
 
@@ -27,6 +26,7 @@ import {
   GIGACHAT_API_PERS,
   ModelGPT,
 } from './constants';
+import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptModels } from './schemas';
@@ -94,7 +94,7 @@ export class GptService {
   async createModel(createModelDto: CreateModelDto): Promise<GptModels> {
     const { model } = createModelDto;
 
-    const isModelExist = await this.gptModels.findOne({ model });
+    const isModelExist = await this.gptModels.findOne({ model }).exec();
 
     if (isModelExist) {
       throw new ConflictException(`${model} already exist`);
@@ -107,12 +107,11 @@ export class GptService {
     return this.gptModels.find().exec();
   }
 
-  async chatCompletions(
-    messages: ChatCompletionMessageParam[],
-    model = ModelGPT.GPT_3_5_TURBO,
-  ): Promise<ChatCompletions | null> {
+  async chatCompletions(chatCompletionsDto: ChatCompletionDto): Promise<ChatCompletions | null> {
+    const { messages, model } = chatCompletionsDto;
+
     try {
-      const isModelExist = this.gptModels.findOne({ model });
+      const isModelExist = await this.gptModels.findOne({ model }).exec();
 
       if (!isModelExist) {
         throw new NotFoundException(`${model} not found`);
@@ -129,7 +128,7 @@ export class GptService {
       }
 
       if (model === ModelGPT.GIGA_CHAT) {
-        const accessToken = this.getAccessTokenGigaChat();
+        const accessToken = await this.getAccessTokenGigaChat();
 
         const headers = {
           'Content-Type': 'application/json',
@@ -197,7 +196,6 @@ export class GptService {
 
       return transcription.text;
     } catch (error) {
-      console.log(error);
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);
       }
@@ -206,13 +204,14 @@ export class GptService {
     }
   }
 
-  async imagesGenerate() {
-    // const response = await this.openAI.images.generate({
-    //   n: Math.min(MAX_IMAGES_REQUEST, numberOfImages <= 0 ? 1 : numberOfImages),
-    //   prompt,
-    //   response_format: 'b64_json',
-    //   size: IMAGE_SIZE_DEFAULT,
-    // });
-    // return response.data.data;
-  }
+  // TODO: Will be implemented here: https://app.asana.com/0/1205877070000801/1205877070000847/f
+  // async imagesGenerate() {
+  // const response = await this.openAI.images.generate({
+  //   n: Math.min(MAX_IMAGES_REQUEST, numberOfImages <= 0 ? 1 : numberOfImages),
+  //   prompt,
+  //   response_format: 'b64_json',
+  //   size: IMAGE_SIZE_DEFAULT,
+  // });
+  // return response.data.data;
+  // }
 }

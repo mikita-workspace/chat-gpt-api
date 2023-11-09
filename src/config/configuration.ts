@@ -24,7 +24,7 @@ export const configuration = () => ({
     accessSecret: process.env.JWT_ACCESS_TOKEN_SECRET || '',
   },
   http: {
-    timeout: parseInt(process.env.HTTP_TIMEOUT, 10) || 10000,
+    timeout: parseInt(process.env.HTTP_TIMEOUT, 10) || 30000,
     maxRedirects: parseInt(process.env.HTTP_MAX_REDIRECTS, 10) || 5,
   },
   cache: {

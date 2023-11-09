@@ -1,3 +1,4 @@
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import {
   Body,
   Controller,
@@ -9,6 +10,7 @@ import {
   Req,
   UseFilters,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
@@ -23,6 +25,7 @@ import { UpdateClientDto } from './dto/update-client.dto';
 
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
+@UseInterceptors(CacheInterceptor)
 @Controller('api/clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}

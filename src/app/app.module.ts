@@ -32,11 +32,11 @@ import { AppService } from './app.service';
     }),
     CacheModule.registerAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       isGlobal: true,
       useFactory: async (configService: ConfigService) => ({
         ttl: configService.get('cache.ttl'),
       }),
-      inject: [ConfigService],
     }),
     AdminsModule,
     AuthModule,

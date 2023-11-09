@@ -1,3 +1,4 @@
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import {
   Body,
   Controller,
@@ -8,6 +9,7 @@ import {
   Post,
   UseFilters,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 import { RolesAuth } from 'src/modules/auth/decorators';
@@ -22,6 +24,7 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
+@UseInterceptors(CacheInterceptor)
 @Controller('api/admins')
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}

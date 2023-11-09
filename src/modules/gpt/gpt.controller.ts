@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, UseFilters, UseGuards } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminRoles } from '../admins/constants';
@@ -21,6 +30,7 @@ export class GptController {
     return this.gptService.createModel(createModelDto);
   }
 
+  @UseInterceptors(CacheInterceptor)
   @Get('models')
   async findAll() {
     return this.gptService.findAll();

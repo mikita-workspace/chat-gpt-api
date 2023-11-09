@@ -4,6 +4,7 @@ import { HttpExceptionFilter } from 'src/common/exceptions';
 import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
 import { RolesAuthGuard } from '../auth/guard';
+import { SetWebhookDto } from './dto/set-webhook.dto';
 import { TelegramService } from './telegram.service';
 
 @UseFilters(new HttpExceptionFilter())
@@ -19,17 +20,17 @@ export class TelegramController {
   }
 
   @Post('webhook')
-  async setWebhook(@Body() setWebhookDto: { host: string }) {
+  async setWebhook(@Body() setWebhookDto: SetWebhookDto) {
     return this.telegramService.setWebhook(setWebhookDto.host);
-  }
-
-  @Get('updates')
-  async getUpdates() {
-    return this.telegramService.getUpdates();
   }
 
   @Delete('webhook')
   async removeWebhook() {
     return this.telegramService.removeWebhook();
+  }
+
+  @Get('updates')
+  async getUpdates() {
+    return this.telegramService.getUpdates();
   }
 }

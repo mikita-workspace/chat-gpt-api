@@ -20,6 +20,7 @@ import { GptService } from './gpt.service';
 
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
+@UseInterceptors(CacheInterceptor)
 @Controller('api/gpt')
 export class GptController {
   constructor(private readonly gptService: GptService) {}
@@ -30,7 +31,6 @@ export class GptController {
     return this.gptService.createModel(createModelDto);
   }
 
-  @UseInterceptors(CacheInterceptor)
   @Get('models')
   async findAll() {
     return this.gptService.findAll();

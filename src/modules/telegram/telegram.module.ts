@@ -1,12 +1,14 @@
 import { HttpModule } from '@nestjs/axios';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
+import { AuthModule } from '../auth/auth.module';
+import { TelegramController } from './telegram.controller';
 import { TelegramService } from './telegram.service';
 
 @Module({
   imports: [
-    ConfigModule,
+    forwardRef(() => AuthModule),
     HttpModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -15,7 +17,9 @@ import { TelegramService } from './telegram.service';
         maxRedirects: configService.get('http.maxRedirects'),
       }),
     }),
+    ConfigModule,
   ],
+  controllers: [TelegramController],
   providers: [TelegramService],
   exports: [TelegramService],
 })

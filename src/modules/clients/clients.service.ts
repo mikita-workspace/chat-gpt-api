@@ -159,7 +159,7 @@ export class ClientsService {
     if (isApproved && enableNotification) {
       const message = this.i18n.t('locale.client.auth-approved', { lang: client.languageCode });
 
-      await this.telegramService.sendTelegramMessage(telegramId, message);
+      await this.telegramService.sendMessageToChat(telegramId, message);
     }
 
     return client.state;

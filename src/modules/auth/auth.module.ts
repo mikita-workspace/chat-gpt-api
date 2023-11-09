@@ -11,8 +11,6 @@ import { JwtStrategy, LocalStrategy } from './strategies';
 @Module({
   imports: [
     forwardRef(() => AdminsModule),
-    PassportModule,
-    ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -21,6 +19,8 @@ import { JwtStrategy, LocalStrategy } from './strategies';
         signOptions: { expiresIn: Number(configService.get('jwt.accessExp')) },
       }),
     }),
+    PassportModule,
+    ConfigModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy],

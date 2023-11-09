@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { GptMessage } from 'src/modules/gpt/constants';
+import { GptMessage } from 'src/modules/gpt/types';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ClientFeedback } from '../constants';

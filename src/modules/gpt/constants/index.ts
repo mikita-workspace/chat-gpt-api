@@ -4,4 +4,5 @@ export enum ModelGPT {
   WHISPER_1 = 'whisper-1',
 }
 
-export type GptMessage = { content: string; role: string };
+export const GIGA_CHAT_OAUTH = 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth';
+export const GIGA_CHAT = 'https://gigachat.devices.sberbank.ru/api/v1';

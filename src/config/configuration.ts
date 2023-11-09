@@ -9,6 +9,9 @@ export const configuration = () => ({
     token: process.env.OPEN_AI_TOKEN || '',
     organization: process.env.OPEN_AI_ORG || '',
   },
+  sber: {
+    token: process.env.GIGA_CHAT_TOKEN || '',
+  },
   port: parseInt(process.env.PORT, 10) || 5050,
   mongodb: {
     database: {

@@ -1,4 +1,4 @@
-import { addDays, addSeconds, getUnixTime } from 'date-fns';
+import { addDays, addSeconds, compareAsc, getUnixTime } from 'date-fns';
 
 export const getTimestampUnix = (date = new Date()) => getUnixTime(date);
 
@@ -13,3 +13,6 @@ export const getTimestampPlusDays = (days = 0, startDate = new Date()) => {
 
   return getTimestampUnix(newDate);
 };
+
+export const isExpiredDate = (expiredAt: number | string) =>
+  compareAsc(new Date(), new Date(expiredAt)) > 0;

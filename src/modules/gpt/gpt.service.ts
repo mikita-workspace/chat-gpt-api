@@ -2,25 +2,31 @@ import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+import { AxiosError } from 'axios';
+import * as https from 'https';
 import { Model } from 'mongoose';
 import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
+import { catchError, firstValueFrom } from 'rxjs';
+import { isExpiredDate } from 'src/common/utils';
 
-import { ModelGPT } from './constants';
+import { GIGA_CHAT, GIGA_CHAT_OAUTH, ModelGPT } from './constants';
 import { CreateModelDto } from './dto/create-model.dto';
 import { GptModels } from './schemas';
-import { ChatCompletions } from './types/gpt.types';
+import { ChatCompletions, GigaChatAuth } from './types';
 
 @Injectable()
 export class GptService {
   private openAI: OpenAI;
 
   constructor(
+    @Inject('GIGA_CHAT_AUTH') private gigaChatAuth: GigaChatAuth | null = null,
     @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
@@ -29,6 +35,41 @@ export class GptService {
       apiKey: configService.get('openAi.token'),
       organization: configService.get('openAi.organization'),
     });
+  }
+
+  private async getAccessTokenGigaChat() {
+    if (this.gigaChatAuth && !isExpiredDate(this.gigaChatAuth.expiresAt)) {
+      return this.gigaChatAuth.accessToken;
+    }
+
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      RqUID: '6f0b1291-c7f3-43c6-bb2e-9f3efb2dc98e',
+      Authorization: `Bearer ${this.configService.get('sber.token')}`,
+    };
+
+    const { data } = await firstValueFrom(
+      this.httpService
+        .post(
+          GIGA_CHAT_OAUTH,
+          { scope: 'GIGACHAT_API_PERS' },
+          {
+            headers,
+            httpsAgent: new https.Agent({
+              rejectUnauthorized: false,
+            }),
+          },
+        )
+        .pipe(
+          catchError((error: AxiosError) => {
+            throw new BadRequestException(error.response.data);
+          }),
+        ),
+    );
+
+    this.gigaChatAuth = { accessToken: data.access_token, expiresAt: data.expires_at };
+
+    return this.gigaChatAuth.accessToken;
   }
 
   async createModel(createModelDto: CreateModelDto): Promise<GptModels> {
@@ -69,7 +110,46 @@ export class GptService {
       }
 
       if (model === ModelGPT.GIGA_CHAT) {
-        return null;
+        const accessToken = this.getAccessTokenGigaChat();
+
+        const headers = {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          'X-Request-ID': '79e41a5f-f180-4c7a-b2d9-393086ae20a1',
+          'X-Session-ID': 'b6874da0-bf06-410b-a150-fd5f9164a0b2',
+          'X-Client-ID': 'b6874da0-bf06-410b-a150-fd5f9164a0b2',
+        };
+
+        const { data: chatCompletion } = await firstValueFrom(
+          this.httpService
+            .post(
+              `${GIGA_CHAT}/chat/completions`,
+              {
+                max_tokens: 512,
+                messages,
+                model,
+                n: 1,
+                repetition_penalty: 1.07,
+                stream: false,
+                temperature: 0.87,
+                top_p: 0.47,
+                update_interval: 0,
+              },
+              {
+                headers,
+                httpsAgent: new https.Agent({
+                  rejectUnauthorized: false,
+                }),
+              },
+            )
+            .pipe(
+              catchError((error: AxiosError) => {
+                throw new BadRequestException(error.response.data);
+              }),
+            ),
+        );
+
+        return { message: chatCompletion.choices[0].message, usage: chatCompletion.usage };
       }
 
       return null;

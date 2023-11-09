@@ -1,9 +1,9 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateModelDto {
   @IsNotEmpty()
-  @IsNumber()
-  readonly model: number;
+  @IsString()
+  readonly model: string;
   @IsNotEmpty()
   @IsString()
   readonly title: string;

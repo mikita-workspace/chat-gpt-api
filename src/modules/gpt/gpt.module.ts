@@ -1,15 +1,17 @@
 import { HttpModule } from '@nestjs/axios';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { AuthModule } from '../auth/auth.module';
 import { GptController } from './gpt.controller';
 import { GptService } from './gpt.service';
-import { GptModelsSchema } from './schemas';
+import { GptModels, GptModelsSchema } from './schemas';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: GptService.name, schema: GptModelsSchema }]),
+    forwardRef(() => AuthModule),
+    MongooseModule.forFeature([{ name: GptModels.name, schema: GptModelsSchema }]),
     HttpModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

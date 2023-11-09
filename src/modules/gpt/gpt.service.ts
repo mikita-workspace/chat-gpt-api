@@ -76,9 +76,9 @@ export class GptService {
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);
-      } else {
-        throw new BadRequestException();
       }
+
+      throw new BadRequestException();
     }
   }
 }

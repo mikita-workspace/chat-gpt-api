@@ -65,7 +65,7 @@ export class ClientsController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('change-state')
+  @Post('changeState')
   async changeState(
     @Body() changeStateClientDto: ChangeStateClientDto,
     @Req() req: RequestWithAdmin,

@@ -66,13 +66,13 @@ export class AdminsController {
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN)
-  @Post('change-role')
+  @Post('changeRole')
   async changeRole(@Body() changeRoleAdminDto: ChangeRoleAdminDto) {
     return this.adminsService.changeRole(changeRoleAdminDto);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
-  @Post('change-state')
+  @Post('changeState')
   async changeState(@Body() changeStateAdminDto: ChangeStateAdminDto) {
     return this.adminsService.changeState(changeStateAdminDto);
   }

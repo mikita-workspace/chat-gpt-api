@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Post, UseFilters, UseGuards } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminRoles } from '../admins/constants';
@@ -10,6 +20,7 @@ import { TelegramService } from './telegram.service';
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
 @RolesAuth(AdminRoles.SUPER_ADMIN)
+@UseInterceptors(CacheInterceptor)
 @Controller('api/telegram')
 export class TelegramController {
   constructor(private readonly telegramService: TelegramService) {}
@@ -32,5 +43,10 @@ export class TelegramController {
   @Get('updates')
   async getUpdates() {
     return this.telegramService.getUpdates();
+  }
+
+  @Get('getMe')
+  async getMe() {
+    return this.telegramService.getMe();
   }
 }

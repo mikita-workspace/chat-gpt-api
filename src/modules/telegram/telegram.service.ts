@@ -94,6 +94,20 @@ export class TelegramService {
     return data;
   }
 
+  async getMe(): Promise<unknown> {
+    const url = `${this.commonUrl}/getMe`;
+
+    const { data } = await firstValueFrom(
+      this.httpService.get(url).pipe(
+        catchError((error: AxiosError) => {
+          throw new BadRequestException(error.response.data);
+        }),
+      ),
+    );
+
+    return data;
+  }
+
   async downloadVoiceMessage(voicePathApi: string, telegramId: number) {
     const url = `${this.fileUrl}/${voicePathApi}`;
 

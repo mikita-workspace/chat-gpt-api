@@ -28,6 +28,6 @@ export const configuration = () => ({
     maxRedirects: parseInt(process.env.HTTP_MAX_REDIRECTS, 10) || 5,
   },
   cache: {
-    ttl: parseInt(process.env.CACHE_TTL, 10) || 60,
+    ttl: parseInt(process.env.CACHE_TTL, 10) || 60000,
   },
 });

@@ -16,7 +16,13 @@ import { ChatCompletionMessageParam } from 'openai/resources';
 import { catchError, firstValueFrom } from 'rxjs';
 import { isExpiredDate } from 'src/common/utils';
 
-import { GIGA_CHAT, GIGA_CHAT_OAUTH, ModelGPT } from './constants';
+import {
+  GIGA_CHAT,
+  GIGA_CHAT_AUTH_KEY,
+  GIGA_CHAT_OAUTH,
+  GIGACHAT_API_PERS,
+  ModelGPT,
+} from './constants';
 import { CreateModelDto } from './dto/create-model.dto';
 import { GptModels } from './schemas';
 import { ChatCompletions, GigaChatAuth } from './types';
@@ -26,7 +32,7 @@ export class GptService {
   private openAI: OpenAI;
 
   constructor(
-    @Inject('GIGA_CHAT_AUTH') private gigaChatAuth: GigaChatAuth | null = null,
+    @Inject(GIGA_CHAT_AUTH_KEY) private gigaChatAuth: GigaChatAuth,
     @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
@@ -52,9 +58,10 @@ export class GptService {
       this.httpService
         .post(
           GIGA_CHAT_OAUTH,
-          { scope: 'GIGACHAT_API_PERS' },
+          { scope: GIGACHAT_API_PERS },
           {
             headers,
+            // NOTE: TLS certificate is disabled
             httpsAgent: new https.Agent({
               rejectUnauthorized: false,
             }),
@@ -137,6 +144,7 @@ export class GptService {
               },
               {
                 headers,
+                // NOTE: TLS certificate is disabled
                 httpsAgent: new https.Agent({
                   rejectUnauthorized: false,
                 }),

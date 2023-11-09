@@ -1,4 +1,5 @@
 import { HttpService } from '@nestjs/axios';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
@@ -9,31 +10,36 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { AxiosError } from 'axios';
+import { Cache as CacheManager } from 'cache-manager';
+import { createReadStream } from 'fs';
 import * as https from 'https';
 import { Model } from 'mongoose';
 import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { catchError, firstValueFrom } from 'rxjs';
-import { isExpiredDate } from 'src/common/utils';
+import { expiresIn, removeFile } from 'src/common/utils';
 
+import { TelegramService } from '../telegram/telegram.service';
 import {
   GIGA_CHAT,
-  GIGA_CHAT_AUTH_KEY,
+  GIGA_CHAT_ACCESS_TOKEN,
   GIGA_CHAT_OAUTH,
   GIGACHAT_API_PERS,
   ModelGPT,
 } from './constants';
 import { CreateModelDto } from './dto/create-model.dto';
+import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptModels } from './schemas';
-import { ChatCompletions, GigaChatAuth } from './types';
+import { ChatCompletions } from './types';
 
 @Injectable()
 export class GptService {
   private openAI: OpenAI;
 
   constructor(
-    @Inject(GIGA_CHAT_AUTH_KEY) private gigaChatAuth: GigaChatAuth,
     @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
+    @Inject(TelegramService) private readonly telegramService: TelegramService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
@@ -44,8 +50,10 @@ export class GptService {
   }
 
   private async getAccessTokenGigaChat() {
-    if (this.gigaChatAuth && !isExpiredDate(this.gigaChatAuth.expiresAt)) {
-      return this.gigaChatAuth.accessToken;
+    const cachedAccessToken = await this.cacheManager.get(GIGA_CHAT_ACCESS_TOKEN);
+
+    if (cachedAccessToken) {
+      return cachedAccessToken;
     }
 
     const headers = {
@@ -74,9 +82,13 @@ export class GptService {
         ),
     );
 
-    this.gigaChatAuth = { accessToken: data.access_token, expiresAt: data.expires_at };
+    await this.cacheManager.set(
+      GIGA_CHAT_ACCESS_TOKEN,
+      data.access_token,
+      expiresIn(data.expires_at),
+    );
 
-    return this.gigaChatAuth.accessToken;
+    return data.access_token;
   }
 
   async createModel(createModelDto: CreateModelDto): Promise<GptModels> {
@@ -168,5 +180,39 @@ export class GptService {
 
       throw new BadRequestException();
     }
+  }
+
+  async transcriptions(getTranslationDto: GetTranslationDto) {
+    const { voicePathApi, telegramId } = getTranslationDto;
+
+    const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
+
+    try {
+      const transcription = await this.openAI.audio.transcriptions.create({
+        model: ModelGPT.WHISPER_1,
+        file: createReadStream(mp3Path),
+      });
+
+      await removeFile(mp3Path);
+
+      return transcription.text;
+    } catch (error) {
+      console.log(error);
+      if (error instanceof OpenAI.APIError) {
+        throw new BadRequestException(error);
+      }
+
+      throw new BadRequestException();
+    }
+  }
+
+  async imagesGenerate() {
+    // const response = await this.openAI.images.generate({
+    //   n: Math.min(MAX_IMAGES_REQUEST, numberOfImages <= 0 ? 1 : numberOfImages),
+    //   prompt,
+    //   response_format: 'b64_json',
+    //   size: IMAGE_SIZE_DEFAULT,
+    // });
+    // return response.data.data;
   }
 }

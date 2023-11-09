@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
+import { TelegramModule } from '../telegram/telegram.module';
 import { GptController } from './gpt.controller';
 import { GptService } from './gpt.service';
 import { GptModels, GptModelsSchema } from './schemas';
@@ -21,6 +22,7 @@ import { GptModels, GptModelsSchema } from './schemas';
       }),
     }),
     ConfigModule,
+    TelegramModule,
   ],
   controllers: [GptController],
   providers: [GptService],

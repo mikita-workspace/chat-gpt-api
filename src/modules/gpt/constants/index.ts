@@ -5,7 +5,12 @@ export enum ModelGPT {
   WHISPER_1 = 'whisper-1',
 }
 
+export enum InputGPT {
+  TEXT = 'text',
+  VOICE = 'voice',
+}
+
 export const GIGA_CHAT_OAUTH = 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth';
 export const GIGA_CHAT = 'https://gigachat.devices.sberbank.ru/api/v1';
 export const GIGACHAT_API_PERS = 'GIGACHAT_API_PERS';
-export const GIGA_CHAT_AUTH_KEY = 'GIGA_CHAT_AUTH';
+export const GIGA_CHAT_ACCESS_TOKEN = 'giga-chat-access-token';

@@ -5,6 +5,7 @@ import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
 import { RolesAuthGuard } from '../auth/guard';
 import { CreateModelDto } from './dto/create-model.dto';
+import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptService } from './gpt.service';
 
 @UseFilters(new HttpExceptionFilter())
@@ -22,5 +23,10 @@ export class GptController {
   @Get('models')
   async findAll() {
     return this.gptService.findAll();
+  }
+
+  @Post('transcriptions')
+  async transcriptions(@Body() getTranslationDto: GetTranslationDto) {
+    return this.gptService.transcriptions(getTranslationDto);
   }
 }

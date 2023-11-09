@@ -6,8 +6,3 @@ export type ChatCompletions = {
   message: ChatCompletionMessage;
   usage: CompletionUsage;
 };
-
-export type GigaChatAuth = {
-  accessToken: string;
-  expiresAt: number;
-};

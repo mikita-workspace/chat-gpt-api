@@ -1,5 +1,6 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { LanguageCodes } from 'src/common/constants';
@@ -29,6 +30,14 @@ import { AppService } from './app.service';
       },
       resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
     }),
+    CacheModule.registerAsync({
+      imports: [ConfigModule],
+      isGlobal: true,
+      useFactory: async (configService: ConfigService) => ({
+        ttl: configService.get('cache.ttl'),
+      }),
+      inject: [ConfigService],
+    }),
     AdminsModule,
     AuthModule,
     ClientsModule,
@@ -38,5 +47,6 @@ import { AppService } from './app.service';
   ],
   controllers: [AppController],
   providers: [AppService],
+  exports: [CacheModule],
 })
 export class AppModule {}

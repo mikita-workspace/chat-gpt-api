@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
+import { InputGPT } from '../constants';
+
 export type GptModelsDocument = HydratedDocument<GptModels>;
 
 @Schema({ versionKey: false })
@@ -13,6 +15,8 @@ export class GptModels {
   description: string;
   @Prop({ type: String, required: true })
   creator: string;
+  @Prop({ type: Array, default: [InputGPT.TEXT], required: true })
+  input: string[];
 }
 
 export const GptModelsSchema = SchemaFactory.createForClass(GptModels);

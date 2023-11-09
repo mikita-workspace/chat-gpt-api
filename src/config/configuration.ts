@@ -20,11 +20,14 @@ export const configuration = () => ({
     },
   },
   jwt: {
-    accessExp: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || 60,
+    accessExp: parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME, 10) || 60000,
     accessSecret: process.env.JWT_ACCESS_TOKEN_SECRET || '',
   },
   http: {
-    timeout: process.env.HTTP_TIMEOUT || 10000,
-    maxRedirects: process.env.HTTP_MAX_REDIRECTS || 5,
+    timeout: parseInt(process.env.HTTP_TIMEOUT, 10) || 10000,
+    maxRedirects: parseInt(process.env.HTTP_MAX_REDIRECTS, 10) || 5,
+  },
+  cache: {
+    ttl: parseInt(process.env.CACHE_TTL, 10) || 60,
   },
 });

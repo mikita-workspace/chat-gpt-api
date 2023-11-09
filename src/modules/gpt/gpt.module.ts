@@ -1,14 +1,18 @@
 import { HttpModule } from '@nestjs/axios';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
-import { TelegramController } from './telegram.controller';
-import { TelegramService } from './telegram.service';
+import { TelegramModule } from '../telegram/telegram.module';
+import { GptController } from './gpt.controller';
+import { GptService } from './gpt.service';
+import { GptModels, GptModelsSchema } from './schemas';
 
 @Module({
   imports: [
     forwardRef(() => AuthModule),
+    MongooseModule.forFeature([{ name: GptModels.name, schema: GptModelsSchema }]),
     HttpModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -18,9 +22,9 @@ import { TelegramService } from './telegram.service';
       }),
     }),
     ConfigModule,
+    TelegramModule,
   ],
-  controllers: [TelegramController],
-  providers: [TelegramService],
-  exports: [TelegramService],
+  controllers: [GptController],
+  providers: [GptService],
 })
-export class TelegramModule {}
+export class GptModule {}

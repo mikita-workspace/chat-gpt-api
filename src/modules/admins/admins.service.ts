@@ -17,7 +17,7 @@ export class AdminsService {
   async create(createAdminDto: CreateAdminDto): Promise<Admin> {
     const { email } = createAdminDto;
 
-    const admin = await this.adminModel.findOne({ email });
+    const admin = await this.adminModel.findOne({ email }).exec();
 
     if (admin) {
       throw new ConflictException(`${admin.adminId} already exist`);

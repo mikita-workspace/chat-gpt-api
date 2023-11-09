@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { GptMessage } from 'src/modules/gpt/constants';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ClientFeedback } from '../constants';
@@ -18,7 +19,7 @@ export class ClientMessages {
   gptMessages: {
     createdAt: number;
     feedback: ClientFeedback;
-    gptFormat: { content: string; role: string };
+    gptFormat: GptMessage;
   }[];
 }
 

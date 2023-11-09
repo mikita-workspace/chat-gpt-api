@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { LanguageCodes, ModelGPT, MONTH_IN_DAYS } from 'src/common/constants';
+import { LanguageCodes, MONTH_IN_DAYS } from 'src/common/constants';
 import { getTimestampPlusDays, getTimestampUnix } from 'src/common/utils';
+import { ModelGPT } from 'src/modules/gpt/constants';
 
 import { ClientImagesRate, ClientTokensRate } from '../constants';
 import { ClientImages } from './client-images.schema';

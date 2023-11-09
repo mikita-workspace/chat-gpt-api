@@ -14,7 +14,7 @@ export class TelegramService {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.botUrl = `${TELEGRAM_API}/bot${this.configService.get('tokens.telegram')}`;
+    this.botUrl = `${TELEGRAM_API}/bot${this.configService.get('telegram.token')}`;
   }
 
   async sendMessageToChat(chatId: number, message: string): Promise<void> {

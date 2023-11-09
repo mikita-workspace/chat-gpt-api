@@ -2,8 +2,12 @@ export const configuration = () => ({
   api: {
     name: process.env.API_NAME || '',
   },
-  tokens: {
-    telegram: process.env.TELEGRAM_TOKEN || '',
+  telegram: {
+    token: process.env.TELEGRAM_TOKEN || '',
+  },
+  openAi: {
+    token: process.env.OPEN_AI_TOKEN || '',
+    organization: process.env.OPEN_AI_ORG || '',
   },
   port: parseInt(process.env.PORT, 10) || 5050,
   mongodb: {

@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { ClientFeedback } from '../constants';
 
-export type ClientImagesSchemaDocument = HydratedDocument<ClientImages>;
+export type ClientImagesDocument = HydratedDocument<ClientImages>;
 
 @Schema({ versionKey: false })
 export class ClientImages {

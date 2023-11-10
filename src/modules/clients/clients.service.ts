@@ -183,8 +183,6 @@ export class ClientsService {
 
     await clientMessages.save();
 
-    console.log(clientMessages);
-
     return clientMessages;
   }
 
@@ -202,15 +200,15 @@ export class ClientsService {
 
     if (shouldUpdateRate) {
       client.rate = {
-        dalleImages: ClientImagesRate.BASE,
+        dalleImages: Math.max(ClientImagesRate.BASE - usedImages, 0),
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
-        gptTokens: ClientTokensRate.BASE,
+        gptTokens: Math.max(ClientTokensRate.BASE - usedTokens, 0),
       };
     } else {
       client.rate = {
-        gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
         dalleImages: Math.max(client.rate.dalleImages - usedImages, 0),
         expiresAt: client.rate.expiresAt,
+        gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
       };
     }
 

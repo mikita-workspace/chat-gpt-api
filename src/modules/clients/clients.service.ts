@@ -9,12 +9,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
-import { getTimestampUnix, isBoolean } from 'src/common/utils';
+import { MONTH_IN_DAYS } from 'src/common/constants';
+import { getTimestampPlusDays, getTimestampUnix, isBoolean, isExpiredDate } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
 import { TelegramService } from '../telegram/telegram.service';
-import { ClientFeedback } from './constants';
+import { ClientFeedback, ClientImagesRate, ClientTokensRate } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -128,7 +129,7 @@ export class ClientsService {
       throw new NotFoundException(`${telegramId} not found`);
     }
 
-    return { state: client.state, models: client.gptModels };
+    return { state: client.state, models: client.gptModels, rate: client.rate };
   }
 
   async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {
@@ -185,5 +186,36 @@ export class ClientsService {
     console.log(clientMessages);
 
     return clientMessages;
+  }
+
+  async updateClientRate(
+    telegramId: number,
+    { usedTokens = 0, usedImages = 0 }: { usedTokens?: number; usedImages?: number },
+  ) {
+    const client = await this.clientModel.findOne({ telegramId }).exec();
+
+    if (!client) {
+      throw new NotFoundException(`${telegramId} not found`);
+    }
+
+    const shouldUpdateRate = isExpiredDate(client.rate.expiresAt);
+
+    if (shouldUpdateRate) {
+      client.rate = {
+        dalleImages: ClientImagesRate.BASE,
+        expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
+        gptTokens: ClientTokensRate.BASE,
+      };
+    } else {
+      client.rate = {
+        gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
+        dalleImages: Math.max(client.rate.dalleImages - usedImages, 0),
+        expiresAt: client.rate.expiresAt,
+      };
+    }
+
+    await client.save();
+
+    return client.rate;
   }
 }

@@ -28,14 +28,14 @@ export class Client {
     type: Object,
     default: {
       dalleImages: ClientImagesRate.BASE,
-      expireAt: getTimestampPlusDays(MONTH_IN_DAYS),
+      expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
       gptTokens: ClientTokensRate.BASE,
     },
     required: true,
   })
   rate: {
     dalleImages: number;
-    expireAt: number;
+    expiresAt: number;
     gptTokens: number;
   };
 

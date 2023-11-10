@@ -183,7 +183,6 @@ export class GptService {
 
       const clientMessage = messages.slice(-1)[0];
       const assistantMessage = chatCompletionsResponse.message;
-      console.log(clientMessage, assistantMessage);
 
       if (clientMessage && assistantMessage) {
         await this.clientsService.updateClientMessages(telegramId, [
@@ -191,12 +190,15 @@ export class GptService {
           assistantMessage,
         ]);
 
-        return chatCompletionsResponse;
+        const clientRate = await this.clientsService.updateClientRate(telegramId, {
+          usedTokens: chatCompletionsResponse.usage.total_tokens,
+        });
+
+        return { ...chatCompletionsResponse, clientRate };
       }
 
       return null;
     } catch (error) {
-      console.log(error);
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);
       }

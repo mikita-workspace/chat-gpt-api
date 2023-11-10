@@ -21,5 +21,6 @@ import { ClientMessages, ClientMessagesSchema } from './schemas/client-messages.
   ],
   controllers: [ClientsController],
   providers: [ClientsService],
+  exports: [ClientsService],
 })
 export class ClientsModule {}

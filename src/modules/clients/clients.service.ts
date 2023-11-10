@@ -8,11 +8,13 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
+import { ChatCompletionMessage } from 'openai/resources/chat';
 import { getTimestampUnix, isBoolean } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
 import { TelegramService } from '../telegram/telegram.service';
+import { ClientFeedback } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -163,5 +165,25 @@ export class ClientsService {
     }
 
     return client.state;
+  }
+
+  async updateClientMessages(telegramId: number, messages: ChatCompletionMessage[]) {
+    const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();
+
+    if (!clientMessages) {
+      throw new NotFoundException(`GPT messages for ${telegramId} not found`);
+    }
+
+    // TODO: Will be updated here: https://app.asana.com/0/1205877070000801/1205877070000835/f
+    clientMessages.gptMessages = [
+      ...clientMessages.gptMessages,
+      { createdAt: getTimestampUnix(), feedback: ClientFeedback.NONE, messages },
+    ];
+
+    await clientMessages.save();
+
+    console.log(clientMessages);
+
+    return clientMessages;
   }
 }

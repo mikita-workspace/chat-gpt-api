@@ -15,7 +15,7 @@ export class ClientImages {
   telegramId: number;
 
   @Prop({ type: Array, default: [], required: true })
-  dalleImages: {
+  images: {
     createdAt: number;
     feedback: ClientFeedback;
     imageLinks: string[];

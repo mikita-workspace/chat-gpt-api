@@ -18,6 +18,7 @@ import { OpenAI } from 'openai';
 import { catchError, firstValueFrom } from 'rxjs';
 import { expiresIn, removeFile } from 'src/common/utils';
 
+import { ClientsService } from '../clients/clients.service';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   GIGA_CHAT,
@@ -42,6 +43,7 @@ export class GptService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly clientsService: ClientsService,
   ) {
     this.openAI = new OpenAI({
       apiKey: configService.get('openAi.token'),
@@ -108,7 +110,9 @@ export class GptService {
   }
 
   async chatCompletions(chatCompletionsDto: ChatCompletionDto): Promise<ChatCompletions | null> {
-    const { messages, model } = chatCompletionsDto;
+    const { messages, model, telegramId } = chatCompletionsDto;
+
+    let chatCompletionsResponse = { message: null, usage: null };
 
     try {
       const isModelExist = await this.gptModels.findOne({ model }).exec();
@@ -124,7 +128,10 @@ export class GptService {
           top_p: 0.5,
         });
 
-        return { message: chatCompletion.choices[0].message, usage: chatCompletion.usage };
+        chatCompletionsResponse = {
+          message: chatCompletion.choices[0].message,
+          usage: chatCompletion.usage,
+        };
       }
 
       if (model === ModelGPT.GIGA_CHAT) {
@@ -168,11 +175,28 @@ export class GptService {
             ),
         );
 
-        return { message: chatCompletion.choices[0].message, usage: chatCompletion.usage };
+        chatCompletionsResponse = {
+          message: chatCompletion.choices[0].message,
+          usage: chatCompletion.usage,
+        };
+      }
+
+      const clientMessage = messages.slice(-1)[0];
+      const assistantMessage = chatCompletionsResponse.message;
+      console.log(clientMessage, assistantMessage);
+
+      if (clientMessage && assistantMessage) {
+        await this.clientsService.updateClientMessages(telegramId, [
+          clientMessage,
+          assistantMessage,
+        ]);
+
+        return chatCompletionsResponse;
       }
 
       return null;
     } catch (error) {
+      console.log(error);
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);
       }

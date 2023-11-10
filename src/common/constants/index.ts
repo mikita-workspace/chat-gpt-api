@@ -6,4 +6,4 @@ export enum LanguageCodes {
   RUSSIAN = 'ru',
 }
 
-export const CONFIG_TTL_MS = 600000;
+export const TTL_CONFIG_CACHE_MS = 600000;

@@ -8,7 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CONFIG_TTL_MS } from 'src/common/constants';
+import { TTL_CONFIG_CACHE_MS } from 'src/common/constants';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminRoles } from '../admins/constants';
@@ -32,7 +32,7 @@ export class GptController {
     return this.gptService.createModel(createModelDto);
   }
 
-  @CacheTTL(CONFIG_TTL_MS)
+  @CacheTTL(TTL_CONFIG_CACHE_MS)
   @Get('models')
   async findAll() {
     return this.gptService.findAll();

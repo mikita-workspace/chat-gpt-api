@@ -128,7 +128,7 @@ export class ClientsService {
       throw new NotFoundException(`${telegramId} not found`);
     }
 
-    return client.state;
+    return { state: client.state, models: client.gptModels };
   }
 
   async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {

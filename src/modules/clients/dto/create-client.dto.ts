@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class CreateClientDto {
   @IsNotEmpty()
@@ -8,6 +8,10 @@ export class CreateClientDto {
   @IsString()
   readonly languageCode: string;
   @IsOptional()
-  @IsString()
-  readonly username?: string;
+  @IsObject()
+  readonly metadata: {
+    username?: string;
+    firstname?: string;
+    lastname?: string;
+  };
 }

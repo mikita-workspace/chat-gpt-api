@@ -8,6 +8,11 @@ export enum ClientImagesRate {
   PREMIUM = 100,
 }
 
+export enum ClientNamesRate {
+  BASE = 'Base',
+  PREMIUM = 'Premium',
+}
+
 export enum ClientFeedback {
   LIKE = 'like',
   DISLIKE = 'dislike',

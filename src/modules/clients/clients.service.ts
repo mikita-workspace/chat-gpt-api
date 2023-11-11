@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
 import { TelegramService } from '../telegram/telegram.service';
-import { ClientFeedback, ClientImagesRate, ClientTokensRate } from './constants';
+import { ClientFeedback, ClientImagesRate, ClientNamesRate, ClientTokensRate } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -32,7 +32,7 @@ export class ClientsService {
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
-    const { telegramId, username, languageCode } = createClientDto;
+    const { telegramId, languageCode, metadata } = createClientDto;
 
     const client = await this.clientModel.findOne({ telegramId }).exec();
 
@@ -50,7 +50,7 @@ export class ClientsService {
       clientImagesId: uuidv4(),
     });
 
-    const newClient = new this.clientModel({ languageCode, telegramId, username });
+    const newClient = new this.clientModel({ languageCode, telegramId, metadata });
 
     newClient.set('gptMessages', newClientMessages._id);
     newClient.set('dalleImages', newClientImages._id);
@@ -61,7 +61,7 @@ export class ClientsService {
       createdAt: newClient.createdAt,
       languageCode: newClient.languageCode,
       telegramId: newClient.telegramId,
-      username: newClient.username,
+      metadata: newClient.metadata,
     };
   }
 
@@ -203,12 +203,14 @@ export class ClientsService {
         dalleImages: Math.max(ClientImagesRate.BASE - usedImages, 0),
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
         gptTokens: Math.max(ClientTokensRate.BASE - usedTokens, 0),
+        name: ClientNamesRate.BASE,
       };
     } else {
       client.rate = {
         dalleImages: Math.max(client.rate.dalleImages - usedImages, 0),
         expiresAt: client.rate.expiresAt,
         gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
+        name: client.rate.name,
       };
     }
 

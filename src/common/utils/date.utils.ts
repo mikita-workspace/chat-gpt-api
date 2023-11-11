@@ -7,6 +7,8 @@ import {
   getUnixTime,
 } from 'date-fns';
 
+import { MS_IN_MIN } from '../constants';
+
 export const getTimestampUnix = (date = new Date()) => getUnixTime(date);
 
 export const getTimestampPlusSeconds = (sec = 0, startDate = new Date()) => {
@@ -26,3 +28,5 @@ export const isExpiredDate = (expiredAt: number) =>
 
 export const expiresIn = (expiredAt: number) =>
   Math.abs(differenceInMilliseconds(new Date(), expiredAt));
+
+export const fromMsToMins = (ms: number | string) => parseInt(String(ms), 10) / MS_IN_MIN;

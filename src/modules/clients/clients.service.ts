@@ -5,12 +5,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 import { MONTH_IN_DAYS } from 'src/common/constants';
-import { getTimestampPlusDays, getTimestampUnix, isBoolean, isExpiredDate } from 'src/common/utils';
+import {
+  fromMsToMins,
+  getTimestampPlusDays,
+  getTimestampUnix,
+  isBoolean,
+  isExpiredDate,
+} from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
@@ -29,6 +36,7 @@ export class ClientsService {
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
     @Inject(TelegramService) private readonly telegramService: TelegramService,
     private readonly i18n: I18nService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
@@ -160,7 +168,10 @@ export class ClientsService {
     await client.save();
 
     if (isApproved && enableNotification) {
-      const message = this.i18n.t('locale.client.auth-approved', { lang: client.languageCode });
+      const message = this.i18n.t('locale.client.auth-approved', {
+        args: { ttl: fromMsToMins(this.configService.get('cache.ttl')) },
+        lang: client.languageCode,
+      });
 
       await this.telegramService.sendMessageToChat(telegramId, message);
     }

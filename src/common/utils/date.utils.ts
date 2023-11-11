@@ -9,7 +9,11 @@ import {
 
 import { MS_IN_MIN } from '../constants';
 
-export const getTimestampUnix = (date = new Date()) => getUnixTime(date);
+export const getTimestampUnix = (timestamp: number | string | Date = Date.now()) => {
+  const date = new Date(timestamp);
+
+  return getUnixTime(date);
+};
 
 export const getTimestampPlusSeconds = (sec = 0, startDate = new Date()) => {
   const newDate = addSeconds(startDate, sec);

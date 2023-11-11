@@ -219,9 +219,9 @@ export class GptService {
 
       const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
 
-      if (model === ModelGPT.WHISPER_1) {
+      if (model === ModelGPT.GPT_3_5_TURBO) {
         const transcription = await this.openAI.audio.transcriptions.create({
-          model,
+          model: ModelGPT.WHISPER_1,
           file: createReadStream(mp3Path),
         });
 
@@ -231,7 +231,11 @@ export class GptService {
       }
 
       // TODO: New model will be added here: https://app.asana.com/0/1205877070000801/1205932083359511/f
-      return '';
+      if (model === ModelGPT.GIGA_CHAT) {
+        return null;
+      }
+
+      return null;
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);

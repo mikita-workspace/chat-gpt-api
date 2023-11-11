@@ -1,5 +1,5 @@
 export const MONTH_IN_DAYS = 30;
-export const MS_IN_MIN = 60000;
+export const MIN_IN_MS = 60 * 1000;
 
 export enum LanguageCodes {
   BELORUSSIAN = 'be',
@@ -7,4 +7,4 @@ export enum LanguageCodes {
   RUSSIAN = 'ru',
 }
 
-export const TTL_CONFIG_CACHE_MS = 600000;
+export const TTL_CONFIG_CACHE_MS = 60 * 60 * 1000;

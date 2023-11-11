@@ -26,9 +26,11 @@ import {
   GIGA_CHAT_OAUTH,
   GIGACHAT_API_PERS,
   ModelGPT,
+  ModelSpeech,
 } from './constants';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
+import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptModels } from './schemas';
 import { ChatCompletions } from './types';
@@ -105,8 +107,12 @@ export class GptService {
     return new this.gptModels(createModelDto).save();
   }
 
-  async findAll(): Promise<GptModels[]> {
-    return this.gptModels.find().exec();
+  async findAll(getModelsDto: GetModelsDto): Promise<GptModels[]> {
+    const { telegramId } = getModelsDto;
+
+    const { models: clientModels } = await this.clientsService.availability(telegramId);
+
+    return this.gptModels.find({ model: { $in: clientModels } }).exec();
   }
 
   async chatCompletions(chatCompletionsDto: ChatCompletionDto): Promise<ChatCompletions | null> {
@@ -219,9 +225,9 @@ export class GptService {
 
       const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
 
-      if (model === ModelGPT.GPT_3_5_TURBO) {
+      if (model === ModelSpeech.WHISPER_1) {
         const transcription = await this.openAI.audio.transcriptions.create({
-          model: ModelGPT.WHISPER_1,
+          model,
           file: createReadStream(mp3Path),
         });
 
@@ -231,7 +237,7 @@ export class GptService {
       }
 
       // TODO: New model will be added here: https://app.asana.com/0/1205877070000801/1205932083359511/f
-      if (model === ModelGPT.GIGA_CHAT) {
+      if (model === ModelSpeech.GENERAL) {
         return null;
       }
 

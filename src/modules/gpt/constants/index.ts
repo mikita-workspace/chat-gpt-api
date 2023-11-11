@@ -5,7 +5,7 @@ export enum ModelGPT {
 
 export enum TypeGPT {
   TEXT = 'text',
-  SPEECH = 'voice',
+  SPEECH = 'speech',
 }
 
 export enum ModelSpeech {

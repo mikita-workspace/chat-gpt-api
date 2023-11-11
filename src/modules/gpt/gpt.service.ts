@@ -51,7 +51,7 @@ export class GptService {
     });
   }
 
-  private async getAccessTokenGigaChat() {
+  private async getAccessTokenSber() {
     const cachedAccessToken = await this.cacheManager.get(GIGA_CHAT_ACCESS_TOKEN);
 
     if (cachedAccessToken) {
@@ -135,7 +135,7 @@ export class GptService {
       }
 
       if (model === ModelGPT.GIGA_CHAT) {
-        const accessToken = await this.getAccessTokenGigaChat();
+        const accessToken = await this.getAccessTokenSber();
 
         const headers = {
           'Content-Type': 'application/json',
@@ -208,19 +208,30 @@ export class GptService {
   }
 
   async transcriptions(getTranslationDto: GetTranslationDto) {
-    const { voicePathApi, telegramId } = getTranslationDto;
-
-    const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
+    const { voicePathApi, telegramId, model } = getTranslationDto;
 
     try {
-      const transcription = await this.openAI.audio.transcriptions.create({
-        model: ModelGPT.WHISPER_1,
-        file: createReadStream(mp3Path),
-      });
+      const isModelExist = await this.gptModels.findOne({ model }).exec();
 
-      await removeFile(mp3Path);
+      if (!isModelExist) {
+        throw new NotFoundException(`${model} not found`);
+      }
 
-      return transcription.text;
+      const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
+
+      if (model === ModelGPT.WHISPER_1) {
+        const transcription = await this.openAI.audio.transcriptions.create({
+          model,
+          file: createReadStream(mp3Path),
+        });
+
+        await removeFile(mp3Path);
+
+        return transcription.text;
+      }
+
+      // TODO: New model will be added here: https://app.asana.com/0/1205877070000801/1205932083359511/f
+      return '';
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);

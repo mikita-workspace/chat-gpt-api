@@ -7,4 +7,7 @@ export class GetTranslationDto {
   @IsNotEmpty()
   @IsNumber()
   readonly telegramId: number;
+  @IsNotEmpty()
+  @IsString()
+  readonly model: string;
 }

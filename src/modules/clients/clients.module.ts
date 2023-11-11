@@ -1,4 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
@@ -17,9 +18,11 @@ import { ClientMessages, ClientMessagesSchema } from './schemas/client-messages.
       { name: ClientMessages.name, schema: ClientMessagesSchema },
       { name: ClientImages.name, schema: ClientImagesSchema },
     ]),
+    ConfigModule,
     TelegramModule,
   ],
   controllers: [ClientsController],
   providers: [ClientsService],
+  exports: [ClientsService],
 })
 export class ClientsModule {}

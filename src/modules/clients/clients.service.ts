@@ -5,14 +5,24 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
-import { getTimestampUnix, isBoolean } from 'src/common/utils';
+import { ChatCompletionMessage } from 'openai/resources/chat';
+import { MONTH_IN_DAYS } from 'src/common/constants';
+import {
+  fromMsToMins,
+  getTimestampPlusDays,
+  getTimestampUnix,
+  isBoolean,
+  isExpiredDate,
+} from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
 import { TelegramService } from '../telegram/telegram.service';
+import { ClientFeedback, ClientImagesRate, ClientNamesRate, ClientTokensRate } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -26,10 +36,11 @@ export class ClientsService {
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
     @Inject(TelegramService) private readonly telegramService: TelegramService,
     private readonly i18n: I18nService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
-    const { telegramId, username, languageCode } = createClientDto;
+    const { telegramId, languageCode, metadata } = createClientDto;
 
     const client = await this.clientModel.findOne({ telegramId }).exec();
 
@@ -47,7 +58,7 @@ export class ClientsService {
       clientImagesId: uuidv4(),
     });
 
-    const newClient = new this.clientModel({ languageCode, telegramId, username });
+    const newClient = new this.clientModel({ languageCode, telegramId, metadata });
 
     newClient.set('gptMessages', newClientMessages._id);
     newClient.set('dalleImages', newClientImages._id);
@@ -58,7 +69,7 @@ export class ClientsService {
       createdAt: newClient.createdAt,
       languageCode: newClient.languageCode,
       telegramId: newClient.telegramId,
-      username: newClient.username,
+      metadata: newClient.metadata,
     };
   }
 
@@ -126,7 +137,7 @@ export class ClientsService {
       throw new NotFoundException(`${telegramId} not found`);
     }
 
-    return client.state;
+    return { state: client.state, models: client.gptModels, rate: client.rate };
   }
 
   async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {
@@ -157,11 +168,65 @@ export class ClientsService {
     await client.save();
 
     if (isApproved && enableNotification) {
-      const message = this.i18n.t('locale.client.auth-approved', { lang: client.languageCode });
+      const message = this.i18n.t('locale.client.auth-approved', {
+        args: { ttl: fromMsToMins(this.configService.get('cache.ttl')) },
+        lang: client.languageCode,
+      });
 
       await this.telegramService.sendMessageToChat(telegramId, message);
     }
 
     return client.state;
+  }
+
+  async updateClientMessages(telegramId: number, messages: ChatCompletionMessage[]) {
+    const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();
+
+    if (!clientMessages) {
+      throw new NotFoundException(`GPT messages for ${telegramId} not found`);
+    }
+
+    // TODO: Will be updated here: https://app.asana.com/0/1205877070000801/1205877070000835/f
+    clientMessages.gptMessages = [
+      ...clientMessages.gptMessages,
+      { createdAt: getTimestampUnix(), feedback: ClientFeedback.NONE, messages },
+    ];
+
+    await clientMessages.save();
+
+    return clientMessages;
+  }
+
+  async updateClientRate(
+    telegramId: number,
+    { usedTokens = 0, usedImages = 0 }: { usedTokens?: number; usedImages?: number },
+  ) {
+    const client = await this.clientModel.findOne({ telegramId }).exec();
+
+    if (!client) {
+      throw new NotFoundException(`${telegramId} not found`);
+    }
+
+    const shouldUpdateRate = isExpiredDate(client.rate.expiresAt);
+
+    if (shouldUpdateRate) {
+      client.rate = {
+        dalleImages: Math.max(ClientImagesRate.BASE - usedImages, 0),
+        expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
+        gptTokens: Math.max(ClientTokensRate.BASE - usedTokens, 0),
+        name: ClientNamesRate.BASE,
+      };
+    } else {
+      client.rate = {
+        dalleImages: Math.max(client.rate.dalleImages - usedImages, 0),
+        expiresAt: client.rate.expiresAt,
+        gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
+        name: client.rate.name,
+      };
+    }
+
+    await client.save();
+
+    return client.rate;
   }
 }

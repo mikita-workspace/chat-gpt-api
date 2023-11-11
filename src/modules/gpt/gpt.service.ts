@@ -18,6 +18,7 @@ import { OpenAI } from 'openai';
 import { catchError, firstValueFrom } from 'rxjs';
 import { expiresIn, removeFile } from 'src/common/utils';
 
+import { ClientsService } from '../clients/clients.service';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   GIGA_CHAT,
@@ -42,6 +43,7 @@ export class GptService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly clientsService: ClientsService,
   ) {
     this.openAI = new OpenAI({
       apiKey: configService.get('openAi.token'),
@@ -49,7 +51,7 @@ export class GptService {
     });
   }
 
-  private async getAccessTokenGigaChat() {
+  private async getAccessTokenSber() {
     const cachedAccessToken = await this.cacheManager.get(GIGA_CHAT_ACCESS_TOKEN);
 
     if (cachedAccessToken) {
@@ -108,7 +110,9 @@ export class GptService {
   }
 
   async chatCompletions(chatCompletionsDto: ChatCompletionDto): Promise<ChatCompletions | null> {
-    const { messages, model } = chatCompletionsDto;
+    const { messages, model, telegramId } = chatCompletionsDto;
+
+    let chatCompletionsResponse = { message: null, usage: null };
 
     try {
       const isModelExist = await this.gptModels.findOne({ model }).exec();
@@ -124,11 +128,14 @@ export class GptService {
           top_p: 0.5,
         });
 
-        return { message: chatCompletion.choices[0].message, usage: chatCompletion.usage };
+        chatCompletionsResponse = {
+          message: chatCompletion.choices[0].message,
+          usage: chatCompletion.usage,
+        };
       }
 
       if (model === ModelGPT.GIGA_CHAT) {
-        const accessToken = await this.getAccessTokenGigaChat();
+        const accessToken = await this.getAccessTokenSber();
 
         const headers = {
           'Content-Type': 'application/json',
@@ -168,7 +175,26 @@ export class GptService {
             ),
         );
 
-        return { message: chatCompletion.choices[0].message, usage: chatCompletion.usage };
+        chatCompletionsResponse = {
+          message: chatCompletion.choices[0].message,
+          usage: chatCompletion.usage,
+        };
+      }
+
+      const clientMessage = messages.slice(-1)[0];
+      const assistantMessage = chatCompletionsResponse.message;
+
+      if (clientMessage && assistantMessage) {
+        await this.clientsService.updateClientMessages(telegramId, [
+          clientMessage,
+          assistantMessage,
+        ]);
+
+        const clientRate = await this.clientsService.updateClientRate(telegramId, {
+          usedTokens: chatCompletionsResponse.usage.total_tokens,
+        });
+
+        return { ...chatCompletionsResponse, clientRate };
       }
 
       return null;
@@ -182,19 +208,34 @@ export class GptService {
   }
 
   async transcriptions(getTranslationDto: GetTranslationDto) {
-    const { voicePathApi, telegramId } = getTranslationDto;
-
-    const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
+    const { voicePathApi, telegramId, model } = getTranslationDto;
 
     try {
-      const transcription = await this.openAI.audio.transcriptions.create({
-        model: ModelGPT.WHISPER_1,
-        file: createReadStream(mp3Path),
-      });
+      const isModelExist = await this.gptModels.findOne({ model }).exec();
 
-      await removeFile(mp3Path);
+      if (!isModelExist) {
+        throw new NotFoundException(`${model} not found`);
+      }
 
-      return transcription.text;
+      const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
+
+      if (model === ModelGPT.GPT_3_5_TURBO) {
+        const transcription = await this.openAI.audio.transcriptions.create({
+          model: ModelGPT.WHISPER_1,
+          file: createReadStream(mp3Path),
+        });
+
+        await removeFile(mp3Path);
+
+        return transcription.text;
+      }
+
+      // TODO: New model will be added here: https://app.asana.com/0/1205877070000801/1205932083359511/f
+      if (model === ModelGPT.GIGA_CHAT) {
+        return null;
+      }
+
+      return null;
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);

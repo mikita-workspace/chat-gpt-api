@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { ChatCompletionMessageParam } from 'openai/resources';
 
 export class ChatCompletionDto {
@@ -8,4 +8,7 @@ export class ChatCompletionDto {
   @IsNotEmpty()
   @IsString()
   readonly model: string;
+  @IsNotEmpty()
+  @IsNumber()
+  readonly telegramId: number;
 }

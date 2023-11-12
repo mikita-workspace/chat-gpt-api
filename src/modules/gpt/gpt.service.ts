@@ -135,6 +135,12 @@ export class GptService {
     let chatCompletionsResponse = { message: null, usage: null };
 
     try {
+      const { rate } = await this.clientsService.availability(telegramId);
+
+      if (rate.gptTokens <= 0) {
+        throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
+      }
+
       const isModelExist = await this.gptModels.findOne({ model }).exec();
 
       if (!isModelExist) {
@@ -227,6 +233,7 @@ export class GptService {
       if (statusCode && statusCode === HttpStatusCode.NotFound) {
         throw new NotFoundException(error.message);
       }
+
       throw new BadRequestException(error.message);
     }
   }
@@ -235,6 +242,12 @@ export class GptService {
     const { voicePathApi, telegramId, model } = getTranslationDto;
 
     try {
+      const { rate } = await this.clientsService.availability(telegramId);
+
+      if (rate.gptTokens <= 0) {
+        throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
+      }
+
       const isModelExist = await this.gptModels.findOne({ model }).exec();
 
       if (!isModelExist) {

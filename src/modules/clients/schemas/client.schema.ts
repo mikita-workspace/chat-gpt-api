@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import { LanguageCodes, MONTH_IN_DAYS } from 'src/common/constants';
 import { getTimestampPlusDays, getTimestampUnix } from 'src/common/utils';
-import { ModelGPT } from 'src/modules/gpt/constants';
+import { ModelGPT, ModelSpeech } from 'src/modules/gpt/constants';
 
 import { ClientImagesRate, ClientNamesRate, ClientTokensRate } from '../constants';
 import { ClientImages } from './client-images.schema';
@@ -62,8 +62,8 @@ export class Client {
     updatedAt: number;
   };
 
-  @Prop({ type: Array, default: [ModelGPT.GPT_3_5_TURBO], required: true })
-  gptModels: Array<keyof typeof ModelGPT>;
+  @Prop({ type: Array, default: [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1], required: true })
+  gptModels: string[];
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientMessages.name, required: true })
   gptMessages: ClientMessages;

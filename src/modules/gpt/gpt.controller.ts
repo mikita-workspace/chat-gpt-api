@@ -16,6 +16,7 @@ import { RolesAuth } from '../auth/decorators';
 import { RolesAuthGuard } from '../auth/guard';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
+import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptService } from './gpt.service';
 
@@ -34,8 +35,8 @@ export class GptController {
 
   @CacheTTL(TTL_CONFIG_CACHE_MS)
   @Get('models')
-  async findAll() {
-    return this.gptService.findAll();
+  async findAll(@Body() getModelsDto: GetModelsDto) {
+    return this.gptService.findAll(getModelsDto);
   }
 
   @Post('transcriptions')

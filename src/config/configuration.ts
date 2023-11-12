@@ -6,11 +6,17 @@ export const configuration = () => ({
     token: process.env.TELEGRAM_TOKEN || '',
   },
   openAi: {
-    token: process.env.OPEN_AI_TOKEN || '',
     organization: process.env.OPEN_AI_ORG || '',
+    token: process.env.OPEN_AI_TOKEN || '',
   },
   sber: {
     token: process.env.GIGA_CHAT_TOKEN || '',
+  },
+  github: {
+    apiRepo: process.env.GITHUB_REPO_API || '',
+    clientRepo: process.env.GITHUB_REPO_CLIENT || '',
+    owner: process.env.GITHUB_OWNER || '',
+    token: process.env.GITHUB_TOKEN || '',
   },
   port: parseInt(process.env.PORT, 10) || 5050,
   mongodb: {
@@ -24,8 +30,8 @@ export const configuration = () => ({
     accessSecret: process.env.JWT_ACCESS_TOKEN_SECRET || '',
   },
   http: {
-    timeout: parseInt(process.env.HTTP_TIMEOUT, 10) || 30000,
     maxRedirects: parseInt(process.env.HTTP_MAX_REDIRECTS, 10) || 5,
+    timeout: parseInt(process.env.HTTP_TIMEOUT, 10) || 30000,
   },
   cache: {
     ttl: parseInt(process.env.CACHE_TTL, 10) || 60000,

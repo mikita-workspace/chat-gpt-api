@@ -16,7 +16,7 @@ import * as https from 'https';
 import { Model } from 'mongoose';
 import { OpenAI } from 'openai';
 import { catchError, firstValueFrom } from 'rxjs';
-import { expiresIn, removeFile } from 'src/common/utils';
+import { expiresInMs, removeFile } from 'src/common/utils';
 
 import { ClientsService } from '../clients/clients.service';
 import { TelegramService } from '../telegram/telegram.service';
@@ -26,9 +26,11 @@ import {
   GIGA_CHAT_OAUTH,
   GIGACHAT_API_PERS,
   ModelGPT,
+  ModelSpeech,
 } from './constants';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
+import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptModels } from './schemas';
 import { ChatCompletions } from './types';
@@ -87,7 +89,7 @@ export class GptService {
     await this.cacheManager.set(
       GIGA_CHAT_ACCESS_TOKEN,
       data.access_token,
-      expiresIn(data.expires_at),
+      expiresInMs(data.expires_at),
     );
 
     return data.access_token;
@@ -105,12 +107,16 @@ export class GptService {
     return new this.gptModels(createModelDto).save();
   }
 
-  async findAll(): Promise<GptModels[]> {
-    return this.gptModels.find().exec();
+  async findAll(getModelsDto: GetModelsDto): Promise<GptModels[]> {
+    const { telegramId } = getModelsDto;
+
+    const { models: clientModels } = await this.clientsService.availability(telegramId);
+
+    return this.gptModels.find({ model: { $in: clientModels } }).exec();
   }
 
   async chatCompletions(chatCompletionsDto: ChatCompletionDto): Promise<ChatCompletions | null> {
-    const { messages, model, telegramId } = chatCompletionsDto;
+    const { messages, messageId, model, telegramId } = chatCompletionsDto;
 
     let chatCompletionsResponse = { message: null, usage: null };
 
@@ -185,7 +191,7 @@ export class GptService {
       const assistantMessage = chatCompletionsResponse.message;
 
       if (clientMessage && assistantMessage) {
-        await this.clientsService.updateClientMessages(telegramId, [
+        await this.clientsService.updateClientMessages(telegramId, messageId, [
           clientMessage,
           assistantMessage,
         ]);
@@ -219,9 +225,9 @@ export class GptService {
 
       const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
 
-      if (model === ModelGPT.GPT_3_5_TURBO) {
+      if (model === ModelSpeech.WHISPER_1) {
         const transcription = await this.openAI.audio.transcriptions.create({
-          model: ModelGPT.WHISPER_1,
+          model,
           file: createReadStream(mp3Path),
         });
 
@@ -231,7 +237,7 @@ export class GptService {
       }
 
       // TODO: New model will be added here: https://app.asana.com/0/1205877070000801/1205932083359511/f
-      if (model === ModelGPT.GIGA_CHAT) {
+      if (model === ModelSpeech.GENERAL) {
         return null;
       }
 

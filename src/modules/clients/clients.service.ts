@@ -12,6 +12,7 @@ import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 import { MONTH_IN_DAYS } from 'src/common/constants';
 import {
+  copyObject,
   fromMsToMins,
   getTimestampPlusDays,
   getTimestampUnix,
@@ -25,6 +26,7 @@ import { TelegramService } from '../telegram/telegram.service';
 import { ClientFeedback, ClientImagesRate, ClientNamesRate, ClientTokensRate } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
+import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client, ClientImages, ClientMessages } from './schemas';
 
@@ -179,17 +181,26 @@ export class ClientsService {
     return client.state;
   }
 
-  async updateClientMessages(telegramId: number, messages: ChatCompletionMessage[]) {
+  async updateClientMessages(
+    telegramId: number,
+    messageId: number,
+    messages: ChatCompletionMessage[],
+  ) {
     const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();
 
     if (!clientMessages) {
       throw new NotFoundException(`GPT messages for ${telegramId} not found`);
     }
 
-    // TODO: Will be updated here: https://app.asana.com/0/1205877070000801/1205877070000835/f
     clientMessages.gptMessages = [
       ...clientMessages.gptMessages,
-      { createdAt: getTimestampUnix(), feedback: ClientFeedback.NONE, messages },
+      {
+        createdAt: getTimestampUnix(),
+        updatedAt: getTimestampUnix(),
+        feedback: ClientFeedback.NONE,
+        messageId,
+        messages,
+      },
     ];
 
     await clientMessages.save();
@@ -228,5 +239,37 @@ export class ClientsService {
     await client.save();
 
     return client.rate;
+  }
+
+  async setClientFeedback(feedbackClientDto: FeedbackClientDto) {
+    const { telegramId, messageId, feedback } = feedbackClientDto;
+
+    const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();
+
+    if (!clientMessages) {
+      throw new NotFoundException(`GPT messages for ${telegramId} not found`);
+    }
+
+    const gptMessageIndex = clientMessages.gptMessages.findIndex(
+      (message) => message.messageId === messageId,
+    );
+
+    if (gptMessageIndex > -1) {
+      const gptMessageCopy = copyObject(clientMessages.gptMessages[gptMessageIndex]);
+
+      gptMessageCopy.feedback = feedback;
+      gptMessageCopy.updatedAt = getTimestampUnix();
+
+      clientMessages.gptMessages = [
+        ...clientMessages.gptMessages.filter(
+          (message) => message.messageId !== gptMessageCopy.messageId,
+        ),
+        gptMessageCopy,
+      ];
+
+      await clientMessages.save();
+    }
+
+    return clientMessages.gptMessages[gptMessageIndex] ?? null;
   }
 }

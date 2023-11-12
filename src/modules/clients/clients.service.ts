@@ -210,6 +210,7 @@ export class ClientsService {
 
   async updateClientImages(
     telegramId: number,
+    messageId: number,
     images: { urls: string[]; prompt: string; revisedPrompt: string },
   ) {
     const { urls, prompt, revisedPrompt } = images;
@@ -225,10 +226,11 @@ export class ClientsService {
       {
         createdAt: getTimestampUnix(),
         feedback: ClientFeedback.NONE,
-        urls,
+        messageId,
+        prompt,
         revisedPrompt,
         updatedAt: getTimestampUnix(),
-        prompt,
+        urls,
       },
     ];
 

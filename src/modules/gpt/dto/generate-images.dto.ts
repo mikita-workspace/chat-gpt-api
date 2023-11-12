@@ -5,6 +5,9 @@ export class GenerateImagesDto {
   @IsNumber()
   readonly telegramId: number;
   @IsNotEmpty()
+  @IsNumber()
+  readonly messageId: number;
+  @IsNotEmpty()
   @IsString()
   readonly model: string;
   @IsNotEmpty()

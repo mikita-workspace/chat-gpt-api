@@ -18,7 +18,7 @@ import { Model } from 'mongoose';
 import { OpenAI } from 'openai';
 import { Image as ImageAi } from 'openai/resources';
 import { catchError, firstValueFrom } from 'rxjs';
-import { expiresInMs, removeFile } from 'src/common/utils';
+import { expiresInMs, isExpiredDate, removeFile } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ClientsService } from '../clients/clients.service';
@@ -137,7 +137,7 @@ export class GptService {
     try {
       const { rate } = await this.clientsService.availability(telegramId);
 
-      if (rate.gptTokens <= 0) {
+      if (!isExpiredDate(rate.expiresAt) && !rate.gptTokens) {
         throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
       }
 
@@ -244,7 +244,7 @@ export class GptService {
     try {
       const { rate } = await this.clientsService.availability(telegramId);
 
-      if (rate.gptTokens <= 0) {
+      if (!isExpiredDate(rate.expiresAt) && !rate.gptTokens) {
         throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
       }
 
@@ -299,6 +299,12 @@ export class GptService {
     } = generateImagesDto;
 
     try {
+      const { rate } = await this.clientsService.availability(telegramId);
+
+      if (!isExpiredDate(rate.expiresAt) && !rate.images) {
+        throw new BadRequestException(`All images for the ${telegramId} have been used up`);
+      }
+
       const isModelExist = await this.gptModels.findOne({ model }).exec();
 
       if (!isModelExist) {

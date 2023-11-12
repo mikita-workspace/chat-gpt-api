@@ -30,7 +30,7 @@ export const getTimestampPlusDays = (days = 0, startDate = new Date()) => {
 export const isExpiredDate = (expiredAt: number) =>
   compareAsc(new Date(), fromUnixTime(expiredAt)) > 0;
 
-export const expiresIn = (expiredAt: number) =>
+export const expiresInMs = (expiredAt: number) =>
   Math.abs(differenceInMilliseconds(new Date(), expiredAt));
 
 export const fromMsToMins = (ms: number | string) => parseInt(String(ms), 10) / MIN_IN_MS;

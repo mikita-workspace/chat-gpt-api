@@ -16,7 +16,7 @@ import * as https from 'https';
 import { Model } from 'mongoose';
 import { OpenAI } from 'openai';
 import { catchError, firstValueFrom } from 'rxjs';
-import { expiresIn, removeFile } from 'src/common/utils';
+import { expiresInMs, removeFile } from 'src/common/utils';
 
 import { ClientsService } from '../clients/clients.service';
 import { TelegramService } from '../telegram/telegram.service';
@@ -89,7 +89,7 @@ export class GptService {
     await this.cacheManager.set(
       GIGA_CHAT_ACCESS_TOKEN,
       data.access_token,
-      expiresIn(data.expires_at),
+      expiresInMs(data.expires_at),
     );
 
     return data.access_token;

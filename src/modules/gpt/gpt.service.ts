@@ -116,7 +116,7 @@ export class GptService {
   }
 
   async chatCompletions(chatCompletionsDto: ChatCompletionDto): Promise<ChatCompletions | null> {
-    const { messages, model, telegramId } = chatCompletionsDto;
+    const { messages, messageId, model, telegramId } = chatCompletionsDto;
 
     let chatCompletionsResponse = { message: null, usage: null };
 
@@ -191,7 +191,7 @@ export class GptService {
       const assistantMessage = chatCompletionsResponse.message;
 
       if (clientMessage && assistantMessage) {
-        await this.clientsService.updateClientMessages(telegramId, [
+        await this.clientsService.updateClientMessages(telegramId, messageId, [
           clientMessage,
           assistantMessage,
         ]);

@@ -6,7 +6,7 @@ export class ChangeRoleAdminDto {
   @IsEnum(AdminRoles)
   @IsNotEmpty()
   @IsString()
-  readonly role: string;
+  readonly role: AdminRoles;
   @IsNotEmpty()
   @IsString()
   readonly adminId: string;

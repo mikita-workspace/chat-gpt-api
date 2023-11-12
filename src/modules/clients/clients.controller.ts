@@ -21,6 +21,7 @@ import { RequestWithAdmin } from '../auth/types';
 import { ClientsService } from './clients.service';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
+import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
 @UseFilters(new HttpExceptionFilter())
@@ -71,5 +72,10 @@ export class ClientsController {
     @Req() req: RequestWithAdmin,
   ) {
     return this.clientsService.changeState(changeStateClientDto, req.admin.role);
+  }
+
+  @Post('feedback')
+  async giveClientFeedback(@Body() feedbackClientDto: FeedbackClientDto) {
+    return this.clientsService.giveClientFeedback(feedbackClientDto);
   }
 }

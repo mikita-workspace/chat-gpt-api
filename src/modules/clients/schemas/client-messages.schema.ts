@@ -18,7 +18,9 @@ export class ClientMessages {
   @Prop({ type: Array, default: [], required: true })
   gptMessages: {
     createdAt: number;
+    updatedAt: number;
     feedback: ClientFeedback;
+    messageId: number;
     messages: ChatCompletionMessage[];
   }[];
 }

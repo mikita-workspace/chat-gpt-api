@@ -6,6 +6,9 @@ export class ChatCompletionDto {
   @IsArray()
   readonly messages: ChatCompletionMessageParam[];
   @IsNotEmpty()
+  @IsNumber()
+  readonly messageId: number;
+  @IsNotEmpty()
   @IsString()
   readonly model: string;
   @IsNotEmpty()

@@ -75,7 +75,7 @@ export class ClientsController {
   }
 
   @Post('feedback')
-  async giveClientFeedback(@Body() feedbackClientDto: FeedbackClientDto) {
-    return this.clientsService.giveClientFeedback(feedbackClientDto);
+  async setClientFeedback(@Body() feedbackClientDto: FeedbackClientDto) {
+    return this.clientsService.setClientFeedback(feedbackClientDto);
   }
 }

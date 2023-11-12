@@ -241,7 +241,7 @@ export class ClientsService {
     return client.rate;
   }
 
-  async giveClientFeedback(feedbackClientDto: FeedbackClientDto) {
+  async setClientFeedback(feedbackClientDto: FeedbackClientDto) {
     const { telegramId, messageId, feedback } = feedbackClientDto;
 
     const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();

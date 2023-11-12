@@ -62,8 +62,8 @@ export class ClientsService {
 
     const newClient = new this.clientModel({ languageCode, telegramId, metadata });
 
-    newClient.set('gptMessages', newClientMessages._id);
-    newClient.set('dalleImages', newClientImages._id);
+    newClient.set('messages', newClientMessages._id);
+    newClient.set('images', newClientImages._id);
 
     await newClient.save();
 
@@ -192,8 +192,8 @@ export class ClientsService {
       throw new NotFoundException(`GPT messages for ${telegramId} not found`);
     }
 
-    clientMessages.gptMessages = [
-      ...clientMessages.gptMessages,
+    clientMessages.messages = [
+      ...clientMessages.messages,
       {
         createdAt: getTimestampUnix(),
         updatedAt: getTimestampUnix(),
@@ -206,6 +206,35 @@ export class ClientsService {
     await clientMessages.save();
 
     return clientMessages;
+  }
+
+  async updateClientImages(
+    telegramId: number,
+    images: { urls: string[]; prompt: string; revisedPrompt: string },
+  ) {
+    const { urls, prompt, revisedPrompt } = images;
+
+    const clientImages = await this.clientImagesModel.findOne({ telegramId }).exec();
+
+    if (!clientImages) {
+      throw new NotFoundException(`GPT images for ${telegramId} not found`);
+    }
+
+    clientImages.images = [
+      ...clientImages.images,
+      {
+        createdAt: getTimestampUnix(),
+        feedback: ClientFeedback.NONE,
+        urls,
+        revisedPrompt,
+        updatedAt: getTimestampUnix(),
+        prompt,
+      },
+    ];
+
+    await clientImages.save();
+
+    return clientImages;
   }
 
   async updateClientRate(
@@ -222,14 +251,14 @@ export class ClientsService {
 
     if (shouldUpdateRate) {
       client.rate = {
-        dalleImages: Math.max(ClientImagesRate.BASE - usedImages, 0),
+        images: Math.max(ClientImagesRate.BASE - usedImages, 0),
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
         gptTokens: Math.max(ClientTokensRate.BASE - usedTokens, 0),
         name: ClientNamesRate.BASE,
       };
     } else {
       client.rate = {
-        dalleImages: Math.max(client.rate.dalleImages - usedImages, 0),
+        images: Math.max(client.rate.images - usedImages, 0),
         expiresAt: client.rate.expiresAt,
         gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
         name: client.rate.name,
@@ -250,18 +279,18 @@ export class ClientsService {
       throw new NotFoundException(`GPT messages for ${telegramId} not found`);
     }
 
-    const gptMessageIndex = clientMessages.gptMessages.findIndex(
+    const gptMessageIndex = clientMessages.messages.findIndex(
       (message) => message.messageId === messageId,
     );
 
     if (gptMessageIndex > -1) {
-      const gptMessageCopy = copyObject(clientMessages.gptMessages[gptMessageIndex]);
+      const gptMessageCopy = copyObject(clientMessages.messages[gptMessageIndex]);
 
       gptMessageCopy.feedback = feedback;
       gptMessageCopy.updatedAt = getTimestampUnix();
 
-      clientMessages.gptMessages = [
-        ...clientMessages.gptMessages.filter(
+      clientMessages.messages = [
+        ...clientMessages.messages.filter(
           (message) => message.messageId !== gptMessageCopy.messageId,
         ),
         gptMessageCopy,
@@ -270,6 +299,6 @@ export class ClientsService {
       await clientMessages.save();
     }
 
-    return clientMessages.gptMessages[gptMessageIndex] ?? null;
+    return clientMessages.messages[gptMessageIndex] ?? null;
   }
 }

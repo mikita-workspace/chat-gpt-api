@@ -4,8 +4,8 @@ export enum ClientTokensRate {
 }
 
 export enum ClientImagesRate {
-  BASE = 25,
-  PREMIUM = 100,
+  BASE = 10,
+  PREMIUM = 50,
 }
 
 export enum ClientNamesRate {

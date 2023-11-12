@@ -9,14 +9,17 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import { AxiosError } from 'axios';
+import { AxiosError, HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
+import { v2 as CloudStorage } from 'cloudinary';
 import { createReadStream } from 'fs';
 import * as https from 'https';
 import { Model } from 'mongoose';
 import { OpenAI } from 'openai';
+import { Image as ImageAi } from 'openai/resources';
 import { catchError, firstValueFrom } from 'rxjs';
 import { expiresInMs, removeFile } from 'src/common/utils';
+import { v4 as uuidv4 } from 'uuid';
 
 import { ClientsService } from '../clients/clients.service';
 import { TelegramService } from '../telegram/telegram.service';
@@ -25,15 +28,19 @@ import {
   GIGA_CHAT_ACCESS_TOKEN,
   GIGA_CHAT_OAUTH,
   GIGACHAT_API_PERS,
+  IMAGE_SIZE_HEIGHT_DEFAULT,
+  IMAGE_SIZE_WIDTH_DEFAULT,
   ModelGPT,
+  ModelImage,
   ModelSpeech,
 } from './constants';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
+import { GenerateImagesDto } from './dto/generate-images.dto';
 import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptModels } from './schemas';
-import { ChatCompletions } from './types';
+import { ChatCompletions, ImagesGenerate } from './types';
 
 @Injectable()
 export class GptService {
@@ -41,15 +48,22 @@ export class GptService {
 
   constructor(
     @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
-    @Inject(TelegramService) private readonly telegramService: TelegramService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
+    @Inject(TelegramService) private readonly telegramService: TelegramService,
+    private readonly clientsService: ClientsService,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
-    private readonly clientsService: ClientsService,
   ) {
     this.openAI = new OpenAI({
       apiKey: configService.get('openAi.token'),
       organization: configService.get('openAi.organization'),
+    });
+
+    CloudStorage.config({
+      api_key: configService.get('cloudinary.apiKey'),
+      api_secret: configService.get('cloudinary.apiSecret'),
+      cloud_name: configService.get('cloudinary.cloudName'),
+      secure: true,
     });
   }
 
@@ -208,12 +222,16 @@ export class GptService {
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);
       }
+      const statusCode = error?.response?.statusCode;
 
-      throw new BadRequestException();
+      if (statusCode && statusCode === HttpStatusCode.NotFound) {
+        throw new NotFoundException(error.message);
+      }
+      throw new BadRequestException(error.message);
     }
   }
 
-  async transcriptions(getTranslationDto: GetTranslationDto) {
+  async transcriptions(getTranslationDto: GetTranslationDto): Promise<string | null> {
     const { voicePathApi, telegramId, model } = getTranslationDto;
 
     try {
@@ -247,18 +265,100 @@ export class GptService {
         throw new BadRequestException(error);
       }
 
-      throw new BadRequestException();
+      const statusCode = error?.response?.statusCode;
+
+      if (statusCode && statusCode === HttpStatusCode.NotFound) {
+        throw new NotFoundException(error.message);
+      }
+
+      throw new BadRequestException(error.message);
     }
   }
 
-  // TODO: Will be implemented here: https://app.asana.com/0/1205877070000801/1205877070000847/f
-  // async imagesGenerate() {
-  // const response = await this.openAI.images.generate({
-  //   n: Math.min(MAX_IMAGES_REQUEST, numberOfImages <= 0 ? 1 : numberOfImages),
-  //   prompt,
-  //   response_format: 'b64_json',
-  //   size: IMAGE_SIZE_DEFAULT,
-  // });
-  // return response.data.data;
-  // }
+  async imagesGenerate(generateImagesDto: GenerateImagesDto): Promise<ImagesGenerate | null> {
+    const { telegramId, model, amount, prompt, useCloudinary = false } = generateImagesDto;
+
+    try {
+      const isModelExist = await this.gptModels.findOne({ model }).exec();
+
+      if (!isModelExist) {
+        throw new NotFoundException(`${model} not found`);
+      }
+
+      let imagesFromAi: ImageAi[] = [];
+      let images: ImagesGenerate['images'] = [];
+
+      if (model === ModelImage.DALL_E_3) {
+        const response = await this.openAI.images.generate({
+          model,
+          n: amount,
+          prompt,
+          response_format: useCloudinary ? 'b64_json' : 'url',
+          size: `${IMAGE_SIZE_HEIGHT_DEFAULT}x${IMAGE_SIZE_WIDTH_DEFAULT}`,
+        });
+
+        imagesFromAi = response.data;
+      }
+
+      if (imagesFromAi.length > 0) {
+        if (useCloudinary) {
+          const cloudStorageRequests = imagesFromAi.map((image) =>
+            CloudStorage.uploader.upload(`data:image/jpeg;base64,${image.b64_json}`, {
+              resource_type: 'image',
+              folder: `images/${telegramId}`,
+              public_id: `${telegramId}-${model}-${uuidv4()}`,
+            }),
+          );
+
+          const cloudStorageResponses = await Promise.all(cloudStorageRequests);
+
+          images = cloudStorageResponses.map((response) => ({
+            bytes: response.bytes,
+            height: response.height,
+            url: response.url,
+            width: response.width,
+          }));
+        } else {
+          images = imagesFromAi.map((response) => ({
+            bytes: null,
+            height: IMAGE_SIZE_HEIGHT_DEFAULT,
+            url: response.url,
+            width: IMAGE_SIZE_WIDTH_DEFAULT,
+          }));
+        }
+
+        const revisedPrompt = imagesFromAi[0].revised_prompt;
+
+        await this.clientsService.updateClientImages(telegramId, {
+          urls: imagesFromAi.map(({ url }) => url),
+          prompt,
+          revisedPrompt,
+        });
+
+        const clientRate = await this.clientsService.updateClientRate(telegramId, {
+          usedImages: imagesFromAi.length,
+        });
+
+        return {
+          clientRate,
+          images,
+          revisedPrompt: imagesFromAi[0].revised_prompt,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      if (error instanceof OpenAI.APIError) {
+        throw new BadRequestException(error);
+      }
+
+      const statusCode = error?.response?.statusCode;
+
+      if (statusCode && statusCode === HttpStatusCode.NotFound) {
+        throw new NotFoundException(error.message);
+      }
+
+      throw new BadRequestException(error.message);
+    }
+  }
 }

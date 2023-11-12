@@ -2,6 +2,11 @@ export const configuration = () => ({
   api: {
     name: process.env.API_NAME || '',
   },
+  cloudinary: {
+    apiKey: process.env.CLOUDINARY_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_API_SECRET || '',
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+  },
   telegram: {
     token: process.env.TELEGRAM_TOKEN || '',
   },

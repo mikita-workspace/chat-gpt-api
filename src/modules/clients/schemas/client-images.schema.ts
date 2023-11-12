@@ -18,8 +18,10 @@ export class ClientImages {
   images: {
     createdAt: number;
     feedback: ClientFeedback;
-    imageLinks: string[];
+    urls: string[];
     prompt: string;
+    revisedPrompt: string;
+    updatedAt: number;
   }[];
 }
 

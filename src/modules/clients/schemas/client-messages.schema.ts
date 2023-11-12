@@ -16,7 +16,7 @@ export class ClientMessages {
   telegramId: number;
 
   @Prop({ type: Array, default: [], required: true })
-  gptMessages: {
+  messages: {
     createdAt: number;
     updatedAt: number;
     feedback: ClientFeedback;

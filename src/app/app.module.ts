@@ -9,6 +9,7 @@ import { MongoDBModule } from 'src/database';
 import { AdminsModule } from 'src/modules/admins/admins.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { ClientsModule } from 'src/modules/clients/clients.module';
+import { GithubModule } from 'src/modules/github/github.module';
 import { GptModule } from 'src/modules/gpt/gpt.module';
 import { TelegramModule } from 'src/modules/telegram/telegram.module';
 
@@ -41,6 +42,7 @@ import { AppService } from './app.service';
     AdminsModule,
     AuthModule,
     ClientsModule,
+    GithubModule,
     GptModule,
     MongoDBModule,
     TelegramModule,

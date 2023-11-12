@@ -305,24 +305,6 @@ export class GptService {
         });
 
         imagesFromAi = response.data;
-        // TEST
-        // imagesFromAi = [
-        //   {
-        //     url: 'https://www.seiu1000.org/sites/main/files/imagecache/hero/main-images/camera_lense_0.jpeg',
-        //     revised_prompt:
-        //       'Voluptate ut est tempor ea. Quis id mollit excepteur excepteur ut irure est minim qui exercitation adipisicing. Cillum magna duis ex duis amet aliqua irure anim labore minim. Labore minim dolor adipisicing aute aute esse et reprehenderit consectetur sint officia consequat. Esse officia culpa enim quis cillum ad tempor duis cupidatat mollit. Ullamco ea amet esse pariatur deserunt dolore aliquip id sint officia non quis ea occaecat. Dolor veniam dolore adipisicing non voluptate.',
-        //   },
-        //   {
-        //     url: 'https://www.seiu1000.org/sites/main/files/imagecache/hero/main-images/camera_lense_0.jpeg',
-        //     revised_prompt:
-        //       'Voluptate ut est tempor ea. Quis id mollit excepteur excepteur ut irure est minim qui exercitation adipisicing. Cillum magna duis ex duis amet aliqua irure anim labore minim. Labore minim dolor adipisicing aute aute esse et reprehenderit consectetur sint officia consequat. Esse officia culpa enim quis cillum ad tempor duis cupidatat mollit. Ullamco ea amet esse pariatur deserunt dolore aliquip id sint officia non quis ea occaecat. Dolor veniam dolore adipisicing non voluptate.',
-        //   },
-        //   {
-        //     url: 'https://www.seiu1000.org/sites/main/files/imagecache/hero/main-images/camera_lense_0.jpeg',
-        //     revised_prompt:
-        //       'Voluptate ut est tempor ea. Quis id mollit excepteur excepteur ut irure est minim qui exercitation adipisicing. Cillum magna duis ex duis amet aliqua irure anim labore minim. Labore minim dolor adipisicing aute aute esse et reprehenderit consectetur sint officia consequat. Esse officia culpa enim quis cillum ad tempor duis cupidatat mollit. Ullamco ea amet esse pariatur deserunt dolore aliquip id sint officia non quis ea occaecat. Dolor veniam dolore adipisicing non voluptate.',
-        //   },
-        // ];
       }
 
       if (imagesFromAi.length > 0) {

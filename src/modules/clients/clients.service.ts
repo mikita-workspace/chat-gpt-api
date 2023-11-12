@@ -276,31 +276,50 @@ export class ClientsService {
     const { telegramId, messageId, feedback } = feedbackClientDto;
 
     const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();
+    const clientImages = await this.clientImagesModel.findOne({ telegramId }).exec();
 
-    if (!clientMessages) {
-      throw new NotFoundException(`GPT messages for ${telegramId} not found`);
+    if (!clientMessages && !clientImages) {
+      throw new NotFoundException(`GPT messages and images for ${telegramId} not found`);
     }
 
-    const gptMessageIndex = clientMessages.messages.findIndex(
+    const messagesIndex = clientMessages.messages.findIndex(
       (message) => message.messageId === messageId,
     );
+    const imagesIndex = clientImages.images.findIndex((image) => image.messageId === messageId);
 
-    if (gptMessageIndex > -1) {
-      const gptMessageCopy = copyObject(clientMessages.messages[gptMessageIndex]);
+    if (messagesIndex > -1) {
+      const messagesCopy = copyObject(clientMessages.messages[messagesIndex]);
 
-      gptMessageCopy.feedback = feedback;
-      gptMessageCopy.updatedAt = getTimestampUnix();
+      messagesCopy.feedback = feedback;
+      messagesCopy.updatedAt = getTimestampUnix();
 
       clientMessages.messages = [
         ...clientMessages.messages.filter(
-          (message) => message.messageId !== gptMessageCopy.messageId,
+          (message) => message.messageId !== messagesCopy.messageId,
         ),
-        gptMessageCopy,
+        messagesCopy,
       ];
 
       await clientMessages.save();
     }
 
-    return clientMessages.messages[gptMessageIndex] ?? null;
+    if (imagesIndex > -1) {
+      const imagesCopy = copyObject(clientImages.images[imagesIndex]);
+
+      imagesCopy.feedback = feedback;
+      imagesCopy.updatedAt = getTimestampUnix();
+
+      clientImages.images = [
+        ...clientImages.images.filter((image) => image.messageId !== imagesCopy.messageId),
+        imagesCopy,
+      ];
+
+      await clientImages.save();
+    }
+
+    return {
+      messages: clientMessages.messages[messagesIndex] ?? [],
+      images: clientImages.images[imagesIndex] ?? [],
+    };
   }
 }

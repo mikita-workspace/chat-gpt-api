@@ -160,8 +160,6 @@ export class GptService {
       if (statusCode && statusCode === HttpStatusCode.NotFound) {
         throw new NotFoundException(error.message);
       }
-
-      throw new BadRequestException(error.message);
     }
   }
 

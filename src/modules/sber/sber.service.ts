@@ -193,6 +193,9 @@ export class SberService {
             }),
           },
         )
+        // NOTE: Delay is depend on length of input file
+        // TODO: calculate delay
+        .pipe(delay(2000))
         .pipe(
           catchError((error: AxiosError) => {
             throw new BadRequestException(error.response.data);
@@ -209,9 +212,6 @@ export class SberService {
             rejectUnauthorized: false,
           }),
         })
-        // NOTE: Delay is depend on length of input file
-        // TODO: calculate delay
-        .pipe(delay(1000))
         .pipe(
           catchError((error: AxiosError) => {
             throw new BadRequestException(error.response.data);

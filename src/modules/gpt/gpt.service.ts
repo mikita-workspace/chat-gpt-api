@@ -312,6 +312,7 @@ export class GptService {
       }
 
       let imagesFromAi: ImageAi[] = [];
+      let cloudImages: ImagesGenerate['images'] = [];
       let images: ImagesGenerate['images'] = [];
 
       if (model === ModelImage.DALL_E_3) {
@@ -338,20 +339,22 @@ export class GptService {
 
           const cloudStorageResponses = await Promise.all(cloudStorageRequests);
 
-          images = cloudStorageResponses.map((response) => ({
+          cloudImages = cloudStorageResponses.map((response) => ({
             bytes: response.bytes,
             height: response.height,
             url: response.url,
             width: response.width,
           }));
-        } else {
-          images = imagesFromAi.map((response) => ({
-            bytes: null,
-            height: IMAGE_SIZE_HEIGHT_DEFAULT,
-            url: response.url,
-            width: IMAGE_SIZE_WIDTH_DEFAULT,
-          }));
         }
+
+        images = Boolean(cloudImages.length)
+          ? cloudImages
+          : imagesFromAi.map((response) => ({
+              bytes: null,
+              height: IMAGE_SIZE_HEIGHT_DEFAULT,
+              url: response.url,
+              width: IMAGE_SIZE_WIDTH_DEFAULT,
+            }));
 
         const revisedPrompt = imagesFromAi[0].revised_prompt;
 

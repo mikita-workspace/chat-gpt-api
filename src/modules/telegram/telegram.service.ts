@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
+import { getAudioDurationInSeconds } from 'get-audio-duration';
 import { catchError, firstValueFrom } from 'rxjs';
 import { convertToMp3, createOgg } from 'src/common/helpers';
 
@@ -108,12 +109,14 @@ export class TelegramService {
     return data;
   }
 
-  async downloadVoiceMessage(voicePathApi: string, telegramId: number) {
-    const url = `${this.fileUrl}/${voicePathApi}`;
+  async getFile(filename: string, telegramId: number) {
+    const url = `${this.fileUrl}/${filename}`;
 
     const oggPath = await createOgg(url, String(telegramId));
     const mp3Path = await convertToMp3(oggPath, String(telegramId));
 
-    return mp3Path || '';
+    const duration = await getAudioDurationInSeconds(mp3Path);
+
+    return { filePath: mp3Path || '', duration: duration * 1000 };
   }
 }

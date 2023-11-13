@@ -7,6 +7,8 @@ export type ChatCompletions = {
   usage: CompletionUsage;
 };
 
+export type Transcriptions = { text: string };
+
 export type ImagesGenerate = {
   clientRate: ClientRate;
   images: {

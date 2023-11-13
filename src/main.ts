@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 
 import { AppModule } from './app/app.module';
+import { API_VERSION_DEFAULT } from './common/constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,7 +15,7 @@ async function bootstrap() {
   app.use(helmet());
 
   app.enableVersioning({
-    defaultVersion: '1',
+    defaultVersion: API_VERSION_DEFAULT,
     type: VersioningType.URI,
   });
 

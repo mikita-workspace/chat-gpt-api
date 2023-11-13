@@ -52,6 +52,6 @@ export class GptController {
 
   @Post('generateImages')
   async generateImages(@Body() generateImagesDto: GenerateImagesDto) {
-    return this.gptService.imagesGenerate(generateImagesDto);
+    return this.gptService.generateImages(generateImagesDto);
   }
 }

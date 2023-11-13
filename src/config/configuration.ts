@@ -15,7 +15,8 @@ export const configuration = () => ({
     token: process.env.OPEN_AI_TOKEN || '',
   },
   sber: {
-    token: process.env.GIGA_CHAT_TOKEN || '',
+    chatToken: process.env.GIGA_CHAT_TOKEN || '',
+    speechToken: process.env.SALUTE_SPEECH_TOKEN || '',
   },
   github: {
     apiRepo: process.env.GITHUB_REPO_API || '',

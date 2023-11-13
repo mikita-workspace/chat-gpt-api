@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 export class GetTranslationDto {
   @IsNotEmpty()
   @IsString()
-  readonly voicePathApi: string;
+  readonly filename: string;
   @IsNotEmpty()
   @IsNumber()
   readonly telegramId: number;

@@ -1,10 +1,11 @@
-import { HttpModule } from '@nestjs/axios';
 import { forwardRef, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
 import { ClientsModule } from '../clients/clients.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { OpenAiModule } from '../openai/openai.module';
+import { SberModule } from '../sber/sber.module';
 import { TelegramModule } from '../telegram/telegram.module';
 import { GptController } from './gpt.controller';
 import { GptService } from './gpt.service';
@@ -15,15 +16,9 @@ import { GptModels, GptModelsSchema } from './schemas';
     forwardRef(() => AuthModule),
     forwardRef(() => ClientsModule),
     MongooseModule.forFeature([{ name: GptModels.name, schema: GptModelsSchema }]),
-    HttpModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        timeout: configService.get('http.timeout'),
-        maxRedirects: configService.get('http.maxRedirects'),
-      }),
-    }),
-    ConfigModule,
+    CloudinaryModule,
+    OpenAiModule,
+    SberModule,
     TelegramModule,
   ],
   controllers: [GptController],

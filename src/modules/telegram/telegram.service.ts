@@ -108,8 +108,8 @@ export class TelegramService {
     return data;
   }
 
-  async downloadVoiceMessage(voicePathApi: string, telegramId: number) {
-    const url = `${this.fileUrl}/${voicePathApi}`;
+  async downloadVoiceMessage(filename: string, telegramId: number) {
+    const url = `${this.fileUrl}/${filename}`;
 
     const oggPath = await createOgg(url, String(telegramId));
     const mp3Path = await convertToMp3(oggPath, String(telegramId));

@@ -26,13 +26,16 @@ import { TelegramService } from '../telegram/telegram.service';
 import {
   GIGA_CHAT,
   GIGA_CHAT_ACCESS_TOKEN,
-  GIGA_CHAT_OAUTH,
   GIGACHAT_API_PERS,
   IMAGE_SIZE_HEIGHT_DEFAULT,
   IMAGE_SIZE_WIDTH_DEFAULT,
   ModelGPT,
   ModelImage,
   ModelSpeech,
+  SALUTE_SPEECH_ACCESS_TOKEN,
+  SALUTE_SPEECH_PERS,
+  SBER_OAUTH,
+  SMART_SPEEECH,
 } from './constants';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
@@ -40,7 +43,7 @@ import { GenerateImagesDto } from './dto/generate-images.dto';
 import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptModels } from './schemas';
-import { ChatCompletions, ImagesGenerate } from './types';
+import { ChatCompletions, ImagesGenerate, Transcriptions } from './types';
 
 @Injectable()
 export class GptService {
@@ -67,24 +70,60 @@ export class GptService {
     });
   }
 
-  private async getAccessTokenSber() {
-    const cachedAccessToken = await this.cacheManager.get(GIGA_CHAT_ACCESS_TOKEN);
-
-    if (cachedAccessToken) {
-      return cachedAccessToken;
-    }
-
-    const headers = {
+  private async getSberAccessToken({
+    speech = false,
+    chat = false,
+  }: {
+    speech?: boolean;
+    chat?: boolean;
+  }): Promise<string> {
+    let headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
       RqUID: '6f0b1291-c7f3-43c6-bb2e-9f3efb2dc98e',
-      Authorization: `Bearer ${this.configService.get('sber.token')}`,
+      Authorization: '',
     };
+    let scope = '';
+    let cacheToken = '';
+
+    if (chat) {
+      cacheToken = GIGA_CHAT_ACCESS_TOKEN;
+
+      const cachedGigaChatAccessToken = await this.cacheManager.get<string>(cacheToken);
+
+      if (cachedGigaChatAccessToken) {
+        return cachedGigaChatAccessToken;
+      }
+
+      headers = {
+        ...headers,
+        Authorization: `Bearer ${this.configService.get('sber.chatToken')}`,
+      };
+
+      scope = GIGACHAT_API_PERS;
+    }
+
+    if (speech) {
+      cacheToken = SALUTE_SPEECH_ACCESS_TOKEN;
+
+      const cachedSaluteSpeechAccessToken = await this.cacheManager.get<string>(cacheToken);
+
+      if (cachedSaluteSpeechAccessToken) {
+        return cachedSaluteSpeechAccessToken;
+      }
+
+      headers = {
+        ...headers,
+        Authorization: `Bearer ${this.configService.get('sber.speechToken')}`,
+      };
+
+      scope = SALUTE_SPEECH_PERS;
+    }
 
     const { data } = await firstValueFrom(
       this.httpService
         .post(
-          GIGA_CHAT_OAUTH,
-          { scope: GIGACHAT_API_PERS },
+          SBER_OAUTH,
+          { scope },
           {
             headers,
             // NOTE: TLS certificate is disabled
@@ -100,11 +139,7 @@ export class GptService {
         ),
     );
 
-    await this.cacheManager.set(
-      GIGA_CHAT_ACCESS_TOKEN,
-      data.access_token,
-      expiresInMs(data.expires_at),
-    );
+    await this.cacheManager.set(cacheToken, data.access_token, expiresInMs(data.expires_at));
 
     return data.access_token;
   }
@@ -161,7 +196,7 @@ export class GptService {
       }
 
       if (model === ModelGPT.GIGA_CHAT) {
-        const accessToken = await this.getAccessTokenSber();
+        const accessToken = await this.getSberAccessToken({ chat: true });
 
         const headers = {
           'Content-Type': 'application/json',
@@ -238,8 +273,10 @@ export class GptService {
     }
   }
 
-  async transcriptions(getTranslationDto: GetTranslationDto): Promise<string | null> {
-    const { voicePathApi, telegramId, model } = getTranslationDto;
+  async transcriptions(getTranslationDto: GetTranslationDto): Promise<Transcriptions | null> {
+    const { filename, telegramId, model } = getTranslationDto;
+
+    let transcription = { text: '' };
 
     try {
       const { rate } = await this.clientsService.availability(telegramId);
@@ -254,25 +291,110 @@ export class GptService {
         throw new NotFoundException(`${model} not found`);
       }
 
-      const mp3Path = await this.telegramService.downloadVoiceMessage(voicePathApi, telegramId);
+      const mp3Path = await this.telegramService.downloadVoiceMessage(filename, telegramId);
 
       if (model === ModelSpeech.WHISPER_1) {
-        const transcription = await this.openAI.audio.transcriptions.create({
+        const data = await this.openAI.audio.transcriptions.create({
           model,
           file: createReadStream(mp3Path),
         });
 
-        await removeFile(mp3Path);
-
-        return transcription.text;
+        transcription = { text: data.text };
       }
 
-      // TODO: New model will be added here: https://app.asana.com/0/1205877070000801/1205932083359511/f
       if (model === ModelSpeech.GENERAL) {
-        return null;
+        const accessToken = await this.getSberAccessToken({ speech: true });
+
+        const commonHeaders = {
+          Authorization: `Bearer ${accessToken}`,
+        };
+
+        const { data: upload } = await firstValueFrom(
+          this.httpService
+            .post(`${SMART_SPEEECH}/data:upload`, createReadStream(mp3Path), {
+              headers: { ...commonHeaders, 'Content-Type': 'audio/mpeg' },
+              // NOTE: TLS certificate is disabled
+              httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+              }),
+            })
+            .pipe(
+              catchError((error: AxiosError) => {
+                throw new BadRequestException(error.response.data);
+              }),
+            ),
+        );
+
+        const { data: recognize } = await firstValueFrom(
+          this.httpService
+            .post(
+              `${SMART_SPEEECH}/speech:async_recognize`,
+              {
+                options: {
+                  model,
+                  audio_encoding: 'MP3',
+                  channels_count: 1,
+                },
+                request_file_id: upload.result.request_file_id,
+              },
+              {
+                headers: { ...commonHeaders, 'Content-Type': 'application/json' },
+                // NOTE: TLS certificate is disabled
+                httpsAgent: new https.Agent({
+                  rejectUnauthorized: false,
+                }),
+              },
+            )
+            .pipe(
+              catchError((error: AxiosError) => {
+                throw new BadRequestException(error.response.data);
+              }),
+            ),
+        );
+
+        await (() => new Promise((resolve) => setTimeout(resolve, 1000)))();
+
+        const { data: status } = await firstValueFrom(
+          this.httpService
+            .get(`${SMART_SPEEECH}/task:get?id=${recognize.result.id}`, {
+              headers: commonHeaders,
+              // NOTE: TLS certificate is disabled
+              httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+              }),
+            })
+            .pipe(
+              catchError((error: AxiosError) => {
+                throw new BadRequestException(error.response.data);
+              }),
+            ),
+        );
+
+        const { data: download } = await firstValueFrom(
+          this.httpService
+            .get(
+              `${SMART_SPEEECH}/data:download?response_file_id=${status.result.response_file_id}`,
+              {
+                headers: commonHeaders,
+                // NOTE: TLS certificate is disabled
+                httpsAgent: new https.Agent({
+                  rejectUnauthorized: false,
+                }),
+              },
+            )
+            .pipe(
+              catchError((error: AxiosError) => {
+                throw new BadRequestException(error.response.data);
+              }),
+            ),
+        );
+
+        transcription = { text: download[0].results[0].normalized_text };
       }
 
-      return null;
+      await removeFile(mp3Path);
+
+      return transcription;
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new BadRequestException(error);

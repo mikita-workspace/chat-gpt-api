@@ -4,8 +4,8 @@ export enum ModelGPT {
 }
 
 export enum TypeGPT {
+  AUDIO = 'audio',
   IMAGE = 'image',
-  SPEECH = 'speech',
   TEXT = 'text',
 }
 

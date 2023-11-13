@@ -23,6 +23,7 @@ import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { UpdateClientRateDto } from './dto/update-client-rate.dto';
 
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
@@ -77,5 +78,10 @@ export class ClientsController {
   @Post('feedback')
   async setClientFeedback(@Body() feedbackClientDto: FeedbackClientDto) {
     return this.clientsService.setClientFeedback(feedbackClientDto);
+  }
+
+  @Post('clientRate')
+  async updateClientRate(@Body() { telegramId }: UpdateClientRateDto) {
+    return this.clientsService.updateClientRate(telegramId, {});
   }
 }

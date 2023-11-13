@@ -7,12 +7,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+import { differenceInCalendarDays } from 'date-fns';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 import { MONTH_IN_DAYS } from 'src/common/constants';
 import {
   copyObject,
+  expiresInMs,
   fromMsToMins,
   getTimestampPlusDays,
   getTimestampUnix,
@@ -23,11 +25,18 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
 import { TelegramService } from '../telegram/telegram.service';
-import { ClientFeedback, ClientImagesRate, ClientNamesRate, ClientTokensRate } from './constants';
+import {
+  ClientFeedback,
+  ClientImagesRate,
+  ClientNamesRate,
+  ClientSymbolRate,
+  ClientTokensRate,
+} from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
 import { Client, ClientImages, ClientMessages } from './schemas';
 
 @Injectable()
@@ -62,8 +71,8 @@ export class ClientsService {
 
     const newClient = new this.clientModel({ languageCode, telegramId, metadata });
 
-    newClient.set('gptMessages', newClientMessages._id);
-    newClient.set('dalleImages', newClientImages._id);
+    newClient.set('messages', newClientMessages._id);
+    newClient.set('images', newClientImages._id);
 
     await newClient.save();
 
@@ -192,8 +201,8 @@ export class ClientsService {
       throw new NotFoundException(`GPT messages for ${telegramId} not found`);
     }
 
-    clientMessages.gptMessages = [
-      ...clientMessages.gptMessages,
+    clientMessages.messages = [
+      ...clientMessages.messages,
       {
         createdAt: getTimestampUnix(),
         updatedAt: getTimestampUnix(),
@@ -208,6 +217,37 @@ export class ClientsService {
     return clientMessages;
   }
 
+  async updateClientImages(
+    telegramId: number,
+    messageId: number,
+    images: { urls: string[]; prompt: string; revisedPrompt: string },
+  ) {
+    const { urls, prompt, revisedPrompt } = images;
+
+    const clientImages = await this.clientImagesModel.findOne({ telegramId }).exec();
+
+    if (!clientImages) {
+      throw new NotFoundException(`GPT images for ${telegramId} not found`);
+    }
+
+    clientImages.images = [
+      ...clientImages.images,
+      {
+        createdAt: getTimestampUnix(),
+        feedback: ClientFeedback.NONE,
+        messageId,
+        prompt,
+        revisedPrompt,
+        updatedAt: getTimestampUnix(),
+        urls,
+      },
+    ];
+
+    await clientImages.save();
+
+    return clientImages;
+  }
+
   async updateClientRate(
     telegramId: number,
     { usedTokens = 0, usedImages = 0 }: { usedTokens?: number; usedImages?: number },
@@ -218,23 +258,68 @@ export class ClientsService {
       throw new NotFoundException(`${telegramId} not found`);
     }
 
-    const shouldUpdateRate = isExpiredDate(client.rate.expiresAt);
+    const isPremiumClient = client.rate.name === ClientNamesRate.PREMIUM;
 
-    if (shouldUpdateRate) {
+    if (isExpiredDate(client.rate.expiresAt)) {
       client.rate = {
-        dalleImages: Math.max(ClientImagesRate.BASE - usedImages, 0),
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
-        gptTokens: Math.max(ClientTokensRate.BASE - usedTokens, 0),
-        name: ClientNamesRate.BASE,
+        gptTokens: Math.max(
+          isPremiumClient ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE - usedTokens,
+          0,
+        ),
+        images: Math.max(
+          isPremiumClient ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE - usedImages,
+          0,
+        ),
+        name: client.rate.name,
+        symbol: client.rate.symbol,
       };
     } else {
       client.rate = {
-        dalleImages: Math.max(client.rate.dalleImages - usedImages, 0),
         expiresAt: client.rate.expiresAt,
         gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
+        images: Math.max(client.rate.images - usedImages, 0),
         name: client.rate.name,
+        symbol: client.rate.symbol,
       };
     }
+
+    await client.save();
+
+    return client.rate;
+  }
+
+  async updateClientRateName(updateClientRateNameDto: UpdateClientRateNameDto) {
+    const { telegramId, name } = updateClientRateNameDto;
+
+    const client = await this.clientModel.findOne({ telegramId }).exec();
+
+    if (!client) {
+      throw new NotFoundException(`${telegramId} not found`);
+    }
+
+    if (client.rate.name === name) {
+      return client.rate;
+    }
+
+    const tokens =
+      name === ClientNamesRate.PREMIUM ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE;
+    const images =
+      name === ClientNamesRate.PREMIUM ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE;
+
+    const expiresIn = expiresInMs(client.rate.expiresAt);
+    const remainDays = differenceInCalendarDays(new Date(), expiresIn);
+
+    const remainTokens = Math.floor((tokens / MONTH_IN_DAYS) * remainDays);
+    const remainImages = Math.floor((images / MONTH_IN_DAYS) * remainDays);
+
+    client.rate = {
+      ...client.rate,
+      gptTokens: remainTokens,
+      images: remainImages,
+      name,
+      symbol: ClientNamesRate.PREMIUM ? ClientSymbolRate.PREMIUM : ClientSymbolRate.BASE,
+    };
 
     await client.save();
 
@@ -245,31 +330,50 @@ export class ClientsService {
     const { telegramId, messageId, feedback } = feedbackClientDto;
 
     const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();
+    const clientImages = await this.clientImagesModel.findOne({ telegramId }).exec();
 
-    if (!clientMessages) {
-      throw new NotFoundException(`GPT messages for ${telegramId} not found`);
+    if (!clientMessages && !clientImages) {
+      throw new NotFoundException(`GPT messages and images for ${telegramId} not found`);
     }
 
-    const gptMessageIndex = clientMessages.gptMessages.findIndex(
+    const messagesIndex = clientMessages.messages.findIndex(
       (message) => message.messageId === messageId,
     );
+    const imagesIndex = clientImages.images.findIndex((image) => image.messageId === messageId);
 
-    if (gptMessageIndex > -1) {
-      const gptMessageCopy = copyObject(clientMessages.gptMessages[gptMessageIndex]);
+    if (messagesIndex > -1) {
+      const messagesCopy = copyObject(clientMessages.messages[messagesIndex]);
 
-      gptMessageCopy.feedback = feedback;
-      gptMessageCopy.updatedAt = getTimestampUnix();
+      messagesCopy.feedback = feedback;
+      messagesCopy.updatedAt = getTimestampUnix();
 
-      clientMessages.gptMessages = [
-        ...clientMessages.gptMessages.filter(
-          (message) => message.messageId !== gptMessageCopy.messageId,
+      clientMessages.messages = [
+        ...clientMessages.messages.filter(
+          (message) => message.messageId !== messagesCopy.messageId,
         ),
-        gptMessageCopy,
+        messagesCopy,
       ];
 
       await clientMessages.save();
     }
 
-    return clientMessages.gptMessages[gptMessageIndex] ?? null;
+    if (imagesIndex > -1) {
+      const imagesCopy = copyObject(clientImages.images[imagesIndex]);
+
+      imagesCopy.feedback = feedback;
+      imagesCopy.updatedAt = getTimestampUnix();
+
+      clientImages.images = [
+        ...clientImages.images.filter((image) => image.messageId !== imagesCopy.messageId),
+        imagesCopy,
+      ];
+
+      await clientImages.save();
+    }
+
+    return {
+      messages: clientMessages.messages[messagesIndex] ?? [],
+      images: clientImages.images[imagesIndex] ?? [],
+    };
   }
 }

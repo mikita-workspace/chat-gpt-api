@@ -4,13 +4,18 @@ export enum ClientTokensRate {
 }
 
 export enum ClientImagesRate {
-  BASE = 25,
-  PREMIUM = 100,
+  BASE = 10,
+  PREMIUM = 30,
 }
 
 export enum ClientNamesRate {
   BASE = 'Base',
   PREMIUM = 'Premium',
+}
+
+export enum ClientSymbolRate {
+  BASE = '',
+  PREMIUM = '★',
 }
 
 export enum ClientFeedback {

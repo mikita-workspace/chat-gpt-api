@@ -16,6 +16,7 @@ import { RolesAuth } from '../auth/decorators';
 import { RolesAuthGuard } from '../auth/guard';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
+import { GenerateImagesDto } from './dto/generate-images.dto';
 import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptService } from './gpt.service';
@@ -47,5 +48,10 @@ export class GptController {
   @Post('chatCompletions')
   async chatCompletions(@Body() chatCompletionDto: ChatCompletionDto) {
     return this.gptService.chatCompletions(chatCompletionDto);
+  }
+
+  @Post('generateImages')
+  async generateImages(@Body() generateImagesDto: GenerateImagesDto) {
+    return this.gptService.imagesGenerate(generateImagesDto);
   }
 }

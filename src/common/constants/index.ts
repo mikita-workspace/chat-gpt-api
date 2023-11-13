@@ -1,5 +1,6 @@
 export const MONTH_IN_DAYS = 30;
 export const MIN_IN_MS = 60 * 1000;
+export const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export enum LanguageCodes {
   BELORUSSIAN = 'be',

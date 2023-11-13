@@ -17,6 +17,8 @@ export class GptModels {
   creator: string;
   @Prop({ type: String, default: TypeGPT.TEXT, required: true })
   type: string;
+  @Prop({ type: Number })
+  max: number;
 }
 
 export const GptModelsSchema = SchemaFactory.createForClass(GptModels);

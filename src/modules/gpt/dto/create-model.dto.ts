@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateModelDto {
   @IsNotEmpty()
@@ -14,6 +14,9 @@ export class CreateModelDto {
   @IsString()
   readonly creator: string;
   @IsOptional()
-  @IsArray()
-  readonly input: string[];
+  @IsString()
+  readonly input: string;
+  @IsOptional()
+  @IsNumber()
+  readonly max: number;
 }

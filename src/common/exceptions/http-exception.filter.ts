@@ -13,7 +13,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const exceptionResponse = exception.getResponse() as {
       description: string;
       error: string;
-      message: unknown;
+      message: string;
     };
 
     response.status(status).json({

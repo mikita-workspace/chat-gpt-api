@@ -5,6 +5,7 @@ import { getTimestampPlusDays, getTimestampUnix } from 'src/common/utils';
 import { ModelGPT, ModelImage, ModelSpeech } from 'src/modules/gpt/constants';
 
 import { ClientImagesRate, ClientNamesRate, ClientTokensRate } from '../constants';
+import { ClientRate } from '../types';
 import { ClientImages } from './client-images.schema';
 import { ClientMessages } from './client-messages.schema';
 
@@ -39,13 +40,7 @@ export class Client {
     },
     required: true,
   })
-  rate: {
-    expiresAt: number;
-    gptTokens: number;
-    images: number;
-    name: string;
-    symbol: string;
-  };
+  rate: ClientRate;
 
   @Prop({
     type: Object,

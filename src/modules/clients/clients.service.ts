@@ -7,12 +7,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+import { differenceInCalendarDays } from 'date-fns';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 import { MONTH_IN_DAYS } from 'src/common/constants';
 import {
   copyObject,
+  expiresInMs,
   fromMsToMins,
   getTimestampPlusDays,
   getTimestampUnix,
@@ -23,11 +25,18 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
 import { TelegramService } from '../telegram/telegram.service';
-import { ClientFeedback, ClientImagesRate, ClientNamesRate, ClientTokensRate } from './constants';
+import {
+  ClientFeedback,
+  ClientImagesRate,
+  ClientNamesRate,
+  ClientSymbolRate,
+  ClientTokensRate,
+} from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
 import { Client, ClientImages, ClientMessages } from './schemas';
 
 @Injectable()
@@ -274,6 +283,43 @@ export class ClientsService {
         symbol: client.rate.symbol,
       };
     }
+
+    await client.save();
+
+    return client.rate;
+  }
+
+  async updateClientRateName(updateClientRateNameDto: UpdateClientRateNameDto) {
+    const { telegramId, name } = updateClientRateNameDto;
+
+    const client = await this.clientModel.findOne({ telegramId }).exec();
+
+    if (!client) {
+      throw new NotFoundException(`${telegramId} not found`);
+    }
+
+    if (client.rate.name === name) {
+      return client.rate;
+    }
+
+    const tokens =
+      name === ClientNamesRate.PREMIUM ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE;
+    const images =
+      name === ClientNamesRate.PREMIUM ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE;
+
+    const expiresIn = expiresInMs(client.rate.expiresAt);
+    const remainDays = differenceInCalendarDays(new Date(), expiresIn);
+
+    const remainTokens = Math.floor((tokens / MONTH_IN_DAYS) * remainDays);
+    const remainImages = Math.floor((images / MONTH_IN_DAYS) * remainDays);
+
+    client.rate = {
+      ...client.rate,
+      gptTokens: remainTokens,
+      images: remainImages,
+      name,
+      symbol: ClientNamesRate.PREMIUM ? ClientSymbolRate.PREMIUM : ClientSymbolRate.BASE,
+    };
 
     await client.save();
 

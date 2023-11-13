@@ -24,6 +24,7 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientRateDto } from './dto/update-client-rate.dto';
+import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
 
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
@@ -83,5 +84,11 @@ export class ClientsController {
   @Post('clientRate')
   async updateClientRate(@Body() { telegramId }: UpdateClientRateDto) {
     return this.clientsService.updateClientRate(telegramId, {});
+  }
+
+  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @Post('clientRate/name')
+  async updateClientRateName(@Body() updateClientRateNameDto: UpdateClientRateNameDto) {
+    return this.clientsService.updateClientRateName(updateClientRateNameDto);
   }
 }

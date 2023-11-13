@@ -11,9 +11,11 @@ import { catchError, delay, firstValueFrom } from 'rxjs';
 import { expiresInMs } from 'src/common/utils';
 
 import {
+  DELAY_FACTOR,
   GIGA_CHAT,
   GIGA_CHAT_ACCESS_TOKEN,
   GIGACHAT_API_PERS,
+  MAX_AUDIO_DURATION_MS,
   SALUTE_SPEECH_ACCESS_TOKEN,
   SALUTE_SPEECH_PERS,
   SBER_OAUTH,
@@ -148,8 +150,14 @@ export class SberService {
     return completions;
   }
 
-  async transcriptions(filePath: string, options: { model: string }) {
-    const { model } = options;
+  async transcriptions(filePath: string, options: { model: string; duration: number }) {
+    const { model, duration } = options;
+
+    if (duration > MAX_AUDIO_DURATION_MS) {
+      throw new BadRequestException(
+        `Max audio duration is ${MAX_AUDIO_DURATION_MS}. Your duration: ${duration}`,
+      );
+    }
 
     const accessToken = await this.getAccessToken({ speech: true });
 
@@ -193,9 +201,7 @@ export class SberService {
             }),
           },
         )
-        // NOTE: Delay is depend on length of input file
-        // TODO: calculate delay
-        .pipe(delay(2000))
+        .pipe(delay(Math.floor(duration / DELAY_FACTOR)))
         .pipe(
           catchError((error: AxiosError) => {
             throw new BadRequestException(error.response.data);

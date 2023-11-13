@@ -137,21 +137,21 @@ export class GptService {
         throw new NotFoundException(`${model} not found`);
       }
 
-      const mp3Path = await this.telegramService.downloadVoiceMessage(filename, telegramId);
+      const { filePath, duration } = await this.telegramService.getFile(filename, telegramId);
 
       if (model === ModelSpeech.WHISPER_1) {
-        const transcription = await this.openAiService.transcriptions(mp3Path, { model });
+        const transcription = await this.openAiService.transcriptions(filePath, { model });
 
         transcriptionResponse = { text: transcription.text };
       }
 
       if (model === ModelSpeech.GENERAL) {
-        const transcription = await this.sberService.transcriptions(mp3Path, { model });
+        const transcription = await this.sberService.transcriptions(filePath, { model, duration });
 
         transcriptionResponse = { text: transcription.text };
       }
 
-      await removeFile(mp3Path);
+      await removeFile(filePath);
 
       return transcriptionResponse;
     } catch (error) {

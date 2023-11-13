@@ -31,18 +31,20 @@ export class Client {
   @Prop({
     type: Object,
     default: {
-      images: ClientImagesRate.BASE,
       expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
       gptTokens: ClientTokensRate.BASE,
+      images: ClientImagesRate.BASE,
       name: ClientNamesRate.BASE,
+      symbol: ClientImagesRate.BASE,
     },
     required: true,
   })
   rate: {
-    images: number;
     expiresAt: number;
     gptTokens: number;
+    images: number;
     name: string;
+    symbol: string;
   };
 
   @Prop({

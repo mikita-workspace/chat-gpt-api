@@ -1,13 +1,25 @@
 import { ChatCompletionMessage, CompletionUsage } from 'openai/resources';
 
 export type ChatCompletions = {
-  clientRate: { images: number; expiresAt: number; gptTokens: number };
+  clientRate: {
+    expiresAt: number;
+    gptTokens: number;
+    images: number;
+    name: string;
+    symbol: string;
+  };
   message: ChatCompletionMessage;
   usage: CompletionUsage;
 };
 
 export type ImagesGenerate = {
-  clientRate: { images: number; expiresAt: number; gptTokens: number };
+  clientRate: {
+    expiresAt: number;
+    gptTokens: number;
+    images: number;
+    name: string;
+    symbol: string;
+  };
   images: {
     bytes: number | null;
     height: number;

@@ -23,7 +23,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
 import { TelegramService } from '../telegram/telegram.service';
-import { ClientFeedback, ClientImagesRate, ClientNamesRate, ClientTokensRate } from './constants';
+import {
+  ClientFeedback,
+  ClientImagesRate,
+  ClientNamesRate,
+  ClientSymbolRate,
+  ClientTokensRate,
+} from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
@@ -253,17 +259,19 @@ export class ClientsService {
 
     if (shouldUpdateRate) {
       client.rate = {
-        images: Math.max(ClientImagesRate.BASE - usedImages, 0),
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
         gptTokens: Math.max(ClientTokensRate.BASE - usedTokens, 0),
+        images: Math.max(ClientImagesRate.BASE - usedImages, 0),
         name: ClientNamesRate.BASE,
+        symbol: ClientSymbolRate.BASE,
       };
     } else {
       client.rate = {
-        images: Math.max(client.rate.images - usedImages, 0),
         expiresAt: client.rate.expiresAt,
         gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
+        images: Math.max(client.rate.images - usedImages, 0),
         name: client.rate.name,
+        symbol: client.rate.symbol,
       };
     }
 

@@ -13,6 +13,11 @@ export enum ClientNamesRate {
   PREMIUM = 'Premium',
 }
 
+export enum ClientSymbolRate {
+  BASE = '',
+  PREMIUM = '★',
+}
+
 export enum ClientFeedback {
   LIKE = 'like',
   DISLIKE = 'dislike',

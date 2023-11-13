@@ -9,8 +9,11 @@ import { MongoDBModule } from 'src/database';
 import { AdminsModule } from 'src/modules/admins/admins.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { ClientsModule } from 'src/modules/clients/clients.module';
+import { CloudinaryModule } from 'src/modules/cloudinary/cloudinary.module';
 import { GithubModule } from 'src/modules/github/github.module';
 import { GptModule } from 'src/modules/gpt/gpt.module';
+import { OpenAiModule } from 'src/modules/openai/openai.module';
+import { SberModule } from 'src/modules/sber/sber.module';
 import { TelegramModule } from 'src/modules/telegram/telegram.module';
 
 import { AppController } from './app.controller';
@@ -42,9 +45,12 @@ import { AppService } from './app.service';
     AdminsModule,
     AuthModule,
     ClientsModule,
+    CloudinaryModule,
     GithubModule,
     GptModule,
     MongoDBModule,
+    OpenAiModule,
+    SberModule,
     TelegramModule,
   ],
   controllers: [AppController],

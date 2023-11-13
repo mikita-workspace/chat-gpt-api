@@ -1,5 +1,3 @@
-import { HttpService } from '@nestjs/axios';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
@@ -7,36 +5,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import { AxiosError, HttpStatusCode } from 'axios';
-import { Cache as CacheManager } from 'cache-manager';
-import { v2 as CloudStorage } from 'cloudinary';
-import { createReadStream } from 'fs';
-import * as https from 'https';
+import { HttpStatusCode } from 'axios';
 import { Model } from 'mongoose';
-import { OpenAI } from 'openai';
 import { Image as ImageAi } from 'openai/resources';
-import { catchError, firstValueFrom } from 'rxjs';
-import { expiresInMs, isExpiredDate, removeFile } from 'src/common/utils';
+import { isExpiredDate, removeFile } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ClientsService } from '../clients/clients.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { OpenAiService } from '../openai/openai.service';
+import { SberService } from '../sber/sber.service';
 import { TelegramService } from '../telegram/telegram.service';
-import {
-  GIGA_CHAT,
-  GIGA_CHAT_ACCESS_TOKEN,
-  GIGACHAT_API_PERS,
-  IMAGE_SIZE_HEIGHT_DEFAULT,
-  IMAGE_SIZE_WIDTH_DEFAULT,
-  ModelGPT,
-  ModelImage,
-  ModelSpeech,
-  SALUTE_SPEECH_ACCESS_TOKEN,
-  SALUTE_SPEECH_PERS,
-  SBER_OAUTH,
-  SMART_SPEEECH,
-} from './constants';
+import { ModelGPT, ModelImage, ModelSpeech } from './constants';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { GenerateImagesDto } from './dto/generate-images.dto';
@@ -47,102 +28,14 @@ import { ChatCompletions, ImagesGenerate, Transcriptions } from './types';
 
 @Injectable()
 export class GptService {
-  private openAI: OpenAI;
-
   constructor(
     @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     @Inject(TelegramService) private readonly telegramService: TelegramService,
+    @Inject(OpenAiService) private readonly openAiService: OpenAiService,
+    @Inject(SberService) private readonly sberService: SberService,
+    @Inject(CloudinaryService) private readonly cloudinaryService: CloudinaryService,
     private readonly clientsService: ClientsService,
-    private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
-  ) {
-    this.openAI = new OpenAI({
-      apiKey: configService.get('openAi.token'),
-      organization: configService.get('openAi.organization'),
-    });
-
-    CloudStorage.config({
-      api_key: configService.get('cloudinary.apiKey'),
-      api_secret: configService.get('cloudinary.apiSecret'),
-      cloud_name: configService.get('cloudinary.cloudName'),
-      secure: true,
-    });
-  }
-
-  private async getSberAccessToken({
-    speech = false,
-    chat = false,
-  }: {
-    speech?: boolean;
-    chat?: boolean;
-  }): Promise<string> {
-    let headers = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      RqUID: '6f0b1291-c7f3-43c6-bb2e-9f3efb2dc98e',
-      Authorization: '',
-    };
-    let scope = '';
-    let cacheToken = '';
-
-    if (chat) {
-      cacheToken = GIGA_CHAT_ACCESS_TOKEN;
-
-      const cachedGigaChatAccessToken = await this.cacheManager.get<string>(cacheToken);
-
-      if (cachedGigaChatAccessToken) {
-        return cachedGigaChatAccessToken;
-      }
-
-      headers = {
-        ...headers,
-        Authorization: `Bearer ${this.configService.get('sber.chatToken')}`,
-      };
-
-      scope = GIGACHAT_API_PERS;
-    }
-
-    if (speech) {
-      cacheToken = SALUTE_SPEECH_ACCESS_TOKEN;
-
-      const cachedSaluteSpeechAccessToken = await this.cacheManager.get<string>(cacheToken);
-
-      if (cachedSaluteSpeechAccessToken) {
-        return cachedSaluteSpeechAccessToken;
-      }
-
-      headers = {
-        ...headers,
-        Authorization: `Bearer ${this.configService.get('sber.speechToken')}`,
-      };
-
-      scope = SALUTE_SPEECH_PERS;
-    }
-
-    const { data } = await firstValueFrom(
-      this.httpService
-        .post(
-          SBER_OAUTH,
-          { scope },
-          {
-            headers,
-            // NOTE: TLS certificate is disabled
-            httpsAgent: new https.Agent({
-              rejectUnauthorized: false,
-            }),
-          },
-        )
-        .pipe(
-          catchError((error: AxiosError) => {
-            throw new BadRequestException(error.response.data);
-          }),
-        ),
-    );
-
-    await this.cacheManager.set(cacheToken, data.access_token, expiresInMs(data.expires_at));
-
-    return data.access_token;
-  }
+  ) {}
 
   async createModel(createModelDto: CreateModelDto): Promise<GptModels> {
     const { model } = createModelDto;
@@ -183,62 +76,20 @@ export class GptService {
       }
 
       if (model === ModelGPT.GPT_3_5_TURBO) {
-        const chatCompletion = await this.openAI.chat.completions.create({
-          messages,
-          model,
-          top_p: 0.5,
-        });
+        const completion = await this.openAiService.completions(messages, { model });
 
         chatCompletionsResponse = {
-          message: chatCompletion.choices[0].message,
-          usage: chatCompletion.usage,
+          message: completion.choices[0].message,
+          usage: completion.usage,
         };
       }
 
       if (model === ModelGPT.GIGA_CHAT) {
-        const accessToken = await this.getSberAccessToken({ chat: true });
-
-        const headers = {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-          'X-Request-ID': '79e41a5f-f180-4c7a-b2d9-393086ae20a1',
-          'X-Session-ID': 'b6874da0-bf06-410b-a150-fd5f9164a0b2',
-          'X-Client-ID': 'b6874da0-bf06-410b-a150-fd5f9164a0b2',
-        };
-
-        const { data: chatCompletion } = await firstValueFrom(
-          this.httpService
-            .post(
-              `${GIGA_CHAT}/chat/completions`,
-              {
-                max_tokens: 512,
-                messages,
-                model,
-                n: 1,
-                repetition_penalty: 1.07,
-                stream: false,
-                temperature: 0.87,
-                top_p: 0.47,
-                update_interval: 0,
-              },
-              {
-                headers,
-                // NOTE: TLS certificate is disabled
-                httpsAgent: new https.Agent({
-                  rejectUnauthorized: false,
-                }),
-              },
-            )
-            .pipe(
-              catchError((error: AxiosError) => {
-                throw new BadRequestException(error.response.data);
-              }),
-            ),
-        );
+        const completion = await this.sberService.completions(messages, { model });
 
         chatCompletionsResponse = {
-          message: chatCompletion.choices[0].message,
-          usage: chatCompletion.usage,
+          message: completion.choices[0].message,
+          usage: completion.usage,
         };
       }
 
@@ -260,23 +111,18 @@ export class GptService {
 
       return null;
     } catch (error) {
-      if (error instanceof OpenAI.APIError) {
-        throw new BadRequestException(error);
-      }
       const statusCode = error?.response?.statusCode;
 
       if (statusCode && statusCode === HttpStatusCode.NotFound) {
         throw new NotFoundException(error.message);
       }
-
-      throw new BadRequestException(error.message);
     }
   }
 
   async transcriptions(getTranslationDto: GetTranslationDto): Promise<Transcriptions | null> {
     const { filename, telegramId, model } = getTranslationDto;
 
-    let transcription = { text: '' };
+    let transcriptionResponse = { text: '' };
 
     try {
       const { rate } = await this.clientsService.availability(telegramId);
@@ -294,112 +140,21 @@ export class GptService {
       const mp3Path = await this.telegramService.downloadVoiceMessage(filename, telegramId);
 
       if (model === ModelSpeech.WHISPER_1) {
-        const data = await this.openAI.audio.transcriptions.create({
-          model,
-          file: createReadStream(mp3Path),
-        });
+        const transcription = await this.openAiService.transcriptions(mp3Path, { model });
 
-        transcription = { text: data.text };
+        transcriptionResponse = { text: transcription.text };
       }
 
       if (model === ModelSpeech.GENERAL) {
-        const accessToken = await this.getSberAccessToken({ speech: true });
+        const transcription = await this.sberService.transcriptions(mp3Path, { model });
 
-        const commonHeaders = {
-          Authorization: `Bearer ${accessToken}`,
-        };
-
-        const { data: upload } = await firstValueFrom(
-          this.httpService
-            .post(`${SMART_SPEEECH}/data:upload`, createReadStream(mp3Path), {
-              headers: { ...commonHeaders, 'Content-Type': 'audio/mpeg' },
-              // NOTE: TLS certificate is disabled
-              httpsAgent: new https.Agent({
-                rejectUnauthorized: false,
-              }),
-            })
-            .pipe(
-              catchError((error: AxiosError) => {
-                throw new BadRequestException(error.response.data);
-              }),
-            ),
-        );
-
-        const { data: recognize } = await firstValueFrom(
-          this.httpService
-            .post(
-              `${SMART_SPEEECH}/speech:async_recognize`,
-              {
-                options: {
-                  model,
-                  audio_encoding: 'MP3',
-                  channels_count: 1,
-                },
-                request_file_id: upload.result.request_file_id,
-              },
-              {
-                headers: { ...commonHeaders, 'Content-Type': 'application/json' },
-                // NOTE: TLS certificate is disabled
-                httpsAgent: new https.Agent({
-                  rejectUnauthorized: false,
-                }),
-              },
-            )
-            .pipe(
-              catchError((error: AxiosError) => {
-                throw new BadRequestException(error.response.data);
-              }),
-            ),
-        );
-
-        await (() => new Promise((resolve) => setTimeout(resolve, 1000)))();
-
-        const { data: status } = await firstValueFrom(
-          this.httpService
-            .get(`${SMART_SPEEECH}/task:get?id=${recognize.result.id}`, {
-              headers: commonHeaders,
-              // NOTE: TLS certificate is disabled
-              httpsAgent: new https.Agent({
-                rejectUnauthorized: false,
-              }),
-            })
-            .pipe(
-              catchError((error: AxiosError) => {
-                throw new BadRequestException(error.response.data);
-              }),
-            ),
-        );
-
-        const { data: download } = await firstValueFrom(
-          this.httpService
-            .get(
-              `${SMART_SPEEECH}/data:download?response_file_id=${status.result.response_file_id}`,
-              {
-                headers: commonHeaders,
-                // NOTE: TLS certificate is disabled
-                httpsAgent: new https.Agent({
-                  rejectUnauthorized: false,
-                }),
-              },
-            )
-            .pipe(
-              catchError((error: AxiosError) => {
-                throw new BadRequestException(error.response.data);
-              }),
-            ),
-        );
-
-        transcription = { text: download[0].results[0].normalized_text };
+        transcriptionResponse = { text: transcription.text };
       }
 
       await removeFile(mp3Path);
 
-      return transcription;
+      return transcriptionResponse;
     } catch (error) {
-      if (error instanceof OpenAI.APIError) {
-        throw new BadRequestException(error);
-      }
-
       const statusCode = error?.response?.statusCode;
 
       if (statusCode && statusCode === HttpStatusCode.NotFound) {
@@ -410,7 +165,7 @@ export class GptService {
     }
   }
 
-  async imagesGenerate(generateImagesDto: GenerateImagesDto): Promise<ImagesGenerate | null> {
+  async generateImages(generateImagesDto: GenerateImagesDto): Promise<ImagesGenerate | null> {
     const {
       telegramId,
       messageId,
@@ -435,47 +190,37 @@ export class GptService {
 
       let imagesFromAi: ImageAi[] = [];
       let cloudImages: ImagesGenerate['images'] = [];
-      let images: ImagesGenerate['images'] = [];
+
+      let imagesResponse: ImagesGenerate['images'] = [];
 
       if (model === ModelImage.DALL_E_3) {
-        const response = await this.openAI.images.generate({
+        const images = await this.openAiService.images(prompt, amount, {
           model,
-          n: amount,
-          prompt,
-          response_format: useCloudinary ? 'b64_json' : 'url',
-          size: `${IMAGE_SIZE_HEIGHT_DEFAULT}x${IMAGE_SIZE_WIDTH_DEFAULT}`,
+          responseFormat: useCloudinary ? 'b64_json' : 'url',
         });
 
-        imagesFromAi = response.data;
+        imagesFromAi = images;
       }
 
       if (imagesFromAi.length > 0) {
         if (useCloudinary) {
-          const cloudStorageRequests = imagesFromAi.map((image) =>
-            CloudStorage.uploader.upload(`data:image/jpeg;base64,${image.b64_json}`, {
-              resource_type: 'image',
-              folder: `images/${telegramId}`,
-              public_id: `${telegramId}-${model}-${uuidv4()}`,
-            }),
-          );
+          const base64s = imagesFromAi.map(({ b64_json }) => b64_json);
 
-          const cloudStorageResponses = await Promise.all(cloudStorageRequests);
+          const cloudinary = await this.cloudinaryService.uploadBase64(base64s, {
+            folder: `images/${telegramId}`,
+            public_id: `${telegramId}-${model}-${uuidv4()}`,
+          });
 
-          cloudImages = cloudStorageResponses.map((response) => ({
-            bytes: response.bytes,
-            height: response.height,
-            url: response.url,
-            width: response.width,
-          }));
+          cloudImages = cloudinary;
         }
 
-        images = Boolean(cloudImages.length)
+        imagesResponse = Boolean(cloudImages.length)
           ? cloudImages
           : imagesFromAi.map((response) => ({
               bytes: null,
-              height: IMAGE_SIZE_HEIGHT_DEFAULT,
+              height: 1024,
               url: response.url,
-              width: IMAGE_SIZE_WIDTH_DEFAULT,
+              width: 1024,
             }));
 
         const revisedPrompt = imagesFromAi[0].revised_prompt;
@@ -492,24 +237,18 @@ export class GptService {
 
         return {
           clientRate,
-          images,
+          images: imagesResponse,
           revisedPrompt,
         };
       }
 
       return null;
     } catch (error) {
-      if (error instanceof OpenAI.APIError) {
-        throw new BadRequestException(error);
-      }
-
       const statusCode = error?.response?.statusCode;
 
       if (statusCode && statusCode === HttpStatusCode.NotFound) {
         throw new NotFoundException(error.message);
       }
-
-      throw new BadRequestException(error.message);
     }
   }
 }

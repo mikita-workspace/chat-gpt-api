@@ -45,6 +45,12 @@ export class ClientsController {
     return this.clientsService.findAll(req.admin.role);
   }
 
+  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @Get('unauthorized')
+  async findUnauthorized() {
+    return this.clientsService.findUnauthorized();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {

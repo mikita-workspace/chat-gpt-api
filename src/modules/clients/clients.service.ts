@@ -98,9 +98,17 @@ export class ClientsService {
   }
 
   async findAll(role: `${AdminRoles}`): Promise<Client[]> {
-    const filter = role === AdminRoles.MODERATOR ? { state: { isApproved: true } } : {};
+    const filter = role === AdminRoles.MODERATOR ? { 'state.isApproved': true } : {};
 
     return this.clientModel.find(filter).exec();
+  }
+
+  async findUnauthorized() {
+    return this.clientModel
+      .find({
+        'state.isApproved': false,
+      })
+      .exec();
   }
 
   async findOne(telegramId: number): Promise<Client> {

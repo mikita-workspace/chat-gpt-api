@@ -1,3 +1,5 @@
+export const GET_GPT_MODELS_CACHE_KEY = 'get-gpt-models-cache-key';
+
 export enum ModelGPT {
   GIGA_CHAT = 'GigaChat:latest',
   GPT_3_5_TURBO = 'gpt-3.5-turbo-1106',
@@ -21,4 +23,5 @@ export enum ModelImage {
 }
 
 export const gptModelsBase = [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_2];
+export const gptModelsPromo = [...gptModelsBase, ModelGPT.GPT_4_TURBO, ModelImage.DALL_E_3];
 export const gptModelsPremium = [...Object.values({ ...ModelGPT, ...ModelSpeech, ...ModelImage })];

@@ -61,7 +61,7 @@ export class Client {
 
   @Prop({
     type: Array,
-    default: [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_3],
+    default: [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_2],
     required: true,
   })
   gptModels: string[];

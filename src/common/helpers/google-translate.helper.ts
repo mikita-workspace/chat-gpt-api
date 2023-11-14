@@ -6,7 +6,7 @@ const translate = require('translate-google');
 
 export const getTranslation = async (
   text: string,
-  to: `${LocaleCodes}`,
+  to: `${LocaleCodes}` = LocaleCodes.ENGLISH,
 ): Promise<{ text: string; provider: { name: string; url: string } }> => {
   const translatedText = await translate(text, { to });
 

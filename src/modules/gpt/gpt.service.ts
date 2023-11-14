@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -30,11 +29,11 @@ import { ChatCompletions, ImagesGenerate, Transcriptions } from './types';
 export class GptService {
   constructor(
     @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
-    @Inject(TelegramService) private readonly telegramService: TelegramService,
-    @Inject(OpenAiService) private readonly openAiService: OpenAiService,
-    @Inject(SberService) private readonly sberService: SberService,
-    @Inject(CloudinaryService) private readonly cloudinaryService: CloudinaryService,
     private readonly clientsService: ClientsService,
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly openAiService: OpenAiService,
+    private readonly sberService: SberService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   async createModel(createModelDto: CreateModelDto): Promise<GptModels> {

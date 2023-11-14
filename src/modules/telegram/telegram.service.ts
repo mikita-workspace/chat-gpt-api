@@ -21,15 +21,21 @@ export class TelegramService {
     this.fileUrl = `${TELEGRAM_API}/file/bot${this.configService.get('telegram.token')}`;
   }
 
-  async sendMessageToChat(chatId: number, message: string): Promise<void> {
+  async sendMessageToChat(
+    telegramId: number,
+    message: string,
+    options: { parsedMode?: 'HTML' | 'Markdown' },
+  ): Promise<void> {
     const url = `${this.commonUrl}/sendMessage`;
 
     await firstValueFrom(
       this.httpService
         .post(url, {
-          chat_id: chatId,
-          text: message,
+          chat_id: telegramId,
           disable_notification: true,
+          disable_web_page_preview: true,
+          parse_mode: options?.parsedMode,
+          text: message,
         })
         .pipe(
           catchError((error: AxiosError) => {

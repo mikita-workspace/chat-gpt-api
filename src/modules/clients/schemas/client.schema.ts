@@ -37,7 +37,7 @@ export class Client {
       gptTokens: ClientTokensRate.BASE,
       images: ClientImagesRate.BASE,
       name: ClientNamesRate.BASE,
-      symbol: ClientImagesRate.BASE,
+      symbol: '',
     },
     required: true,
   })

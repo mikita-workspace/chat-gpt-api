@@ -21,4 +21,5 @@ export enum ModelImage {
 }
 
 export const gptModelsBase = [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_2];
+export const gptModelsPromo = [...gptModelsBase, ModelGPT.GPT_4_TURBO, ModelImage.DALL_E_3];
 export const gptModelsPremium = [...Object.values({ ...ModelGPT, ...ModelSpeech, ...ModelImage })];

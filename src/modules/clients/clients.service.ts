@@ -26,7 +26,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
-import { gptModelsBase, gptModelsPremium } from '../gpt/constants';
+import { gptModelsBase, gptModelsPremium, gptModelsPromo } from '../gpt/constants';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   ClientFeedback,
@@ -305,26 +305,55 @@ export class ClientsService {
       return client.rate;
     }
 
-    const tokens =
-      name === ClientNamesRate.PREMIUM ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE;
-    const images =
-      name === ClientNamesRate.PREMIUM ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE;
-    const gptModels = name === ClientNamesRate.PREMIUM ? gptModelsPremium : gptModelsBase;
+    const clientRate = (() => {
+      if (name === ClientNamesRate.PREMIUM) {
+        return {
+          images: ClientImagesRate.PREMIUM,
+          gptModels: gptModelsPremium,
+          gptTokens: ClientTokensRate.PREMIUM,
+          symbol: ClientSymbolRate.PREMIUM,
+        };
+      }
 
-    const expiresIn = expiresInMs(client.rate.expiresAt);
-    const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
+      if (name === ClientNamesRate.PROMO) {
+        return {
+          images: ClientImagesRate.PROMO,
+          gptModels: gptModelsPromo,
+          gptTokens: ClientTokensRate.PROMO,
+          symbol: '',
+        };
+      }
 
-    const remainTokens = Math.floor((tokens / MONTH_IN_DAYS) * remainDays);
-    const remainImages = Math.floor((images / MONTH_IN_DAYS) * remainDays);
+      return {
+        images: ClientImagesRate.BASE,
+        gptModels: gptModelsBase,
+        gptTokens: ClientTokensRate.BASE,
+        symbol: '',
+      };
+    })();
 
-    client.rate = {
-      ...client.rate,
-      gptModels,
-      gptTokens: remainTokens,
-      images: remainImages,
-      name,
-      symbol: ClientNamesRate.PREMIUM ? ClientSymbolRate.PREMIUM : ClientSymbolRate.BASE,
-    };
+    if (name === ClientNamesRate.PROMO) {
+      client.rate = {
+        ...clientRate,
+        expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 2),
+        name,
+      };
+    } else {
+      const expiresIn = expiresInMs(client.rate.expiresAt);
+      const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
+
+      const remainTokens = Math.floor((clientRate.gptTokens / MONTH_IN_DAYS) * remainDays);
+      const remainImages = Math.floor((clientRate.images / MONTH_IN_DAYS) * remainDays);
+
+      client.rate = {
+        ...client.rate,
+        gptModels: clientRate.gptModels,
+        gptTokens: remainTokens,
+        images: remainImages,
+        name,
+        symbol: clientRate.symbol,
+      };
+    }
 
     await client.save();
 

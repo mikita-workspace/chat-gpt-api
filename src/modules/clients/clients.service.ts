@@ -151,7 +151,7 @@ export class ClientsService {
       throw new NotFoundException(`${telegramId} not found`);
     }
 
-    return { state: client.state, models: client.gptModels, rate: client.rate };
+    return { rate: client.rate, state: client.state };
   }
 
   async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {
@@ -268,6 +268,7 @@ export class ClientsService {
     if (isExpiredDate(client.rate.expiresAt)) {
       client.rate = {
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
+        gptModels: client.rate.gptModels,
         gptTokens: Math.max(
           isPremiumClient ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE - usedTokens,
           0,
@@ -282,6 +283,7 @@ export class ClientsService {
     } else {
       client.rate = {
         expiresAt: client.rate.expiresAt,
+        gptModels: client.rate.gptModels,
         gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
         images: Math.max(client.rate.images - usedImages, 0),
         name: client.rate.name,

@@ -54,7 +54,9 @@ export class GptService {
   async findAll(getModelsDto: GetModelsDto): Promise<GptModels[]> {
     const { telegramId } = getModelsDto;
 
-    const { models: clientModels } = await this.clientsService.availability(telegramId);
+    const {
+      rate: { gptModels: clientModels },
+    } = await this.clientsService.availability(telegramId);
 
     return this.gptModels.find({ model: { $in: clientModels } }).exec();
   }

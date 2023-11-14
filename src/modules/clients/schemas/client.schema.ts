@@ -33,6 +33,7 @@ export class Client {
     type: Object,
     default: {
       expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
+      gptModels: [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_2],
       gptTokens: ClientTokensRate.BASE,
       images: ClientImagesRate.BASE,
       name: ClientNamesRate.BASE,
@@ -58,13 +59,6 @@ export class Client {
     isBlocked: boolean;
     updatedAt: number;
   };
-
-  @Prop({
-    type: Array,
-    default: [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_2],
-    required: true,
-  })
-  gptModels: string[];
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientMessages.name, required: true })
   messages: ClientMessages;

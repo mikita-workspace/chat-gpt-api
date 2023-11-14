@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
-import { LanguageCodes } from 'src/common/constants';
+import { LocaleCodes } from 'src/common/constants';
 import { configuration } from 'src/config';
 import { MongoDBModule } from 'src/database';
 import { AdminsModule } from 'src/modules/admins/admins.module';
@@ -27,7 +27,7 @@ import { AppService } from './app.service';
       load: [configuration],
     }),
     I18nModule.forRoot({
-      fallbackLanguage: LanguageCodes.ENGLISH,
+      fallbackLanguage: LocaleCodes.ENGLISH,
       loaderOptions: {
         path: path.join(__dirname, '../i18n/'),
         watch: true,

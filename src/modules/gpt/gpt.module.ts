@@ -14,8 +14,8 @@ import { GptModels, GptModelsSchema } from './schemas';
 @Module({
   imports: [
     forwardRef(() => AuthModule),
-    forwardRef(() => ClientsModule),
     MongooseModule.forFeature([{ name: GptModels.name, schema: GptModelsSchema }]),
+    ClientsModule,
     CloudinaryModule,
     OpenAiModule,
     SberModule,

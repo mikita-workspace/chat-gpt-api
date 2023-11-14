@@ -3,12 +3,14 @@ import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthModule } from '../auth/auth.module';
+import { ClientsModule } from '../clients/clients.module';
 import { TelegramController } from './telegram.controller';
 import { TelegramService } from './telegram.service';
 
 @Module({
   imports: [
     forwardRef(() => AuthModule),
+    forwardRef(() => ClientsModule),
     HttpModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

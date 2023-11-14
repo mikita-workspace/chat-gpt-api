@@ -288,6 +288,8 @@ export class ClientsService {
         ...client.rate,
         name: client.rate.name === ClientNamesRate.PROMO ? ClientNamesRate.BASE : client.rate.name,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
+        gptModels:
+          client.rate.name === ClientNamesRate.PROMO ? gptModelsBase : client.rate.gptModels,
         gptTokens: Math.max(
           isPremiumClient ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE - usedTokens,
           0,
@@ -355,7 +357,7 @@ export class ClientsService {
     if (name === ClientNamesRate.PROMO) {
       client.rate = {
         ...clientRate,
-        expiresAt: getTimestampPlusDays(),
+        expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 3),
         name,
       };
     } else {

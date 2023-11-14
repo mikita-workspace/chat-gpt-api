@@ -1,12 +1,15 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { HttpStatusCode } from 'axios';
+import { Cache as CacheManager } from 'cache-manager';
 import { differenceInCalendarDays } from 'date-fns';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
@@ -26,7 +29,12 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
-import { gptModelsBase, gptModelsPremium, gptModelsPromo } from '../gpt/constants';
+import {
+  GET_GPT_MODELS_CACHE_KEY,
+  gptModelsBase,
+  gptModelsPremium,
+  gptModelsPromo,
+} from '../gpt/constants';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   ClientFeedback,
@@ -46,6 +54,7 @@ import { Client, ClientImages, ClientMessages } from './schemas';
 @Injectable()
 export class ClientsService {
   constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     @InjectModel(Client.name) private readonly clientModel: Model<Client>,
     @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
@@ -269,6 +278,7 @@ export class ClientsService {
     if (isExpiredDate(client.rate.expiresAt)) {
       client.rate = {
         ...client.rate,
+        name: client.rate.name === ClientNamesRate.PROMO ? ClientNamesRate.BASE : client.rate.name,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
         gptTokens: Math.max(
           isPremiumClient ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE - usedTokens,
@@ -305,6 +315,8 @@ export class ClientsService {
       return client.rate;
     }
 
+    await this.cacheManager.del(GET_GPT_MODELS_CACHE_KEY);
+
     const clientRate = (() => {
       if (name === ClientNamesRate.PREMIUM) {
         return {
@@ -335,7 +347,7 @@ export class ClientsService {
     if (name === ClientNamesRate.PROMO) {
       client.rate = {
         ...clientRate,
-        expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 2),
+        expiresAt: getTimestampPlusDays(),
         name,
       };
     } else {

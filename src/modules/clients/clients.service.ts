@@ -1,21 +1,23 @@
 import {
   BadRequestException,
   ConflictException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+import { HttpStatusCode } from 'axios';
 import { differenceInCalendarDays } from 'date-fns';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 import { MONTH_IN_DAYS } from 'src/common/constants';
+import { getTranslation } from 'src/common/helpers';
 import {
   copyObject,
   expiresInMs,
   fromMsToMins,
+  getAvailableLocale,
   getTimestampPlusDays,
   getTimestampUnix,
   isBoolean,
@@ -24,6 +26,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
+import { gptModelsBase, gptModelsPremium } from '../gpt/constants';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   ClientFeedback,
@@ -35,6 +38,7 @@ import {
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
+import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
 import { Client, ClientImages, ClientMessages } from './schemas';
@@ -45,7 +49,7 @@ export class ClientsService {
     @InjectModel(Client.name) private readonly clientModel: Model<Client>,
     @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
-    @Inject(TelegramService) private readonly telegramService: TelegramService,
+    private readonly telegramService: TelegramService,
     private readonly i18n: I18nService,
     private readonly configService: ConfigService,
   ) {}
@@ -148,7 +152,7 @@ export class ClientsService {
       throw new NotFoundException(`${telegramId} not found`);
     }
 
-    return { state: client.state, models: client.gptModels, rate: client.rate };
+    return { rate: client.rate, state: client.state };
   }
 
   async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {
@@ -179,12 +183,14 @@ export class ClientsService {
     await client.save();
 
     if (isApproved && enableNotification) {
+      const lang = getAvailableLocale(client.languageCode);
+
       const message = this.i18n.t('locale.client.auth-approved', {
         args: { ttl: fromMsToMins(this.configService.get('cache.ttl')) },
-        lang: client.languageCode,
+        lang,
       });
 
-      await this.telegramService.sendMessageToChat(telegramId, message);
+      await this.telegramService.sendMessageToChat(telegramId, message, {});
     }
 
     return client.state;
@@ -262,6 +268,7 @@ export class ClientsService {
 
     if (isExpiredDate(client.rate.expiresAt)) {
       client.rate = {
+        ...client.rate,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
         gptTokens: Math.max(
           isPremiumClient ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE - usedTokens,
@@ -271,16 +278,12 @@ export class ClientsService {
           isPremiumClient ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE - usedImages,
           0,
         ),
-        name: client.rate.name,
-        symbol: client.rate.symbol,
       };
     } else {
       client.rate = {
-        expiresAt: client.rate.expiresAt,
+        ...client.rate,
         gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
         images: Math.max(client.rate.images - usedImages, 0),
-        name: client.rate.name,
-        symbol: client.rate.symbol,
       };
     }
 
@@ -306,15 +309,17 @@ export class ClientsService {
       name === ClientNamesRate.PREMIUM ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE;
     const images =
       name === ClientNamesRate.PREMIUM ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE;
+    const gptModels = name === ClientNamesRate.PREMIUM ? gptModelsPremium : gptModelsBase;
 
     const expiresIn = expiresInMs(client.rate.expiresAt);
-    const remainDays = differenceInCalendarDays(new Date(), expiresIn);
+    const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
 
     const remainTokens = Math.floor((tokens / MONTH_IN_DAYS) * remainDays);
     const remainImages = Math.floor((images / MONTH_IN_DAYS) * remainDays);
 
     client.rate = {
       ...client.rate,
+      gptModels,
       gptTokens: remainTokens,
       images: remainImages,
       name,
@@ -374,6 +379,33 @@ export class ClientsService {
     return {
       messages: clientMessages.messages[messagesIndex] ?? [],
       images: clientImages.images[imagesIndex] ?? [],
+    };
+  }
+
+  async clientsMailing(clientsMailingDto: ClientsMailingDto) {
+    const { telegramIds, message } = clientsMailingDto;
+
+    const clients = await this.clientModel.find({ telegramId: { $in: telegramIds } }).exec();
+
+    for (const client of clients) {
+      const { telegramId, languageCode } = client;
+
+      const lang = getAvailableLocale(languageCode);
+      const translate = await getTranslation(message, lang);
+
+      const text = `${translate.text}\n\r\n\r<b>${this.i18n.t('locale.client.translated-by', {
+        lang,
+      })} <a href="${translate.provider.url}">${translate.provider.name}</a></b>`;
+
+      await this.telegramService.sendMessageToChat(telegramId, text, {
+        parsedMode: 'HTML',
+      });
+    }
+
+    return {
+      result: 'ok',
+      sentToClients: clients.map(({ telegramId }) => telegramId),
+      status: HttpStatusCode.Ok,
     };
   }
 }

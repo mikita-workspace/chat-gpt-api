@@ -1,15 +1,16 @@
 import {
   BadRequestException,
   ConflictException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { HttpStatusCode } from 'axios';
 import { Model } from 'mongoose';
+import { I18nService } from 'nestjs-i18n';
 import { Image as ImageAi } from 'openai/resources';
-import { isExpiredDate, removeFile } from 'src/common/utils';
+import { getTranslation } from 'src/common/helpers';
+import { getAvailableLocale, isExpiredDate, removeFile } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ClientsService } from '../clients/clients.service';
@@ -30,11 +31,12 @@ import { ChatCompletions, ImagesGenerate, Transcriptions } from './types';
 export class GptService {
   constructor(
     @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
-    @Inject(TelegramService) private readonly telegramService: TelegramService,
-    @Inject(OpenAiService) private readonly openAiService: OpenAiService,
-    @Inject(SberService) private readonly sberService: SberService,
-    @Inject(CloudinaryService) private readonly cloudinaryService: CloudinaryService,
     private readonly clientsService: ClientsService,
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly i18n: I18nService,
+    private readonly openAiService: OpenAiService,
+    private readonly sberService: SberService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   async createModel(createModelDto: CreateModelDto): Promise<GptModels> {
@@ -52,7 +54,9 @@ export class GptService {
   async findAll(getModelsDto: GetModelsDto): Promise<GptModels[]> {
     const { telegramId } = getModelsDto;
 
-    const { models: clientModels } = await this.clientsService.availability(telegramId);
+    const {
+      rate: { gptModels: clientModels },
+    } = await this.clientsService.availability(telegramId);
 
     return this.gptModels.find({ model: { $in: clientModels } }).exec();
   }
@@ -75,7 +79,7 @@ export class GptService {
         throw new NotFoundException(`${model} not found`);
       }
 
-      if (model === ModelGPT.GPT_3_5_TURBO) {
+      if ([ModelGPT.GPT_3_5_TURBO, ModelGPT.GPT_4_TURBO].includes(model as ModelGPT)) {
         const completion = await this.openAiService.completions(messages, { model });
 
         chatCompletionsResponse = {
@@ -111,6 +115,7 @@ export class GptService {
 
       return null;
     } catch (error) {
+      console.log(error);
       const statusCode = error?.response?.statusCode;
 
       if (statusCode && statusCode === HttpStatusCode.NotFound) {
@@ -174,7 +179,7 @@ export class GptService {
     } = generateImagesDto;
 
     try {
-      const { rate } = await this.clientsService.availability(telegramId);
+      const { rate, languageCode } = await this.clientsService.findOne(telegramId);
 
       if (!isExpiredDate(rate.expiresAt) && !rate.images) {
         throw new BadRequestException(`All images for the ${telegramId} have been used up`);
@@ -191,7 +196,7 @@ export class GptService {
 
       let imagesResponse: ImagesGenerate['images'] = [];
 
-      if (model === ModelImage.DALL_E_3) {
+      if ([ModelImage.DALL_E_2, ModelImage.DALL_E_3].includes(model as ModelImage)) {
         const images = await this.openAiService.images(prompt, amount, {
           model,
           responseFormat: useCloudinary ? 'b64_json' : 'url',
@@ -216,9 +221,9 @@ export class GptService {
           ? cloudImages
           : imagesFromAi.map((response) => ({
               bytes: null,
-              height: 1024,
+              height: model === ModelImage.DALL_E_3 ? 1024 : 256,
               url: response.url,
-              width: 1024,
+              width: model === ModelImage.DALL_E_3 ? 1024 : 256,
             }));
 
         const revisedPrompt = imagesFromAi[0].revised_prompt;
@@ -233,10 +238,19 @@ export class GptService {
           usedImages: imagesFromAi.length,
         });
 
+        const lang = getAvailableLocale(languageCode);
+        const translate = revisedPrompt ? await getTranslation(revisedPrompt, lang) : '';
+
+        const clientRevisedPrompt = translate
+          ? `${translate.text}\n\r\n\r<b>${this.i18n.t('locale.client.translated-by', {
+              lang,
+            })} <a href="${translate.provider.url}">${translate.provider.name}</a></b>`
+          : '';
+
         return {
           clientRate,
           images: imagesResponse,
-          revisedPrompt,
+          revisedPrompt: clientRevisedPrompt,
         };
       }
 

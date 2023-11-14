@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { LanguageCodes, MONTH_IN_DAYS } from 'src/common/constants';
+import { LocaleCodes, MONTH_IN_DAYS } from 'src/common/constants';
 import { getTimestampPlusDays, getTimestampUnix } from 'src/common/utils';
-import { ModelGPT, ModelImage, ModelSpeech } from 'src/modules/gpt/constants';
+import { gptModelsBase } from 'src/modules/gpt/constants';
 
 import { ClientImagesRate, ClientNamesRate, ClientTokensRate } from '../constants';
 import { ClientRate } from '../types';
@@ -26,13 +26,14 @@ export class Client {
     lastname: string;
   };
 
-  @Prop({ type: String, default: LanguageCodes.ENGLISH, required: true })
+  @Prop({ type: String, default: LocaleCodes.ENGLISH, required: true })
   languageCode: string;
 
   @Prop({
     type: Object,
     default: {
       expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
+      gptModels: gptModelsBase,
       gptTokens: ClientTokensRate.BASE,
       images: ClientImagesRate.BASE,
       name: ClientNamesRate.BASE,
@@ -58,13 +59,6 @@ export class Client {
     isBlocked: boolean;
     updatedAt: number;
   };
-
-  @Prop({
-    type: Array,
-    default: [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_3],
-    required: true,
-  })
-  gptModels: string[];
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: ClientMessages.name, required: true })
   messages: ClientMessages;

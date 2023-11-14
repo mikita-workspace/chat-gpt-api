@@ -1,6 +1,10 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateModelDto {
+  @IsNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  associated: string[];
   @IsNotEmpty()
   @IsString()
   readonly model: string;

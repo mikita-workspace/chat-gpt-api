@@ -7,6 +7,8 @@ export type GptModelsDocument = HydratedDocument<GptModels>;
 
 @Schema({ versionKey: false })
 export class GptModels {
+  @Prop({ type: Array, required: true })
+  associated: string[];
   @Prop({ type: String, unique: true, required: true })
   model: string;
   @Prop({ type: String, required: true })

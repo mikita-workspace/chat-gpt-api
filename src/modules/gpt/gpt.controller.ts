@@ -1,4 +1,4 @@
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import {
   Body,
   Controller,
@@ -8,7 +8,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { TTL_CONFIG_CACHE_MS } from 'src/common/constants';
 import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminRoles } from '../admins/constants';
@@ -34,7 +33,6 @@ export class GptController {
     return this.gptService.createModel(createModelDto);
   }
 
-  @CacheTTL(TTL_CONFIG_CACHE_MS)
   @Get('models')
   async findAll(@Body() getModelsDto: GetModelsDto) {
     return this.gptService.findAll(getModelsDto);

@@ -22,6 +22,7 @@ import { ClientsService } from './clients.service';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
+import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientRateDto } from './dto/update-client-rate.dto';
 import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
@@ -81,14 +82,20 @@ export class ClientsController {
     return this.clientsService.setClientFeedback(feedbackClientDto);
   }
 
-  @Post('clientRate')
+  @Post('rate')
   async updateClientRate(@Body() { telegramId }: UpdateClientRateDto) {
     return this.clientsService.updateClientRate(telegramId, {});
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
-  @Post('clientRate/name')
+  @Post('rate/name')
   async updateClientRateName(@Body() updateClientRateNameDto: UpdateClientRateNameDto) {
     return this.clientsService.updateClientRateName(updateClientRateNameDto);
+  }
+
+  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @Post('mailing')
+  async clientsMailing(@Body() clientsMailingDto: ClientsMailingDto) {
+    return this.clientsService.clientsMailing(clientsMailingDto);
   }
 }

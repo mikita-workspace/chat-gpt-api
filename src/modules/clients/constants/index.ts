@@ -1,11 +1,11 @@
 export enum ClientTokensRate {
   BASE = 32768,
-  PREMIUM = 131072,
+  PREMIUM = 98304,
 }
 
 export enum ClientImagesRate {
   BASE = 10,
-  PREMIUM = 30,
+  PREMIUM = 20,
 }
 
 export enum ClientNamesRate {

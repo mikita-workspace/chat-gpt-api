@@ -26,6 +26,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AdminRoles } from '../admins/constants';
+import { gptModelsBase, gptModelsPremium } from '../gpt/constants';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   ClientFeedback,
@@ -267,8 +268,8 @@ export class ClientsService {
 
     if (isExpiredDate(client.rate.expiresAt)) {
       client.rate = {
+        ...client.rate,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
-        gptModels: client.rate.gptModels,
         gptTokens: Math.max(
           isPremiumClient ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE - usedTokens,
           0,
@@ -277,17 +278,12 @@ export class ClientsService {
           isPremiumClient ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE - usedImages,
           0,
         ),
-        name: client.rate.name,
-        symbol: client.rate.symbol,
       };
     } else {
       client.rate = {
-        expiresAt: client.rate.expiresAt,
-        gptModels: client.rate.gptModels,
+        ...client.rate,
         gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
         images: Math.max(client.rate.images - usedImages, 0),
-        name: client.rate.name,
-        symbol: client.rate.symbol,
       };
     }
 
@@ -313,15 +309,17 @@ export class ClientsService {
       name === ClientNamesRate.PREMIUM ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE;
     const images =
       name === ClientNamesRate.PREMIUM ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE;
+    const gptModels = name === ClientNamesRate.PREMIUM ? gptModelsPremium : gptModelsBase;
 
     const expiresIn = expiresInMs(client.rate.expiresAt);
-    const remainDays = differenceInCalendarDays(new Date(), expiresIn);
+    const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
 
     const remainTokens = Math.floor((tokens / MONTH_IN_DAYS) * remainDays);
     const remainImages = Math.floor((images / MONTH_IN_DAYS) * remainDays);
 
     client.rate = {
       ...client.rate,
+      gptModels,
       gptTokens: remainTokens,
       images: remainImages,
       name,

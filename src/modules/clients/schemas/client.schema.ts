@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import { LocaleCodes, MONTH_IN_DAYS } from 'src/common/constants';
 import { getTimestampPlusDays, getTimestampUnix } from 'src/common/utils';
-import { ModelGPT, ModelImage, ModelSpeech } from 'src/modules/gpt/constants';
+import { gptModelsBase } from 'src/modules/gpt/constants';
 
 import { ClientImagesRate, ClientNamesRate, ClientTokensRate } from '../constants';
 import { ClientRate } from '../types';
@@ -33,7 +33,7 @@ export class Client {
     type: Object,
     default: {
       expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
-      gptModels: [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_2],
+      gptModels: gptModelsBase,
       gptTokens: ClientTokensRate.BASE,
       images: ClientImagesRate.BASE,
       name: ClientNamesRate.BASE,

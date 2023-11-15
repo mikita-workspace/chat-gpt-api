@@ -1,17 +1,15 @@
-import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsObject, IsOptional } from 'class-validator';
 
 export class CreateClientDto {
   @IsNotEmpty()
   @IsNumber()
   readonly telegramId: number;
-  @IsNotEmpty()
-  @IsString()
-  readonly languageCode: string;
   @IsOptional()
   @IsObject()
   readonly metadata: {
     username?: string;
     firstname?: string;
     lastname?: string;
+    languageCode: string;
   };
 }

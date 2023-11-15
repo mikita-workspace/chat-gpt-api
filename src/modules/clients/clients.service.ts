@@ -64,7 +64,7 @@ export class ClientsService {
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
-    const { telegramId, languageCode, metadata } = createClientDto;
+    const { telegramId, metadata } = createClientDto;
 
     const client = await this.clientModel.findOne({ telegramId }).exec();
 
@@ -82,7 +82,7 @@ export class ClientsService {
       clientImagesId: uuidv4(),
     });
 
-    const newClient = new this.clientModel({ languageCode, telegramId, metadata });
+    const newClient = new this.clientModel({ telegramId, metadata });
 
     newClient.set('messages', newClientMessages._id);
     newClient.set('images', newClientImages._id);
@@ -91,9 +91,8 @@ export class ClientsService {
 
     return {
       createdAt: newClient.createdAt,
-      languageCode: newClient.languageCode,
-      telegramId: newClient.telegramId,
       metadata: newClient.metadata,
+      telegramId: newClient.telegramId,
     };
   }
 
@@ -200,7 +199,7 @@ export class ClientsService {
     await client.save();
 
     if (isApproved && enableNotification) {
-      const lang = getAvailableLocale(client.languageCode);
+      const lang = getAvailableLocale(client.metadata.languageCode);
 
       const message = this.i18n.t('locale.client.auth-approved', {
         args: { ttl: fromMsToMins(this.configService.get('cache.ttl')) },
@@ -439,7 +438,10 @@ export class ClientsService {
     const clients = await this.clientModel.find({ telegramId: { $in: telegramIds } }).exec();
 
     for (const client of clients) {
-      const { telegramId, languageCode } = client;
+      const {
+        telegramId,
+        metadata: { languageCode },
+      } = client;
 
       const lang = getAvailableLocale(languageCode);
       const translate = await getTranslation(message, lang);

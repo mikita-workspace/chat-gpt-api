@@ -178,7 +178,10 @@ export class GptService {
     } = generateImagesDto;
 
     try {
-      const { rate, languageCode } = await this.clientsService.findOne(telegramId);
+      const {
+        rate,
+        metadata: { languageCode },
+      } = await this.clientsService.findOne(telegramId);
 
       if (!isExpiredDate(rate.expiresAt) && !rate.images) {
         throw new BadRequestException(`All images for the ${telegramId} have been used up`);

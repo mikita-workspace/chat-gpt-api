@@ -27,8 +27,8 @@ export class Client {
   metadata: {
     firstname: string;
     languageCode: string;
-    lastname: string;
-    username: string;
+    lastname?: string;
+    username?: string;
   };
 
   @Prop({

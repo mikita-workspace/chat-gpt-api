@@ -26,6 +26,7 @@ import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientRateDto } from './dto/update-client-rate.dto';
 import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
+import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
 
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
@@ -91,6 +92,11 @@ export class ClientsController {
   @Post('rate')
   async updateClientRate(@Body() { telegramId }: UpdateClientRateDto) {
     return this.clientsService.updateClientRate(telegramId, {});
+  }
+
+  @Post('metadata')
+  async updateClientMetadata(@Body() updateClientMetadataDto: UpdateClientMetadataDto) {
+    return this.clientsService.updateClientMetadata(updateClientMetadataDto);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)

@@ -1,6 +1,6 @@
 {
   "client": {
-    "auth-approved": "Your account has been approved by the administrator. Changes will take effect within {ttl}.",
+    "auth-approved": "Your account has been approved by the administrator. Changes will take effect {expiresIn}.",
     "translated-by": "Translated by"
   }
 }

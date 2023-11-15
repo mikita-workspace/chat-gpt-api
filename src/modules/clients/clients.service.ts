@@ -18,10 +18,11 @@ import { MONTH_IN_DAYS } from 'src/common/constants';
 import { getTranslation } from 'src/common/helpers';
 import {
   copyObject,
+  expiresInFormat,
   expiresInMs,
-  fromMsToMins,
   getAvailableLocale,
   getTimestampPlusDays,
+  getTimestampPlusMilliseconds,
   getTimestampUnix,
   isBoolean,
   isExpiredDate,
@@ -49,6 +50,7 @@ import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
+import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
 import { Client, ClientImages, ClientMessages } from './schemas';
 
 @Injectable()
@@ -201,8 +203,13 @@ export class ClientsService {
     if (isApproved && enableNotification) {
       const lang = getAvailableLocale(client.metadata.languageCode);
 
+      const expiresIn = expiresInFormat(
+        getTimestampPlusMilliseconds(this.configService.get('cache.ttl')),
+        lang,
+      );
+
       const message = this.i18n.t('locale.client.auth-approved', {
-        args: { ttl: fromMsToMins(this.configService.get('cache.ttl')) },
+        args: { expiresIn },
         lang,
       });
 
@@ -309,6 +316,25 @@ export class ClientsService {
     await client.save();
 
     return client.rate;
+  }
+
+  async updateClientMetadata(updateClientMetadataDto: UpdateClientMetadataDto) {
+    const { telegramId, metadata } = updateClientMetadataDto;
+
+    const client = await this.clientModel.findOne({ telegramId }).exec();
+
+    if (!client) {
+      throw new NotFoundException(`${telegramId} not found`);
+    }
+
+    client.metadata = {
+      ...client.metadata,
+      ...metadata,
+    };
+
+    await client.save();
+
+    return client.metadata;
   }
 
   async updateClientRateName(updateClientRateNameDto: UpdateClientRateNameDto) {

@@ -18,6 +18,9 @@ export const configuration = () => ({
     chatToken: process.env.GIGA_CHAT_TOKEN || '',
     speechToken: process.env.SALUTE_SPEECH_TOKEN || '',
   },
+  slack: {
+    token: process.env.SLACK_TOKEN || '',
+  },
   github: {
     apiRepo: process.env.GITHUB_REPO_API || '',
     clientRepo: process.env.GITHUB_REPO_CLIENT || '',

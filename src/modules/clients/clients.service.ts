@@ -36,6 +36,9 @@ import {
   gptModelsPremium,
   gptModelsPromo,
 } from '../gpt/constants';
+import { ChannelIds } from '../slack/constants';
+import { SlackService } from '../slack/slack.service';
+import { newClientTemplate } from '../slack/templates';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   ClientFeedback,
@@ -60,9 +63,10 @@ export class ClientsService {
     @InjectModel(Client.name) private readonly clientModel: Model<Client>,
     @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
-    private readonly telegramService: TelegramService,
-    private readonly i18n: I18nService,
     private readonly configService: ConfigService,
+    private readonly i18n: I18nService,
+    private readonly slackService: SlackService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
@@ -88,6 +92,8 @@ export class ClientsService {
 
     newClient.set('messages', newClientMessages._id);
     newClient.set('images', newClientImages._id);
+
+    await this.slackService.sendCustomMessage(newClientTemplate(newClient), ChannelIds.NEW_CLIENTS);
 
     await newClient.save();
 

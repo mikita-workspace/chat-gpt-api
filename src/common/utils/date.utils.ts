@@ -4,6 +4,7 @@ import {
   addSeconds,
   compareAsc,
   differenceInMilliseconds,
+  format,
   formatDistance,
   fromUnixTime,
   getUnixTime,
@@ -62,4 +63,10 @@ export const expiresInFormat = (expiredAt: number, locale = 'en') => {
     addSuffix: true,
     locale: clientLocale,
   });
+};
+
+export const formatDate = (date: number, template: string, locale = 'en') => {
+  const clientLocale = convertLocale(locale);
+
+  return format(fromUnixTime(date), template, { locale: clientLocale });
 };

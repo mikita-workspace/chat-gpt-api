@@ -14,6 +14,7 @@ import { GithubModule } from 'src/modules/github/github.module';
 import { GptModule } from 'src/modules/gpt/gpt.module';
 import { OpenAiModule } from 'src/modules/openai/openai.module';
 import { SberModule } from 'src/modules/sber/sber.module';
+import { SlackModule } from 'src/modules/slack/slack.module';
 import { TelegramModule } from 'src/modules/telegram/telegram.module';
 
 import { AppController } from './app.controller';
@@ -51,6 +52,7 @@ import { AppService } from './app.service';
     MongoDBModule,
     OpenAiModule,
     SberModule,
+    SlackModule,
     TelegramModule,
   ],
   controllers: [AppController],

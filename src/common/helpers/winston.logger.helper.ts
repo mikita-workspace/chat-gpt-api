@@ -1,9 +1,9 @@
 import { createLogger, format, transports } from 'winston';
+// NOTE: `winston-slack-webhook-transport` packages does not support `import`
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const SlackHook = require('winston-slack-webhook-transport');
 
-import { DATE_FORMAT } from '../constants';
-import { formatDate, getTimestampUnix } from '../utils';
+import { apiErrorPayload } from 'src/modules/slack/payloads';
 
 const customFormat = format.printf((info) => {
   const { timestamp, level, message, ...args } = info;
@@ -47,72 +47,7 @@ const prodLogger = {
     new SlackHook({
       level: 'error',
       webhookUrl: process.env.SLACK_WEBHOOK,
-      formatter: (info) => ({
-        text: 'API Error',
-        attachments: [
-          {
-            color: '#f44336',
-            blocks: [
-              {
-                type: 'section',
-                text: {
-                  type: 'mrkdwn',
-                  text: `*Level:*\n${info.level.toUpperCase()}\n*Source:*\n${
-                    info.context
-                  }\n\n*Happened at:*\n${formatDate(
-                    getTimestampUnix(info.timestamp),
-                    DATE_FORMAT,
-                  )}`,
-                },
-              },
-              {
-                type: 'divider',
-              },
-              {
-                type: 'rich_text',
-                elements: [
-                  {
-                    type: 'rich_text_section',
-                    elements: [
-                      {
-                        type: 'text',
-                        text: 'Message:',
-                        style: {
-                          bold: true,
-                        },
-                      },
-                      {
-                        type: 'text',
-                        text: `\n${info.message}\n\n`,
-                      },
-                      {
-                        type: 'text',
-                        text: 'Stack:',
-                        style: {
-                          bold: true,
-                        },
-                      },
-                      {
-                        type: 'text',
-                        text: `\n${JSON.stringify(info.stack)}`,
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: '*New API Error*',
-            },
-          },
-        ],
-      }),
+      formatter: (error: any) => apiErrorPayload(error),
     }),
   ],
 };

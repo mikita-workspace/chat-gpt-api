@@ -38,7 +38,7 @@ export class AdminsController {
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
   @Get()
   async findAll() {
-    return this.adminsService.findAll();
+    return this.adminsService.findAll({});
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)

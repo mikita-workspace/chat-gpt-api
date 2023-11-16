@@ -43,13 +43,19 @@ export class ClientsController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Req() req: RequestWithAdmin) {
-    return this.clientsService.findAll(req.admin.role);
+    const filter = req.admin.role === AdminRoles.MODERATOR ? { 'state.isApproved': true } : {};
+
+    return this.clientsService.findAll(filter);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
   @Get('unauthorized')
   async findUnauthorized() {
-    return this.clientsService.findUnauthorized();
+    const filter = {
+      'state.isApproved': false,
+    };
+
+    return this.clientsService.findAll(filter);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -12,7 +12,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
 import { differenceInCalendarDays } from 'date-fns';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 import { MONTH_IN_DAYS } from 'src/common/constants';
@@ -112,29 +112,16 @@ export class ClientsService {
     };
   }
 
-  async findAll(role: `${AdminRoles}`): Promise<Client[]> {
-    const filter = role === AdminRoles.MODERATOR ? { 'state.isApproved': true } : {};
-
-    return this.clientModel.find(filter).exec();
+  async findAll(filter: FilterQuery<Client>, projection: string | null = null) {
+    return this.clientModel.find(filter, projection).exec();
   }
 
-  async findUnauthorized(projection: string | null = null) {
-    return this.clientModel
-      .find(
-        {
-          'state.isApproved': false,
-        },
-        projection,
-      )
-      .exec();
-  }
-
-  async findOne(telegramId: number): Promise<Client> {
+  async findOne(telegramId: number, projection: string | null = null) {
     if (Number.isNaN(telegramId)) {
       throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
-    const client = await this.clientModel.findOne({ telegramId }).exec();
+    const client = await this.clientModel.findOne({ telegramId }, projection).exec();
 
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
@@ -160,15 +147,7 @@ export class ClientsService {
   }
 
   async remove(telegramId: number) {
-    if (Number.isNaN(telegramId)) {
-      throw new BadRequestException('The Telegram ID does not match the numeric type');
-    }
-
     const client = await this.clientModel.findOneAndDelete({ telegramId }, { new: true }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
 
     await this.clientMessagesModel.deleteOne({ telegramId });
     await this.clientImagesModel.deleteOne({ telegramId });
@@ -186,15 +165,7 @@ export class ClientsService {
   }
 
   async availability(telegramId: number) {
-    if (Number.isNaN(telegramId)) {
-      throw new BadRequestException('The Telegram ID does not match the numeric type');
-    }
-
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'rate state');
 
     return { rate: client.rate, state: client.state };
   }
@@ -208,11 +179,7 @@ export class ClientsService {
       enableNotification = false,
     } = changeStateClientDto;
 
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'state metadata');
 
     client.state = {
       blockReason,
@@ -307,11 +274,7 @@ export class ClientsService {
     telegramId: number,
     { usedTokens = 0, usedImages = 0 }: { usedTokens?: number; usedImages?: number },
   ) {
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'rate');
 
     const isPremiumClient = client.rate.name === ClientNamesRate.PREMIUM;
 
@@ -347,11 +310,7 @@ export class ClientsService {
   async updateClientMetadata(updateClientMetadataDto: UpdateClientMetadataDto) {
     const { telegramId, metadata } = updateClientMetadataDto;
 
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'metadata');
 
     client.metadata = {
       ...client.metadata,
@@ -366,11 +325,7 @@ export class ClientsService {
   async updateClientRateName(updateClientRateNameDto: UpdateClientRateNameDto) {
     const { telegramId, name } = updateClientRateNameDto;
 
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'rate');
 
     if (client.rate.name === name) {
       return client.rate;
@@ -487,7 +442,8 @@ export class ClientsService {
   async clientsMailing(clientsMailingDto: ClientsMailingDto) {
     const { telegramIds, message } = clientsMailingDto;
 
-    const clients = await this.clientModel.find({ telegramId: { $in: telegramIds } }).exec();
+    const filter = { telegramId: { $in: telegramIds } };
+    const clients = await this.findAll(filter, 'telegramId metadata');
 
     for (const client of clients) {
       const {
@@ -517,7 +473,10 @@ export class ClientsService {
   // NOTE: Unauthorized clients will be deleted from DB every 24 hours
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleCronRemoveClients() {
-    const unauthorizedClients = await this.findUnauthorized('telegramId');
+    const filter = {
+      'state.isApproved': false,
+    };
+    const unauthorizedClients = await this.findAll(filter, 'telegramId');
 
     if (unauthorizedClients.length) {
       const ids = unauthorizedClients.map((client) => client.telegramId);

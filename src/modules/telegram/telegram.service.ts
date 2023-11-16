@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import { getAudioDurationInSeconds } from 'get-audio-duration';
@@ -16,6 +16,7 @@ export class TelegramService {
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly logger: Logger,
   ) {
     this.commonUrl = `${TELEGRAM_API}/bot${this.configService.get('telegram.token')}`;
     this.fileUrl = `${TELEGRAM_API}/file/bot${this.configService.get('telegram.token')}`;
@@ -25,7 +26,7 @@ export class TelegramService {
     telegramId: number,
     message: string,
     options: { parsedMode?: 'HTML' | 'Markdown' },
-  ): Promise<void> {
+  ) {
     const url = `${this.commonUrl}/sendMessage`;
 
     await firstValueFrom(
@@ -42,6 +43,11 @@ export class TelegramService {
             throw new BadRequestException(error.response.data);
           }),
         ),
+    );
+
+    this.logger.log(
+      `Telegram message ${message} has been sent to ${telegramId}.`,
+      'src/modules/telegram/telegram.service.ts',
     );
   }
 
@@ -70,6 +76,8 @@ export class TelegramService {
       ),
     );
 
+    this.logger.log(`Webhook ${host} was set`, 'src/modules/telegram/telegram.service.ts');
+
     return data;
   }
 
@@ -83,6 +91,8 @@ export class TelegramService {
         }),
       ),
     );
+
+    this.logger.log(`Webhook was removed`, 'src/modules/telegram/telegram.service.ts');
 
     return data;
   }

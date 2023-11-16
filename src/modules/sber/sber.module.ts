@@ -1,5 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { SberService } from './sber.service';
@@ -16,7 +16,7 @@ import { SberService } from './sber.service';
     }),
     ConfigModule,
   ],
-  providers: [SberService],
+  providers: [SberService, Logger],
   exports: [SberService],
 })
 export class SberModule {}

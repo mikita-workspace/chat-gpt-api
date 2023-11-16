@@ -1,15 +1,5 @@
 import { CacheInterceptor } from '@nestjs/cache-manager';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Post,
-  UseFilters,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
-import { HttpExceptionFilter } from 'src/common/exceptions';
+import { Body, Controller, Delete, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 
 import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
@@ -17,7 +7,6 @@ import { RolesAuthGuard } from '../auth/guard';
 import { SetWebhookDto } from './dto/set-webhook.dto';
 import { TelegramService } from './telegram.service';
 
-@UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
 @UseInterceptors(CacheInterceptor)
 @Controller('api/telegram')

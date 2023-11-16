@@ -7,11 +7,9 @@ import {
   Param,
   Patch,
   Post,
-  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { HttpExceptionFilter } from 'src/common/exceptions';
 import { RolesAuth } from 'src/modules/auth/decorators';
 import { RolesAuthGuard } from 'src/modules/auth/guard';
 
@@ -22,7 +20,6 @@ import { ChangeStateAdminDto } from './dto/change-state-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 
-@UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
 @UseInterceptors(CacheInterceptor)
 @Controller('api/admins')

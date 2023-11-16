@@ -38,8 +38,8 @@ import {
   gptModelsPromo,
 } from '../gpt/constants';
 import { ChannelIds } from '../slack/constants';
+import { newClientPayload } from '../slack/payloads';
 import { SlackService } from '../slack/slack.service';
-import { newClientTemplate } from '../slack/templates';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   ClientFeedback,
@@ -96,9 +96,9 @@ export class ClientsService {
 
     const [slackMessage, slackBlocks] = [
       `${newClient.metadata.firstname}${
-        ' ' + newClient.metadata?.lastname || ''
+        newClient.metadata?.lastname ? ` ${newClient.metadata?.lastname}` : ''
       } is awaiting approval`,
-      newClientTemplate(newClient),
+      newClientPayload(newClient),
     ];
 
     await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelIds.NEW_CLIENTS);

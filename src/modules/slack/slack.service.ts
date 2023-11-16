@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatPostMessageArguments, ErrorCode, WebClient } from '@slack/web-api';
 
@@ -6,7 +6,10 @@ import { ChatPostMessageArguments, ErrorCode, WebClient } from '@slack/web-api';
 export class SlackService {
   private slackClient: WebClient;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logger: Logger,
+  ) {
     this.slackClient = new WebClient(configService.get('slack.token'));
   }
 
@@ -16,6 +19,11 @@ export class SlackService {
         channel,
         text,
       });
+
+      this.logger.log(
+        `Slack message ${text} has been sent to ${channel}.`,
+        'src/modules/slack/slack.service.ts',
+      );
 
       return data;
     } catch (error) {
@@ -27,15 +35,23 @@ export class SlackService {
 
   async sendCustomMessage(
     text: string,
-    blocks: ChatPostMessageArguments['blocks'],
-    channelId: string,
+    payload: {
+      attachments: ChatPostMessageArguments['attachments'];
+      blocks: ChatPostMessageArguments['blocks'];
+    },
+    channel: string,
   ) {
     try {
       const data = await this.slackClient.chat.postMessage({
         text,
-        channel: channelId,
-        blocks,
+        channel,
+        ...payload,
       });
+
+      this.logger.log(
+        `Slack message ${text} has been sent to ${channel}.`,
+        'src/modules/slack/slack.service.ts',
+      );
 
       return data;
     } catch (error) {

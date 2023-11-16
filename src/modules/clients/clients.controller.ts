@@ -8,11 +8,9 @@ import {
   Patch,
   Post,
   Req,
-  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
@@ -28,7 +26,6 @@ import { UpdateClientRateDto } from './dto/update-client-rate.dto';
 import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
 import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
 
-@UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
 @UseInterceptors(CacheInterceptor)
 @Controller('api/clients')

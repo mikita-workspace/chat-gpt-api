@@ -1,9 +1,6 @@
-import { createLogger, format, transports } from 'winston';
-// NOTE: `winston-slack-webhook-transport` packages does not support `import`
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const SlackHook = require('winston-slack-webhook-transport');
-
 import { apiErrorPayload } from 'src/modules/slack/payloads';
+import { createLogger, format, transports } from 'winston';
+import * as SlackHook from 'winston-slack-webhook-transport';
 
 const customFormat = format.printf((info) => {
   const { timestamp, level, message, ...args } = info;

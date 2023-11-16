@@ -1,14 +1,12 @@
-import { LocaleCodes } from '../constants';
+import * as Translate from 'translate-google';
 
-// NOTE: `translate-google` packages does not support `import`
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const translate = require('translate-google');
+import { LocaleCodes } from '../constants';
 
 export const getTranslation = async (
   text: string,
   to: `${LocaleCodes}` = LocaleCodes.ENGLISH,
 ): Promise<{ text: string; provider: { name: string; url: string } }> => {
-  const translatedText = await translate(text, { to });
+  const translatedText = await Translate(text, { to });
 
   return {
     text: translatedText,

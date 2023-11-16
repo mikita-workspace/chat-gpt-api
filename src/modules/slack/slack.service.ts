@@ -25,10 +25,14 @@ export class SlackService {
     }
   }
 
-  async sendCustomMessage(blocks: ChatPostMessageArguments['blocks'], channelId: string) {
+  async sendCustomMessage(
+    text: string,
+    blocks: ChatPostMessageArguments['blocks'],
+    channelId: string,
+  ) {
     try {
       const data = await this.slackClient.chat.postMessage({
-        text: this.configService.get('api.name'),
+        text,
         channel: channelId,
         blocks,
       });

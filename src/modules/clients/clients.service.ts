@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
 import { differenceInCalendarDays } from 'date-fns';
@@ -93,7 +94,14 @@ export class ClientsService {
     newClient.set('messages', newClientMessages._id);
     newClient.set('images', newClientImages._id);
 
-    await this.slackService.sendCustomMessage(newClientTemplate(newClient), ChannelIds.NEW_CLIENTS);
+    const [slackMessage, slackBlocks] = [
+      `${newClient.metadata.firstname}${
+        ' ' + newClient.metadata?.lastname || ''
+      } is awaiting approval`,
+      newClientTemplate(newClient),
+    ];
+
+    await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelIds.NEW_CLIENTS);
 
     await newClient.save();
 
@@ -110,11 +118,14 @@ export class ClientsService {
     return this.clientModel.find(filter).exec();
   }
 
-  async findUnauthorized() {
+  async findUnauthorized(projection: string | null = null) {
     return this.clientModel
-      .find({
-        'state.isApproved': false,
-      })
+      .find(
+        {
+          'state.isApproved': false,
+        },
+        projection,
+      )
       .exec();
   }
 
@@ -163,6 +174,15 @@ export class ClientsService {
     await this.clientImagesModel.deleteOne({ telegramId });
 
     return client;
+  }
+
+  async removeMultiple(telegramIds: number[]) {
+    const clients = await this.clientModel.deleteMany({ telegramId: { $in: telegramIds } });
+
+    await this.clientMessagesModel.deleteMany({ telegramId: { $in: telegramIds } });
+    await this.clientImagesModel.deleteMany({ telegramId: { $in: telegramIds } });
+
+    return clients;
   }
 
   async availability(telegramId: number) {
@@ -492,5 +512,21 @@ export class ClientsService {
       sentToClients: clients.map(({ telegramId }) => telegramId),
       status: HttpStatusCode.Ok,
     };
+  }
+
+  // NOTE: Unauthorized clients will be deleted from DB every 24 hours
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleCronRemoveClients() {
+    const unauthorizedClients = await this.findUnauthorized('telegramId');
+
+    if (unauthorizedClients.length) {
+      const ids = unauthorizedClients.map((client) => client.telegramId);
+
+      await this.removeMultiple(ids);
+
+      return ids;
+    }
+
+    return [];
   }
 }

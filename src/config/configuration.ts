@@ -40,7 +40,7 @@ export const configuration = () => ({
   },
   http: {
     maxRedirects: parseInt(process.env.HTTP_MAX_REDIRECTS, 10) || 5,
-    timeout: parseInt(process.env.HTTP_TIMEOUT, 10) || 30000,
+    timeout: parseInt(process.env.HTTP_TIMEOUT, 10) || 60000,
   },
   cache: {
     ttl: parseInt(process.env.CACHE_TTL, 10) || 60000,

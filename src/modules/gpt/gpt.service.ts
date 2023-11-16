@@ -207,7 +207,7 @@ export class GptService {
         imagesFromAi = images;
       }
 
-      if (imagesFromAi.length > 0) {
+      if (imagesFromAi.length) {
         if (useCloudinary) {
           const base64s = imagesFromAi.map(({ b64_json }) => b64_json);
 

@@ -14,12 +14,12 @@ async function bootstrap() {
 
   app.use(helmet());
 
+  app.useGlobalPipes(new ValidationPipe());
+
   app.enableVersioning({
     defaultVersion: API_VERSION_DEFAULT,
     type: VersioningType.URI,
   });
-
-  app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors();
 

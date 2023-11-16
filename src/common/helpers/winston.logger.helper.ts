@@ -1,6 +1,10 @@
 import { createLogger, format, transports } from 'winston';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const SlackHook = require('winston-slack-webhook-transport');
 
-// Custom log display format
+import { DATE_FORMAT } from '../constants';
+import { formatDate, getTimestampUnix } from '../utils';
+
 const customFormat = format.printf((info) => {
   const { timestamp, level, message, ...args } = info;
 
@@ -33,17 +37,82 @@ const devLogger = {
 
 // For Production environment
 const prodLogger = {
-  format: format.combine(
-    format.colorize(),
-    format.timestamp(),
-    format.errors({ stack: true }),
-    format.json(),
-  ),
+  format: format.combine(format.timestamp(), format.errors({ stack: true }), format.json()),
   transports: [
     new transports.File(options.file),
     new transports.File({
       filename: 'combine.log',
       level: 'info',
+    }),
+    new SlackHook({
+      level: 'error',
+      webhookUrl: process.env.SLACK_WEBHOOK,
+      formatter: (info) => ({
+        text: 'API Error',
+        attachments: [
+          {
+            color: '#f44336',
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: `*Level:*\n${info.level.toUpperCase()}\n*Source:*\n${
+                    info.context
+                  }\n\n*Happened at:*\n${formatDate(
+                    getTimestampUnix(info.timestamp),
+                    DATE_FORMAT,
+                  )}`,
+                },
+              },
+              {
+                type: 'divider',
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'text',
+                        text: 'Message:',
+                        style: {
+                          bold: true,
+                        },
+                      },
+                      {
+                        type: 'text',
+                        text: `\n${info.message}\n\n`,
+                      },
+                      {
+                        type: 'text',
+                        text: 'Stack:',
+                        style: {
+                          bold: true,
+                        },
+                      },
+                      {
+                        type: 'text',
+                        text: `\n${JSON.stringify(info.stack)}`,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: '*New API Error*',
+            },
+          },
+        ],
+      }),
     }),
   ],
 };

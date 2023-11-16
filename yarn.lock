@@ -6632,7 +6632,15 @@ windows-release@^4.0.0:
   dependencies:
     execa "^4.0.2"
 
-winston-transport@^4.5.0:
+winston-slack-webhook-transport@^2.3.3:
+  version "2.3.3"
+  resolved "https://registry.yarnpkg.com/winston-slack-webhook-transport/-/winston-slack-webhook-transport-2.3.3.tgz#5ef2b5d5bf807b91748ef0bf20b6c342eefb7502"
+  integrity sha512-2V+tCGRDVHDR6OuUvdmMzE0C+9GO0eKvuYBcbK9IuhcoY83CDeIBdcorYUHJlp8m9TSoyLv7hfT7UWvA8Ox54A==
+  dependencies:
+    axios "^1.6.1"
+    winston-transport "^4.6.0"
+
+winston-transport@^4.5.0, winston-transport@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/winston-transport/-/winston-transport-4.6.0.tgz#f1c1a665ad1b366df72199e27892721832a19e1b"
   integrity sha512-wbBA9PbPAHxKiygo7ub7BYRiKxms0tpfU2ljtWzb3SjRjv5yl6Ozuy/TkXf00HTAt+Uylo3gSkNwzc4ME0wiIg==

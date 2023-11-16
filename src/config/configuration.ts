@@ -20,6 +20,7 @@ export const configuration = () => ({
   },
   slack: {
     token: process.env.SLACK_TOKEN || '',
+    webhook: process.env.SLACK_WEBHOOK || '',
   },
   github: {
     apiRepo: process.env.GITHUB_REPO_API || '',

@@ -1,14 +1,5 @@
 import { CacheInterceptor, CacheKey } from '@nestjs/cache-manager';
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  UseFilters,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
-import { HttpExceptionFilter } from 'src/common/exceptions';
+import { Body, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 
 import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
@@ -21,7 +12,6 @@ import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptService } from './gpt.service';
 
-@UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
 @UseInterceptors(CacheInterceptor)
 @Controller('api/gpt')

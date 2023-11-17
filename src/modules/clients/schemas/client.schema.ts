@@ -19,15 +19,17 @@ export class Client {
   @Prop({ type: Number, default: getTimestampUnix(), required: true })
   createdAt: number;
 
-  @Prop({ type: Object, default: { username: '', firstname: '', lastname: '' }, required: true })
+  @Prop({
+    type: Object,
+    default: { username: '', firstname: '', lastname: '', languageCode: LocaleCodes.ENGLISH },
+    required: true,
+  })
   metadata: {
-    username: string;
     firstname: string;
-    lastname: string;
+    languageCode: string;
+    lastname?: string;
+    username?: string;
   };
-
-  @Prop({ type: String, default: LocaleCodes.ENGLISH, required: true })
-  languageCode: string;
 
   @Prop({
     type: Object,

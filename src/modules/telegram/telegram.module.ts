@@ -1,5 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
-import { forwardRef, Module } from '@nestjs/common';
+import { forwardRef, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthModule } from '../auth/auth.module';
@@ -20,7 +20,7 @@ import { TelegramService } from './telegram.service';
     ConfigModule,
   ],
   controllers: [TelegramController],
-  providers: [TelegramService],
+  providers: [TelegramService, Logger],
   exports: [TelegramService],
 })
 export class TelegramModule {}

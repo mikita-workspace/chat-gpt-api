@@ -8,11 +8,9 @@ import {
   Patch,
   Post,
   Req,
-  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { HttpExceptionFilter } from 'src/common/exceptions';
 
 import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
@@ -26,8 +24,8 @@ import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientRateDto } from './dto/update-client-rate.dto';
 import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
+import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
 
-@UseFilters(new HttpExceptionFilter())
 @UseGuards(RolesAuthGuard)
 @UseInterceptors(CacheInterceptor)
 @Controller('api/clients')
@@ -42,13 +40,19 @@ export class ClientsController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Req() req: RequestWithAdmin) {
-    return this.clientsService.findAll(req.admin.role);
+    const filter = req.admin.role === AdminRoles.MODERATOR ? { 'state.isApproved': true } : {};
+
+    return this.clientsService.findAll(filter);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
   @Get('unauthorized')
   async findUnauthorized() {
-    return this.clientsService.findUnauthorized();
+    const filter = {
+      'state.isApproved': false,
+    };
+
+    return this.clientsService.findAll(filter);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -91,6 +95,11 @@ export class ClientsController {
   @Post('rate')
   async updateClientRate(@Body() { telegramId }: UpdateClientRateDto) {
     return this.clientsService.updateClientRate(telegramId, {});
+  }
+
+  @Post('metadata')
+  async updateClientMetadata(@Body() updateClientMetadataDto: UpdateClientMetadataDto) {
+    return this.clientsService.updateClientMetadata(updateClientMetadataDto);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)

@@ -1,10 +1,8 @@
-import { Controller, Get, HttpStatus, Req, UseFilters } from '@nestjs/common';
-import { HttpExceptionFilter } from 'src/common/exceptions';
+import { Controller, Get, HttpStatus, Req } from '@nestjs/common';
 import { getTimestampUnix } from 'src/common/utils';
 
 import { AppService } from './app.service';
 
-@UseFilters(new HttpExceptionFilter())
 @Controller('api')
 export class AppController {
   constructor(private readonly appService: AppService) {}

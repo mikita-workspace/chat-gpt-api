@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
+import { SlackModule } from '../slack/slack.module';
 import { TelegramModule } from '../telegram/telegram.module';
 import { ClientsController } from './clients.controller';
 import { ClientsService } from './clients.service';
@@ -19,6 +20,7 @@ import { ClientMessages, ClientMessagesSchema } from './schemas/client-messages.
       { name: ClientImages.name, schema: ClientImagesSchema },
     ]),
     ConfigModule,
+    SlackModule,
     TelegramModule,
   ],
   controllers: [ClientsController],

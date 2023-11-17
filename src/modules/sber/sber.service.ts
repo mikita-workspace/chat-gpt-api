@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
@@ -28,6 +28,7 @@ export class SberService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly logger: Logger,
   ) {}
 
   private async getAccessToken({
@@ -100,6 +101,11 @@ export class SberService {
     );
 
     await this.cacheManager.set(cacheToken, data.access_token, expiresInMs(data.expires_at));
+
+    this.logger.log(
+      `Sber token is configured. Expires in ${data.expires_at} ms.`,
+      'src/modules/sber/sber.service.ts',
+    );
 
     return data.access_token;
   }

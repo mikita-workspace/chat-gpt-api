@@ -8,20 +8,22 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
 import { differenceInCalendarDays } from 'date-fns';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 import { MONTH_IN_DAYS } from 'src/common/constants';
 import { getTranslation } from 'src/common/helpers';
 import {
   copyObject,
+  expiresInFormat,
   expiresInMs,
-  fromMsToMins,
   getAvailableLocale,
   getTimestampPlusDays,
+  getTimestampPlusMilliseconds,
   getTimestampUnix,
   isBoolean,
   isExpiredDate,
@@ -35,6 +37,9 @@ import {
   gptModelsPremium,
   gptModelsPromo,
 } from '../gpt/constants';
+import { ChannelIds } from '../slack/constants';
+import { newClientPayload } from '../slack/payloads';
+import { SlackService } from '../slack/slack.service';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   ClientFeedback,
@@ -49,6 +54,7 @@ import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
+import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
 import { Client, ClientImages, ClientMessages } from './schemas';
 
 @Injectable()
@@ -58,13 +64,14 @@ export class ClientsService {
     @InjectModel(Client.name) private readonly clientModel: Model<Client>,
     @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
     @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
-    private readonly telegramService: TelegramService,
-    private readonly i18n: I18nService,
     private readonly configService: ConfigService,
+    private readonly i18n: I18nService,
+    private readonly slackService: SlackService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
-    const { telegramId, languageCode, metadata } = createClientDto;
+    const { telegramId, metadata } = createClientDto;
 
     const client = await this.clientModel.findOne({ telegramId }).exec();
 
@@ -82,41 +89,39 @@ export class ClientsService {
       clientImagesId: uuidv4(),
     });
 
-    const newClient = new this.clientModel({ languageCode, telegramId, metadata });
+    const newClient = new this.clientModel({ telegramId, metadata });
 
     newClient.set('messages', newClientMessages._id);
     newClient.set('images', newClientImages._id);
+
+    const [slackMessage, slackBlocks] = [
+      `${newClient.metadata.firstname}${
+        newClient.metadata?.lastname ? ` ${newClient.metadata?.lastname}` : ''
+      } is awaiting approval`,
+      newClientPayload(newClient),
+    ];
+
+    await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelIds.NEW_CLIENTS);
 
     await newClient.save();
 
     return {
       createdAt: newClient.createdAt,
-      languageCode: newClient.languageCode,
-      telegramId: newClient.telegramId,
       metadata: newClient.metadata,
+      telegramId: newClient.telegramId,
     };
   }
 
-  async findAll(role: `${AdminRoles}`): Promise<Client[]> {
-    const filter = role === AdminRoles.MODERATOR ? { 'state.isApproved': true } : {};
-
-    return this.clientModel.find(filter).exec();
+  async findAll(filter: FilterQuery<Client>, projection: string | null = null) {
+    return this.clientModel.find(filter, projection).exec();
   }
 
-  async findUnauthorized() {
-    return this.clientModel
-      .find({
-        'state.isApproved': false,
-      })
-      .exec();
-  }
-
-  async findOne(telegramId: number): Promise<Client> {
+  async findOne(telegramId: number, projection: string | null = null) {
     if (Number.isNaN(telegramId)) {
       throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
-    const client = await this.clientModel.findOne({ telegramId }).exec();
+    const client = await this.clientModel.findOne({ telegramId }, projection).exec();
 
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
@@ -142,15 +147,7 @@ export class ClientsService {
   }
 
   async remove(telegramId: number) {
-    if (Number.isNaN(telegramId)) {
-      throw new BadRequestException('The Telegram ID does not match the numeric type');
-    }
-
     const client = await this.clientModel.findOneAndDelete({ telegramId }, { new: true }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
 
     await this.clientMessagesModel.deleteOne({ telegramId });
     await this.clientImagesModel.deleteOne({ telegramId });
@@ -158,16 +155,17 @@ export class ClientsService {
     return client;
   }
 
+  async removeMultiple(telegramIds: number[]) {
+    const clients = await this.clientModel.deleteMany({ telegramId: { $in: telegramIds } });
+
+    await this.clientMessagesModel.deleteMany({ telegramId: { $in: telegramIds } });
+    await this.clientImagesModel.deleteMany({ telegramId: { $in: telegramIds } });
+
+    return clients;
+  }
+
   async availability(telegramId: number) {
-    if (Number.isNaN(telegramId)) {
-      throw new BadRequestException('The Telegram ID does not match the numeric type');
-    }
-
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'rate state');
 
     return { rate: client.rate, state: client.state };
   }
@@ -181,11 +179,7 @@ export class ClientsService {
       enableNotification = false,
     } = changeStateClientDto;
 
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'state metadata');
 
     client.state = {
       blockReason,
@@ -200,10 +194,15 @@ export class ClientsService {
     await client.save();
 
     if (isApproved && enableNotification) {
-      const lang = getAvailableLocale(client.languageCode);
+      const lang = getAvailableLocale(client.metadata.languageCode);
+
+      const expiresIn = expiresInFormat(
+        getTimestampPlusMilliseconds(this.configService.get('cache.ttl')),
+        lang,
+      );
 
       const message = this.i18n.t('locale.client.auth-approved', {
-        args: { ttl: fromMsToMins(this.configService.get('cache.ttl')) },
+        args: { expiresIn },
         lang,
       });
 
@@ -275,11 +274,7 @@ export class ClientsService {
     telegramId: number,
     { usedTokens = 0, usedImages = 0 }: { usedTokens?: number; usedImages?: number },
   ) {
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'rate');
 
     const isPremiumClient = client.rate.name === ClientNamesRate.PREMIUM;
 
@@ -312,14 +307,25 @@ export class ClientsService {
     return client.rate;
   }
 
+  async updateClientMetadata(updateClientMetadataDto: UpdateClientMetadataDto) {
+    const { telegramId, metadata } = updateClientMetadataDto;
+
+    const client = await this.findOne(telegramId, 'metadata');
+
+    client.metadata = {
+      ...client.metadata,
+      ...metadata,
+    };
+
+    await client.save();
+
+    return client.metadata;
+  }
+
   async updateClientRateName(updateClientRateNameDto: UpdateClientRateNameDto) {
     const { telegramId, name } = updateClientRateNameDto;
 
-    const client = await this.clientModel.findOne({ telegramId }).exec();
-
-    if (!client) {
-      throw new NotFoundException(`${telegramId} not found`);
-    }
+    const client = await this.findOne(telegramId, 'rate');
 
     if (client.rate.name === name) {
       return client.rate;
@@ -436,10 +442,14 @@ export class ClientsService {
   async clientsMailing(clientsMailingDto: ClientsMailingDto) {
     const { telegramIds, message } = clientsMailingDto;
 
-    const clients = await this.clientModel.find({ telegramId: { $in: telegramIds } }).exec();
+    const filter = { telegramId: { $in: telegramIds } };
+    const clients = await this.findAll(filter, 'telegramId metadata');
 
     for (const client of clients) {
-      const { telegramId, languageCode } = client;
+      const {
+        telegramId,
+        metadata: { languageCode },
+      } = client;
 
       const lang = getAvailableLocale(languageCode);
       const translate = await getTranslation(message, lang);
@@ -458,5 +468,24 @@ export class ClientsService {
       sentToClients: clients.map(({ telegramId }) => telegramId),
       status: HttpStatusCode.Ok,
     };
+  }
+
+  // NOTE: Unauthorized clients will be deleted from DB every 24 hours
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleCronRemoveClients() {
+    const filter = {
+      'state.isApproved': false,
+    };
+    const unauthorizedClients = await this.findAll(filter, 'telegramId');
+
+    if (unauthorizedClients.length) {
+      const ids = unauthorizedClients.map((client) => client.telegramId);
+
+      await this.removeMultiple(ids);
+
+      return ids;
+    }
+
+    return [];
   }
 }

@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { getTimestampUnix } from 'src/common/utils';
 
 import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
@@ -32,12 +32,12 @@ export class AdminsService {
     }).save();
   }
 
-  async findAll(): Promise<Admin[]> {
-    return this.adminModel.find().exec();
+  async findAll(filter: FilterQuery<Admin>, projection: string | null = null) {
+    return this.adminModel.find(filter, projection).exec();
   }
 
-  async findOne(adminId: string): Promise<Admin> {
-    const admin = await this.adminModel.findOne({ adminId }).exec();
+  async findOne(adminId: string, projection: string | null = null) {
+    const admin = await this.adminModel.findOne({ adminId }, projection).exec();
 
     if (!admin) {
       throw new NotFoundException(`${adminId} not found`);
@@ -46,8 +46,8 @@ export class AdminsService {
     return admin;
   }
 
-  async findOneByEmail(email: string): Promise<Admin> {
-    const admin = await this.adminModel.findOne({ email }).exec();
+  async findOneByEmail(email: string, projection: string | null = null): Promise<Admin> {
+    const admin = await this.adminModel.findOne({ email }, projection).exec();
 
     if (!admin) {
       throw new NotFoundException(`${email} not found`);
@@ -81,13 +81,11 @@ export class AdminsService {
   async changeRole(changeRoleAdminDto: ChangeRoleAdminDto) {
     const { adminId, role } = changeRoleAdminDto;
 
-    const admin = await this.adminModel
-      .findOneAndUpdate({ adminId }, { role }, { new: true })
-      .exec();
+    const admin = await this.findOne(adminId, 'role');
 
-    if (!admin) {
-      throw new NotFoundException(`${adminId} not found`);
-    }
+    admin.role = role;
+
+    await admin.save();
 
     return admin;
   }
@@ -95,23 +93,16 @@ export class AdminsService {
   async changeState(changeStateAdminDto: ChangeStateAdminDto) {
     const { adminId, blockReason = '', isBlocked } = changeStateAdminDto;
 
-    const admin = await this.adminModel
-      .findOneAndUpdate(
-        { adminId },
-        {
-          state: {
-            blockReason,
-            isBlocked,
-            updatedAt: getTimestampUnix(),
-          },
-        },
-        { new: true },
-      )
-      .exec();
+    const admin = await this.findOne(adminId, 'state');
 
-    if (!admin) {
-      throw new NotFoundException(`${adminId} not found`);
-    }
+    admin.state = {
+      ...admin.state,
+      blockReason,
+      isBlocked,
+      updatedAt: getTimestampUnix(),
+    };
+
+    await admin.save();
 
     return admin.state;
   }

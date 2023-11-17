@@ -178,7 +178,10 @@ export class GptService {
     } = generateImagesDto;
 
     try {
-      const { rate, languageCode } = await this.clientsService.findOne(telegramId);
+      const {
+        rate,
+        metadata: { languageCode },
+      } = await this.clientsService.findOne(telegramId);
 
       if (!isExpiredDate(rate.expiresAt) && !rate.images) {
         throw new BadRequestException(`All images for the ${telegramId} have been used up`);
@@ -204,7 +207,7 @@ export class GptService {
         imagesFromAi = images;
       }
 
-      if (imagesFromAi.length > 0) {
+      if (imagesFromAi.length) {
         if (useCloudinary) {
           const base64s = imagesFromAi.map(({ b64_json }) => b64_json);
 

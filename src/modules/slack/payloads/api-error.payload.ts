@@ -1,3 +1,4 @@
+import * as json2md from 'json2md';
 import { DATE_FORMAT } from 'src/common/constants';
 import { formatDate, getTimestampUnix } from 'src/common/utils';
 
@@ -13,7 +14,7 @@ export const apiErrorPayload = (error: any) => {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*Level:*\n${level.toUpperCase()}\n*Source:*\n${context}\n\n*Happened at:*\n${formatDate(
+              text: `*Level:*\n${level.toUpperCase()}\n\n*Source:*\n${context}\n\n*Happened at:*\n${formatDate(
                 getTimestampUnix(timestamp),
                 DATE_FORMAT,
               )}`,
@@ -23,36 +24,18 @@ export const apiErrorPayload = (error: any) => {
             type: 'divider',
           },
           {
-            type: 'rich_text',
-            elements: [
-              {
-                type: 'rich_text_section',
-                elements: [
-                  {
-                    type: 'text',
-                    text: 'Message:',
-                    style: {
-                      bold: true,
-                    },
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*Message:*\n${message}\n\n*Stack:*\n${json2md([
+                {
+                  code: {
+                    language: 'json',
+                    content: JSON.stringify(stack),
                   },
-                  {
-                    type: 'text',
-                    text: `\n${message}\n\n`,
-                  },
-                  {
-                    type: 'text',
-                    text: 'Stack:',
-                    style: {
-                      bold: true,
-                    },
-                  },
-                  {
-                    type: 'text',
-                    text: `\n${JSON.stringify(stack)}`,
-                  },
-                ],
-              },
-            ],
+                },
+              ])}`,
+            },
           },
         ],
       },
@@ -62,7 +45,7 @@ export const apiErrorPayload = (error: any) => {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `'*New Error ${process.env.API_NAME}*`,
+          text: `*New Error in ${process.env.API_NAME}*`,
         },
       },
     ],

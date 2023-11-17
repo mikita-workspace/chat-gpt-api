@@ -11,7 +11,7 @@ import { instance as WinstonInstance } from './common/helpers';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger({
-      instance: WinstonInstance,
+      instance: WinstonInstance({ slackWebhook: process.env.SLACK_WEBHOOK }),
     }),
   });
 

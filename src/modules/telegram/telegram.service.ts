@@ -46,7 +46,7 @@ export class TelegramService {
     );
 
     this.logger.log(
-      `Telegram message ${message} has been sent to ${telegramId}.`,
+      `Telegram message '${message}' has been sent to ${telegramId}.`,
       'src/modules/telegram/telegram.service.ts',
     );
   }
@@ -76,7 +76,7 @@ export class TelegramService {
       ),
     );
 
-    this.logger.log(`Webhook ${host} was set`, 'src/modules/telegram/telegram.service.ts');
+    this.logger.log(`Webhook '${host}' was set`, 'src/modules/telegram/telegram.service.ts');
 
     return data;
   }

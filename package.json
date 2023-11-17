@@ -1,6 +1,6 @@
 {
   "name": "chat-gpt-api",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "repository": "git@github.com:mikita-workspace/chat-gpt-api.git",
   "description": "NovaChat | GPT API",
   "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "cross-env NODE_ENV=production nest start",
     "start:dev": "cross-env NODE_ENV=development nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "cross-env NODE_ENV=production node dist/main",
@@ -34,7 +34,7 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/jwt": "^10.1.1",
     "@nestjs/mapped-types": "*",
-    "@nestjs/mongoose": "^10.0.1",
+    "@nestjs/mongoose": "^10.0.2",
     "@nestjs/passport": "^10.0.2",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^4.0.0",

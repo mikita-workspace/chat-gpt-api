@@ -62,10 +62,10 @@ export const apiErrorPayload = (error: any) => {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: '*New API Error*',
+          text: `'*New Error ${process.env.API_NAME}*`,
         },
       },
     ],
-    text: 'API Error',
+    text: `${process.env.API_NAME} Error`,
   };
 };

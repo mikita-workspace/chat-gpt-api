@@ -15,17 +15,21 @@ export class SlackService {
 
   async sendMessage(text: string, channel: string) {
     try {
-      const data = await this.slackClient.chat.postMessage({
-        channel,
-        text,
-      });
+      if (process.env.NODE_ENV === 'production') {
+        const data = await this.slackClient.chat.postMessage({
+          channel,
+          text,
+        });
 
-      this.logger.log(
-        `Slack message ${text} has been sent to ${channel}.`,
-        'src/modules/slack/slack.service.ts',
-      );
+        this.logger.log(
+          `Slack message ${text} has been sent to ${channel}.`,
+          'src/modules/slack/slack.service.ts',
+        );
 
-      return data;
+        return data;
+      }
+
+      return null;
     } catch (error) {
       if (error.code === ErrorCode.PlatformError) {
         throw new BadRequestException(error.message);
@@ -42,18 +46,22 @@ export class SlackService {
     channel: string,
   ) {
     try {
-      const data = await this.slackClient.chat.postMessage({
-        text,
-        channel,
-        ...payload,
-      });
+      if (process.env.NODE_ENV === 'production') {
+        const data = await this.slackClient.chat.postMessage({
+          text,
+          channel,
+          ...payload,
+        });
 
-      this.logger.log(
-        `Slack message ${text} has been sent to ${channel}.`,
-        'src/modules/slack/slack.service.ts',
-      );
+        this.logger.log(
+          `Slack message ${text} has been sent to ${channel}.`,
+          'src/modules/slack/slack.service.ts',
+        );
 
-      return data;
+        return data;
+      }
+
+      return null;
     } catch (error) {
       if (error.code === ErrorCode.PlatformError) {
         throw new BadRequestException(error.message);

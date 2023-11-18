@@ -18,18 +18,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message: string;
     };
 
-    this.logger.error(
-      'HttpExceptionFilter',
-      {
-        headers: request.headers,
-        body: request.body,
-        query: request.query,
-        params: request.params,
-        url: request.url,
-        error: exceptionResponse,
-      },
-      'src/common/exceptions/http-exception.filter.ts',
-    );
+    if (request.url.includes('api')) {
+      this.logger.error(
+        'HttpExceptionFilter',
+        {
+          headers: request.headers,
+          body: request.body,
+          query: request.query,
+          params: request.params,
+          url: request.url,
+          error: exceptionResponse,
+        },
+        'src/common/exceptions/http-exception.filter.ts',
+      );
+    }
 
     response.status(status).json({
       statusCode: status,

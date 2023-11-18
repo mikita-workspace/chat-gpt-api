@@ -36,7 +36,7 @@ export const configuration = () => ({
     },
   },
   jwt: {
-    accessExp: parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME, 10) || 60000,
+    accessExp: parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME, 10) || 3600,
     accessSecret: process.env.JWT_ACCESS_TOKEN_SECRET || '',
   },
   http: {

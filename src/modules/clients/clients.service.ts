@@ -328,8 +328,8 @@ export class ClientsService {
     return client.metadata;
   }
 
-  async updateClientAccountLevelName(updateClientRateNameDto: UpdateClientAccountLevelNameDto) {
-    const { telegramId, name } = updateClientRateNameDto;
+  async updateClientAccountLevelName(updateAccountLevelNameDto: UpdateClientAccountLevelNameDto) {
+    const { telegramId, name } = updateAccountLevelNameDto;
 
     const client = await this.findOne(telegramId, 'accountLevel');
 
@@ -339,7 +339,7 @@ export class ClientsService {
 
     await this.cacheManager.del(`${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`);
 
-    const clientRate = (() => {
+    const clientAccountLevel = (() => {
       if (name === ClientNamesLevel.PREMIUM) {
         return {
           images: ClientImagesLevel.PREMIUM,
@@ -368,7 +368,7 @@ export class ClientsService {
 
     if (name === ClientNamesLevel.PROMO) {
       client.accountLevel = {
-        ...clientRate,
+        ...clientAccountLevel,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 3),
         name,
       };
@@ -376,16 +376,16 @@ export class ClientsService {
       const expiresIn = expiresInMs(client.accountLevel.expiresAt);
       const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
 
-      const remainTokens = Math.floor((clientRate.gptTokens / MONTH_IN_DAYS) * remainDays);
-      const remainImages = Math.floor((clientRate.images / MONTH_IN_DAYS) * remainDays);
+      const remainTokens = Math.floor((clientAccountLevel.gptTokens / MONTH_IN_DAYS) * remainDays);
+      const remainImages = Math.floor((clientAccountLevel.images / MONTH_IN_DAYS) * remainDays);
 
       client.accountLevel = {
         ...client.accountLevel,
-        gptModels: clientRate.gptModels,
+        gptModels: clientAccountLevel.gptModels,
         gptTokens: remainTokens,
         images: remainImages,
         name,
-        symbol: clientRate.symbol,
+        symbol: clientAccountLevel.symbol,
       };
     }
 

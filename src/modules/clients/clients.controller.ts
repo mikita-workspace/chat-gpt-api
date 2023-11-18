@@ -105,9 +105,9 @@ export class ClientsController {
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
   @Post('accountLevel/name')
   async updateClientClientAccountLevelName(
-    @Body() updateClientRateNameDto: UpdateClientAccountLevelNameDto,
+    @Body() updateClientAccountLevelNameDto: UpdateClientAccountLevelNameDto,
   ) {
-    return this.clientsService.updateClientAccountLevelName(updateClientRateNameDto);
+    return this.clientsService.updateClientAccountLevelName(updateClientAccountLevelNameDto);
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN)

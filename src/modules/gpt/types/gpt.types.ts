@@ -2,7 +2,7 @@ import { ChatCompletionMessage, CompletionUsage } from 'openai/resources';
 import { ClientAccountLevel } from 'src/modules/clients/types';
 
 export type ChatCompletions = {
-  clientRate: ClientAccountLevel;
+  clientAccountLevel: ClientAccountLevel;
   message: ChatCompletionMessage;
   usage: CompletionUsage;
 };
@@ -10,7 +10,7 @@ export type ChatCompletions = {
 export type Transcriptions = { text: string };
 
 export type ImagesGenerate = {
-  clientRate: ClientAccountLevel;
+  clientAccountLevel: ClientAccountLevel;
   images: {
     bytes: number | null;
     height: number;

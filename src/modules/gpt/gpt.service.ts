@@ -122,11 +122,11 @@ export class GptService {
           assistantMessage,
         ]);
 
-        const clientRate = await this.clientsService.updateClientAccountLevel(telegramId, {
+        const clientAccountLevel = await this.clientsService.updateClientAccountLevel(telegramId, {
           usedTokens: chatCompletionsResponse.usage.total_tokens,
         });
 
-        return { ...chatCompletionsResponse, clientRate };
+        return { ...chatCompletionsResponse, clientAccountLevel };
       }
 
       return null;
@@ -246,13 +246,15 @@ export class GptService {
 
         const revisedPrompt = imagesFromAi[0].revised_prompt;
 
+        console.log({ cloudImages, imagesFromAi });
+
         await this.clientsService.updateClientImages(telegramId, messageId, {
           urls: imagesFromAi.map(({ url }) => url),
           prompt,
           revisedPrompt,
         });
 
-        const clientRate = await this.clientsService.updateClientAccountLevel(telegramId, {
+        const clientAccountLevel = await this.clientsService.updateClientAccountLevel(telegramId, {
           usedImages: imagesFromAi.length,
         });
 
@@ -266,7 +268,7 @@ export class GptService {
           : '';
 
         return {
-          clientRate,
+          clientAccountLevel,
           images: imagesResponse,
           revisedPrompt: clientRevisedPrompt,
         };

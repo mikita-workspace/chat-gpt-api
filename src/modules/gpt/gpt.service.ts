@@ -246,10 +246,8 @@ export class GptService {
 
         const revisedPrompt = imagesFromAi[0].revised_prompt;
 
-        console.log({ cloudImages, imagesFromAi });
-
         await this.clientsService.updateClientImages(telegramId, messageId, {
-          urls: imagesFromAi.map(({ url }) => url),
+          urls: imagesResponse.map(({ url }) => url),
           prompt,
           revisedPrompt,
         });

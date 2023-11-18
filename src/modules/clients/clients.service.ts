@@ -43,17 +43,17 @@ import { SlackService } from '../slack/slack.service';
 import { TelegramService } from '../telegram/telegram.service';
 import {
   ClientFeedback,
-  ClientImagesRate,
-  ClientNamesRate,
-  ClientSymbolRate,
-  ClientTokensRate,
+  ClientImagesLevel,
+  ClientNamesLevel,
+  ClientSymbolLevel,
+  ClientTokensLevel,
 } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
-import { UpdateClientRateNameDto } from './dto/update-client-rate-name.dto';
+import { UpdateClientAccountLevelNameDto } from './dto/update-client-account-level-name.dto';
 import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
 import { Client, ClientImages, ClientMessages } from './schemas';
 
@@ -63,7 +63,8 @@ export class ClientsService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     @InjectModel(Client.name) private readonly clientModel: Model<Client>,
     @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
-    @InjectModel(ClientImages.name) private readonly clientImagesModel: Model<ClientImages>,
+    @InjectModel(ClientImages.name)
+    private readonly clientImagesModel: Model<ClientImages>,
     private readonly configService: ConfigService,
     private readonly i18n: I18nService,
     private readonly slackService: SlackService,
@@ -165,9 +166,9 @@ export class ClientsService {
   }
 
   async availability(telegramId: number) {
-    const client = await this.findOne(telegramId, 'rate state');
+    const client = await this.findOne(telegramId, 'accountLevel state');
 
-    return { rate: client.rate, state: client.state };
+    return { accountLevel: client.accountLevel, state: client.state };
   }
 
   async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {
@@ -270,41 +271,46 @@ export class ClientsService {
     return clientImages;
   }
 
-  async updateClientRate(
+  async updateClientAccountLevel(
     telegramId: number,
     { usedTokens = 0, usedImages = 0 }: { usedTokens?: number; usedImages?: number },
   ) {
-    const client = await this.findOne(telegramId, 'rate');
+    const client = await this.findOne(telegramId, 'accountLevel');
 
-    const isPremiumClient = client.rate.name === ClientNamesRate.PREMIUM;
+    const isPremiumClient = client.accountLevel.name === ClientNamesLevel.PREMIUM;
 
-    if (isExpiredDate(client.rate.expiresAt)) {
-      client.rate = {
-        ...client.rate,
-        name: client.rate.name === ClientNamesRate.PROMO ? ClientNamesRate.BASE : client.rate.name,
+    if (isExpiredDate(client.accountLevel.expiresAt)) {
+      client.accountLevel = {
+        ...client.accountLevel,
+        name:
+          client.accountLevel.name === ClientNamesLevel.PROMO
+            ? ClientNamesLevel.BASE
+            : client.accountLevel.name,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
         gptModels:
-          client.rate.name === ClientNamesRate.PROMO ? gptModelsBase : client.rate.gptModels,
+          client.accountLevel.name === ClientNamesLevel.PROMO
+            ? gptModelsBase
+            : client.accountLevel.gptModels,
         gptTokens: Math.max(
-          isPremiumClient ? ClientTokensRate.PREMIUM : ClientTokensRate.BASE - usedTokens,
+          isPremiumClient ? ClientTokensLevel.PREMIUM : ClientTokensLevel.BASE - usedTokens,
           0,
         ),
         images: Math.max(
-          isPremiumClient ? ClientImagesRate.PREMIUM : ClientImagesRate.BASE - usedImages,
+          isPremiumClient ? ClientImagesLevel.PREMIUM : ClientImagesLevel.BASE - usedImages,
           0,
         ),
       };
     } else {
-      client.rate = {
-        ...client.rate,
-        gptTokens: Math.max(client.rate.gptTokens - usedTokens, 0),
-        images: Math.max(client.rate.images - usedImages, 0),
+      client.accountLevel = {
+        ...client.accountLevel,
+        gptTokens: Math.max(client.accountLevel.gptTokens - usedTokens, 0),
+        images: Math.max(client.accountLevel.images - usedImages, 0),
       };
     }
 
     await client.save();
 
-    return client.rate;
+    return client.accountLevel;
   }
 
   async updateClientMetadata(updateClientMetadataDto: UpdateClientMetadataDto) {
@@ -322,59 +328,59 @@ export class ClientsService {
     return client.metadata;
   }
 
-  async updateClientRateName(updateClientRateNameDto: UpdateClientRateNameDto) {
+  async updateClientAccountLevelName(updateClientRateNameDto: UpdateClientAccountLevelNameDto) {
     const { telegramId, name } = updateClientRateNameDto;
 
-    const client = await this.findOne(telegramId, 'rate');
+    const client = await this.findOne(telegramId, 'accountLevel');
 
-    if (client.rate.name === name) {
-      return client.rate;
+    if (client.accountLevel.name === name) {
+      return client.accountLevel;
     }
 
     await this.cacheManager.del(`${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`);
 
     const clientRate = (() => {
-      if (name === ClientNamesRate.PREMIUM) {
+      if (name === ClientNamesLevel.PREMIUM) {
         return {
-          images: ClientImagesRate.PREMIUM,
+          images: ClientImagesLevel.PREMIUM,
           gptModels: gptModelsPremium,
-          gptTokens: ClientTokensRate.PREMIUM,
-          symbol: ClientSymbolRate.PREMIUM,
+          gptTokens: ClientTokensLevel.PREMIUM,
+          symbol: ClientSymbolLevel.PREMIUM,
         };
       }
 
-      if (name === ClientNamesRate.PROMO) {
+      if (name === ClientNamesLevel.PROMO) {
         return {
-          images: ClientImagesRate.PROMO,
+          images: ClientImagesLevel.PROMO,
           gptModels: gptModelsPromo,
-          gptTokens: ClientTokensRate.PROMO,
+          gptTokens: ClientTokensLevel.PROMO,
           symbol: '',
         };
       }
 
       return {
-        images: ClientImagesRate.BASE,
+        images: ClientImagesLevel.BASE,
         gptModels: gptModelsBase,
-        gptTokens: ClientTokensRate.BASE,
+        gptTokens: ClientTokensLevel.BASE,
         symbol: '',
       };
     })();
 
-    if (name === ClientNamesRate.PROMO) {
-      client.rate = {
+    if (name === ClientNamesLevel.PROMO) {
+      client.accountLevel = {
         ...clientRate,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 3),
         name,
       };
     } else {
-      const expiresIn = expiresInMs(client.rate.expiresAt);
+      const expiresIn = expiresInMs(client.accountLevel.expiresAt);
       const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
 
       const remainTokens = Math.floor((clientRate.gptTokens / MONTH_IN_DAYS) * remainDays);
       const remainImages = Math.floor((clientRate.images / MONTH_IN_DAYS) * remainDays);
 
-      client.rate = {
-        ...client.rate,
+      client.accountLevel = {
+        ...client.accountLevel,
         gptModels: clientRate.gptModels,
         gptTokens: remainTokens,
         images: remainImages,
@@ -385,7 +391,7 @@ export class ClientsService {
 
     await client.save();
 
-    return client.rate;
+    return client.accountLevel;
   }
 
   async setClientFeedback(feedbackClientDto: FeedbackClientDto) {

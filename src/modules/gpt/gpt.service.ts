@@ -67,7 +67,7 @@ export class GptService {
     }
 
     const {
-      rate: { gptModels: clientModels },
+      accountLevel: { gptModels: clientModels },
     } = await this.clientsService.availability(telegramId);
 
     const models = await this.gptModels.find({ model: { $in: clientModels } }).exec();
@@ -83,9 +83,9 @@ export class GptService {
     let chatCompletionsResponse = { message: null, usage: null };
 
     try {
-      const { rate } = await this.clientsService.availability(telegramId);
+      const { accountLevel } = await this.clientsService.availability(telegramId);
 
-      if (!isExpiredDate(rate.expiresAt) && !rate.gptTokens) {
+      if (!isExpiredDate(accountLevel.expiresAt) && !accountLevel.gptTokens) {
         throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
       }
 
@@ -122,7 +122,7 @@ export class GptService {
           assistantMessage,
         ]);
 
-        const clientRate = await this.clientsService.updateClientRate(telegramId, {
+        const clientRate = await this.clientsService.updateClientAccountLevel(telegramId, {
           usedTokens: chatCompletionsResponse.usage.total_tokens,
         });
 
@@ -145,9 +145,9 @@ export class GptService {
     let transcriptionResponse = { text: '' };
 
     try {
-      const { rate } = await this.clientsService.availability(telegramId);
+      const { accountLevel } = await this.clientsService.availability(telegramId);
 
-      if (!isExpiredDate(rate.expiresAt) && !rate.gptTokens) {
+      if (!isExpiredDate(accountLevel.expiresAt) && !accountLevel.gptTokens) {
         throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
       }
 
@@ -195,11 +195,11 @@ export class GptService {
 
     try {
       const {
-        rate,
+        accountLevel,
         metadata: { languageCode },
       } = await this.clientsService.findOne(telegramId);
 
-      if (!isExpiredDate(rate.expiresAt) && !rate.images) {
+      if (!isExpiredDate(accountLevel.expiresAt) && !accountLevel.images) {
         throw new BadRequestException(`All images for the ${telegramId} have been used up`);
       }
 
@@ -252,7 +252,7 @@ export class GptService {
           revisedPrompt,
         });
 
-        const clientRate = await this.clientsService.updateClientRate(telegramId, {
+        const clientRate = await this.clientsService.updateClientAccountLevel(telegramId, {
           usedImages: imagesFromAi.length,
         });
 

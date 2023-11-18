@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class UpdateClientRateDto {
+export class UpdateClientAccountLevelDto {
   @IsNotEmpty()
   @IsNumber()
   readonly telegramId: number;

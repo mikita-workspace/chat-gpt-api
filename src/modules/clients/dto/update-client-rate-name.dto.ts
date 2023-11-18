@@ -1,12 +1,12 @@
 import { IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
 
-import { ClientNamesRate } from '../constants';
+import { ClientNamesLevel } from '../constants';
 
-export class UpdateClientRateNameDto {
+export class UpdateClientAccountLevelNameDto {
   @IsNotEmpty()
   @IsNumber()
   readonly telegramId: number;
   @IsNotEmpty()
-  @IsEnum(ClientNamesRate)
-  readonly name: ClientNamesRate;
+  @IsEnum(ClientNamesLevel)
+  readonly name: ClientNamesLevel;
 }

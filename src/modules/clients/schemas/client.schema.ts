@@ -4,8 +4,8 @@ import { LocaleCodes, MONTH_IN_DAYS } from 'src/common/constants';
 import { getTimestampPlusDays, getTimestampUnix } from 'src/common/utils';
 import { gptModelsBase } from 'src/modules/gpt/constants';
 
-import { ClientImagesRate, ClientNamesRate, ClientTokensRate } from '../constants';
-import { ClientRate } from '../types';
+import { ClientImagesLevel, ClientNamesLevel, ClientTokensLevel } from '../constants';
+import { ClientAccountLevel } from '../types';
 import { ClientImages } from './client-images.schema';
 import { ClientMessages } from './client-messages.schema';
 
@@ -36,14 +36,14 @@ export class Client {
     default: {
       expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
       gptModels: gptModelsBase,
-      gptTokens: ClientTokensRate.BASE,
-      images: ClientImagesRate.BASE,
-      name: ClientNamesRate.BASE,
+      gptTokens: ClientTokensLevel.BASE,
+      images: ClientImagesLevel.BASE,
+      name: ClientNamesLevel.BASE,
       symbol: '',
     },
     required: true,
   })
-  rate: ClientRate;
+  accountLevel: ClientAccountLevel;
 
   @Prop({
     type: Object,

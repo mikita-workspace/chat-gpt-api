@@ -1,4 +1,4 @@
-export type ClientRate = {
+export type ClientAccountLevel = {
   expiresAt: number;
   gptModels: string[];
   gptTokens: number;

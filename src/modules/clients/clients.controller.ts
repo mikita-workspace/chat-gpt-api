@@ -22,8 +22,8 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
-import { UpdateClientAccountLevelDto } from './dto/update-client-rate.dto';
-import { UpdateClientAccountLevelNameDto } from './dto/update-client-rate-name.dto';
+import { UpdateClientAccountLevelDto } from './dto/update-client-account-level.dto';
+import { UpdateClientAccountLevelNameDto } from './dto/update-client-account-level-name.dto';
 import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
 
 @UseGuards(RolesAuthGuard)

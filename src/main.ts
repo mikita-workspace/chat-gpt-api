@@ -29,7 +29,7 @@ async function bootstrap() {
 
   app.enableCors();
 
-  await app.listen(port, '0.0.0.0');
+  await app.listen(port);
 
   Logger.log(`API is running on: ${await app.getUrl()}`, 'src/main.ts');
 }

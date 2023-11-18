@@ -1,10 +1,8 @@
-import { CacheInterceptor, CacheKey } from '@nestjs/cache-manager';
-import { Body, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 
 import { AdminRoles } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
 import { RolesAuthGuard } from '../auth/guard';
-import { GET_GPT_MODELS_CACHE_KEY } from './constants';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { GenerateImagesDto } from './dto/generate-images.dto';
@@ -13,7 +11,6 @@ import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptService } from './gpt.service';
 
 @UseGuards(RolesAuthGuard)
-@UseInterceptors(CacheInterceptor)
 @Controller('api/gpt')
 export class GptController {
   constructor(private readonly gptService: GptService) {}
@@ -24,7 +21,6 @@ export class GptController {
     return this.gptService.createModel(createModelDto);
   }
 
-  @CacheKey(GET_GPT_MODELS_CACHE_KEY)
   @Get('models')
   async findAll(@Body() getModelsDto: GetModelsDto) {
     return this.gptService.findAll(getModelsDto);

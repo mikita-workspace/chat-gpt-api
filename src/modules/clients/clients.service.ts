@@ -331,7 +331,7 @@ export class ClientsService {
       return client.rate;
     }
 
-    await this.cacheManager.del(GET_GPT_MODELS_CACHE_KEY);
+    await this.cacheManager.del(`${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`);
 
     const clientRate = (() => {
       if (name === ClientNamesRate.PREMIUM) {

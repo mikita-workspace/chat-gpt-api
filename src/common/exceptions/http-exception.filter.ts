@@ -1,4 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Logger } from '@nestjs/common';
+import { HttpStatusCode } from 'axios';
 import { Request, Response } from 'express';
 
 import { getTimestampUnix } from '../utils';
@@ -18,7 +19,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message: string;
     };
 
-    if (request.url.includes('api')) {
+    if (
+      request.url.includes('api') &&
+      [HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError].includes(status)
+    ) {
       this.logger.error(
         'HttpExceptionFilter',
         {

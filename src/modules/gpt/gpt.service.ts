@@ -1,11 +1,14 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { HttpStatusCode } from 'axios';
+import { Cache as CacheManager } from 'cache-manager';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { Image as ImageAi } from 'openai/resources';
@@ -18,7 +21,7 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { OpenAiService } from '../openai/openai.service';
 import { SberService } from '../sber/sber.service';
 import { TelegramService } from '../telegram/telegram.service';
-import { ModelGPT, ModelImage, ModelSpeech } from './constants';
+import { GET_GPT_MODELS_CACHE_KEY, ModelGPT, ModelImage, ModelSpeech } from './constants';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { GenerateImagesDto } from './dto/generate-images.dto';
@@ -30,6 +33,7 @@ import { ChatCompletions, ImagesGenerate, Transcriptions } from './types';
 @Injectable()
 export class GptService {
   constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
     private readonly clientsService: ClientsService,
     private readonly cloudinaryService: CloudinaryService,
@@ -54,11 +58,23 @@ export class GptService {
   async findAll(getModelsDto: GetModelsDto): Promise<GptModels[]> {
     const { telegramId } = getModelsDto;
 
+    const cache = await this.cacheManager.get<GptModels[]>(
+      `${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`,
+    );
+
+    if (cache) {
+      return cache;
+    }
+
     const {
       rate: { gptModels: clientModels },
     } = await this.clientsService.availability(telegramId);
 
-    return this.gptModels.find({ model: { $in: clientModels } }).exec();
+    const models = await this.gptModels.find({ model: { $in: clientModels } }).exec();
+
+    await this.cacheManager.set(`${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`, models);
+
+    return models;
   }
 
   async chatCompletions(chatCompletionsDto: ChatCompletionDto): Promise<ChatCompletions | null> {

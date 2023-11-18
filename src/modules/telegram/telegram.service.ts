@@ -33,7 +33,7 @@ export class TelegramService {
       this.httpService
         .post(url, {
           chat_id: telegramId,
-          disable_notification: true,
+          disable_notification: false,
           disable_web_page_preview: true,
           parse_mode: options?.parsedMode,
           text: message,

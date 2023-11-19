@@ -26,14 +26,14 @@ describe('AppController', () => {
 
   describe('Controller >> getInitial', () => {
     const mockRequest = {
-      url: '/v1/api',
+      url: 'api/v1',
     };
 
     const mockInitialJson = {
       statusCode: 200,
       message: 'NovaChat | GPT API',
       timestamp: getUnixTime(new Date()),
-      path: '/v1/api',
+      path: 'api/v1',
     };
 
     it('should return initial json', () => {

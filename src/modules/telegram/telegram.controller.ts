@@ -9,7 +9,7 @@ import { TelegramService } from './telegram.service';
 
 @UseGuards(RolesAuthGuard)
 @UseInterceptors(CacheInterceptor)
-@Controller('api/telegram')
+@Controller('telegram')
 export class TelegramController {
   constructor(private readonly telegramService: TelegramService) {}
 

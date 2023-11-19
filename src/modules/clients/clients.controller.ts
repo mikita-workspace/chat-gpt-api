@@ -28,7 +28,7 @@ import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
 
 @UseGuards(RolesAuthGuard)
 @UseInterceptors(CacheInterceptor)
-@Controller('api/clients')
+@Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 

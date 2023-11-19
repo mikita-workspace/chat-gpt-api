@@ -22,7 +22,7 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 
 @UseGuards(RolesAuthGuard)
 @UseInterceptors(CacheInterceptor)
-@Controller('api/admins')
+@Controller('admins')
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}
 

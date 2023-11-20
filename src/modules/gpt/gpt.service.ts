@@ -12,9 +12,10 @@ import { Cache as CacheManager } from 'cache-manager';
 import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { Image as ImageAi } from 'openai/resources';
-import { getTranslation } from 'src/common/helpers';
-import { getAvailableLocale, isExpiredDate, removeFile } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
+
+import { getTranslation } from '@/common/helpers';
+import { getAvailableLocale, isExpiredDate, removeFile } from '@/common/utils';
 
 import { ClientsService } from '../clients/clients.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';

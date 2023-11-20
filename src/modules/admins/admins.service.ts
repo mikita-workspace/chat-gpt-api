@@ -2,7 +2,8 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { FilterQuery, Model } from 'mongoose';
-import { getTimestampUnix } from 'src/common/utils';
+
+import { getTimestampUnix } from '@/common/utils';
 
 import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
 import { ChangeStateAdminDto } from './dto/change-state-admin.dto';

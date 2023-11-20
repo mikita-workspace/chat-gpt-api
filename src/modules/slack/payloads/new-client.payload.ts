@@ -1,6 +1,6 @@
-import { DATE_FORMAT } from 'src/common/constants';
-import { formatDate } from 'src/common/utils';
-import { Client } from 'src/modules/clients/schemas';
+import { DATE_FORMAT } from '@/common/constants';
+import { formatDate } from '@/common/utils';
+import { Client } from '@/modules/clients/schemas';
 
 export const newClientPayload = (client: Client) => {
   const { createdAt, metadata, telegramId } = client;

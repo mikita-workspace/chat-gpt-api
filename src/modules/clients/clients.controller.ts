@@ -110,7 +110,7 @@ export class ClientsController {
     return this.clientsService.updateClientAccountLevelName(updateClientAccountLevelNameDto);
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
   @Post('mailing')
   async clientsMailing(@Body() clientsMailingDto: ClientsMailingDto) {
     return this.clientsService.clientsMailing(clientsMailingDto);

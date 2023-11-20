@@ -2,7 +2,8 @@ import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AdminsModule } from 'src/modules/admins/admins.module';
+
+import { AdminsModule } from '@/modules/admins/admins.module';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';

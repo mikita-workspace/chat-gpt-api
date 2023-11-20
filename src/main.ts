@@ -24,6 +24,7 @@ async function bootstrap() {
 
   app.enableVersioning({
     defaultVersion: API_VERSION_DEFAULT,
+    prefix: 'api/v',
     type: VersioningType.URI,
   });
 

@@ -11,7 +11,7 @@ import { GetTranslationDto } from './dto/get-translation.dto';
 import { GptService } from './gpt.service';
 
 @UseGuards(RolesAuthGuard)
-@Controller('api/gpt')
+@Controller('gpt')
 export class GptController {
   constructor(private readonly gptService: GptService) {}
 

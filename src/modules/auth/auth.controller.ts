@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guard';
 import { RequestWithAdmin } from './types';
 
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

@@ -1,6 +1,7 @@
 import * as json2md from 'json2md';
-import { DATE_FORMAT } from 'src/common/constants';
-import { formatDate, getTimestampUnix } from 'src/common/utils';
+
+import { DATE_FORMAT } from '@/common/constants';
+import { formatDate, getTimestampUnix } from '@/common/utils';
 
 export const apiErrorPayload = (error: any) => {
   const { level, timestamp, context, message, stack } = error;

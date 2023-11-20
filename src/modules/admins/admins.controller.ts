@@ -10,8 +10,9 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { RolesAuth } from 'src/modules/auth/decorators';
-import { RolesAuthGuard } from 'src/modules/auth/guard';
+
+import { RolesAuth } from '@/modules/auth/decorators';
+import { RolesAuthGuard } from '@/modules/auth/guard';
 
 import { AdminsService } from './admins.service';
 import { AdminRoles } from './constants';

@@ -1,6 +1,7 @@
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { Controller, Get, UseInterceptors } from '@nestjs/common';
-import { TTL_CONFIG_CACHE_MS } from 'src/common/constants';
+
+import { TTL_CONFIG_CACHE_MS } from '@/common/constants';
 
 import { GithubService } from './github.service';
 

@@ -15,7 +15,9 @@ import { differenceInCalendarDays } from 'date-fns';
 import { FilterQuery, Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
-import { LocaleCodes, MONTH_IN_DAYS } from 'src/common/constants';
+import { v4 as uuidv4 } from 'uuid';
+
+import { LocaleCodes, MONTH_IN_DAYS } from '@/common/constants';
 import {
   copyObject,
   expiresInFormat,
@@ -26,8 +28,7 @@ import {
   getTimestampUnix,
   isBoolean,
   isExpiredDate,
-} from 'src/common/utils';
-import { v4 as uuidv4 } from 'uuid';
+} from '@/common/utils';
 
 import { AdminRoles } from '../admins/constants';
 import {

@@ -4,9 +4,9 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { WinstonModule } from 'nest-winston';
 
-import { AppModule } from './app/app.module';
-import { API_VERSION_DEFAULT } from './common/constants';
-import { instance as WinstonInstance } from './common/helpers';
+import { AppModule } from '@/app/app.module';
+import { API_VERSION_DEFAULT } from '@/common/constants';
+import { instance as WinstonInstance } from '@/common/helpers';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

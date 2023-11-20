@@ -1,5 +1,6 @@
 import { Controller, Get, HttpStatus, Req } from '@nestjs/common';
-import { getTimestampUnix } from 'src/common/utils';
+
+import { getTimestampUnix } from '@/common/utils';
 
 import { AppService } from './app.service';
 

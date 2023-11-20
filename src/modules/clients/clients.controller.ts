@@ -111,7 +111,6 @@ export class ClientsController {
   }
 
   @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
-  @RolesAuth(AdminRoles.SUPER_ADMIN)
   @Post('mailing')
   async clientsMailing(@Body() clientsMailingDto: ClientsMailingDto) {
     return this.clientsService.clientsMailing(clientsMailingDto);

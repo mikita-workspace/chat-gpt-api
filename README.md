@@ -8,8 +8,8 @@
 An [**API**](https://documenter.getpostman.com) service for an intelligent bot capable of responding to various user requests, including voice input.
 ## Getting Started
 ```bash
-yarn build
-yarn start:prod
+docker compose up --build
+docker compose down
 ```
 ## License
 Distributed under the [Apache License 2.0](LICENSE).

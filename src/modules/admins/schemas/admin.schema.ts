@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { getTimestampUnix } from 'src/common/utils';
 import { v4 as uuidv4 } from 'uuid';
+
+import { getTimestampUnix } from '@/common/utils';
 
 import { AdminRoles } from '../constants';
 

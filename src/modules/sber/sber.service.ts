@@ -8,7 +8,8 @@ import { createReadStream } from 'fs';
 import * as https from 'https';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { catchError, delay, firstValueFrom } from 'rxjs';
-import { expiresInMs } from 'src/common/utils';
+
+import { expiresInMs } from '@/common/utils';
 
 import {
   DELAY_FACTOR,

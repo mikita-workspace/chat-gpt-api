@@ -4,7 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import { getAudioDurationInSeconds } from 'get-audio-duration';
 import { catchError, firstValueFrom } from 'rxjs';
-import { convertToMp3, createOgg } from 'src/common/helpers';
+
+import { convertToMp3, createOgg } from '@/common/helpers';
 
 import { TELEGRAM_API } from './constants';
 

@@ -1,6 +1,7 @@
-import { apiErrorPayload } from 'src/modules/slack/payloads';
 import { createLogger, format, transports } from 'winston';
 import * as SlackHook from 'winston-slack-webhook-transport';
+
+import { apiErrorPayload } from '@/modules/slack/payloads';
 
 export const instance = ({ slackWebhook: webhookUrl }) => {
   const customFormat = format.printf((info) => {

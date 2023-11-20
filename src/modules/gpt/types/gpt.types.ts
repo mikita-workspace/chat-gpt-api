@@ -1,5 +1,6 @@
 import { ChatCompletionMessage, CompletionUsage } from 'openai/resources';
-import { ClientAccountLevel } from 'src/modules/clients/types';
+
+import { ClientAccountLevel } from '@/modules/clients/types';
 
 export type ChatCompletions = {
   clientAccountLevel: ClientAccountLevel;

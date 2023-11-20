@@ -9,6 +9,6 @@ services:
       - .:/usr/src/app
     env_file:
     - .env.production
-    command: yarn start:prod
+    command: yarn start
     ports:
       - 80:80

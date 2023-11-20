@@ -447,7 +447,9 @@ export class ClientsService {
   async clientsMailing(clientsMailingDto: ClientsMailingDto) {
     const { telegramIds, message, sendToEveryone } = clientsMailingDto;
 
-    const filter = sendToEveryone ? {} : { telegramId: { $in: telegramIds } };
+    const filter = sendToEveryone
+      ? { 'state.isApproved': true }
+      : { telegramId: { $in: telegramIds } };
     const clients = await this.findAll(filter, 'telegramId metadata');
 
     for (const client of clients) {

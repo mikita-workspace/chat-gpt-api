@@ -7,9 +7,9 @@ export class CreateClientDto {
   @IsOptional()
   @IsObject()
   readonly metadata: {
-    username?: string;
-    firstname?: string;
-    lastname?: string;
+    firstname: string;
     languageCode: string;
+    lastname?: string;
+    username?: string;
   };
 }

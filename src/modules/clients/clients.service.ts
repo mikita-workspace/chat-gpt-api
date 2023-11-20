@@ -15,8 +15,7 @@ import { differenceInCalendarDays } from 'date-fns';
 import { FilterQuery, Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
-import { MONTH_IN_DAYS } from 'src/common/constants';
-import { getTranslation } from 'src/common/helpers';
+import { LocaleCodes, MONTH_IN_DAYS } from 'src/common/constants';
 import {
   copyObject,
   expiresInFormat,
@@ -446,9 +445,9 @@ export class ClientsService {
   }
 
   async clientsMailing(clientsMailingDto: ClientsMailingDto) {
-    const { telegramIds, message } = clientsMailingDto;
+    const { telegramIds, message, sendToEveryone } = clientsMailingDto;
 
-    const filter = { telegramId: { $in: telegramIds } };
+    const filter = sendToEveryone ? {} : { telegramId: { $in: telegramIds } };
     const clients = await this.findAll(filter, 'telegramId metadata');
 
     for (const client of clients) {
@@ -457,12 +456,11 @@ export class ClientsService {
         metadata: { languageCode },
       } = client;
 
-      const lang = getAvailableLocale(languageCode);
-      const translate = await getTranslation(message, lang);
+      const clientLang = getAvailableLocale(languageCode);
 
-      const text = `${translate.text}\n\r\n\r<b>${this.i18n.t('locale.client.translated-by', {
-        lang,
-      })} <a href="${translate.provider.url}">${translate.provider.name}</a></b>`;
+      const text = Object.keys(message).includes(clientLang)
+        ? message[clientLang]
+        : message[LocaleCodes.ENGLISH];
 
       await this.telegramService.sendMessageToChat(telegramId, text, {
         parsedMode: 'HTML',

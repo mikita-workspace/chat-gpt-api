@@ -1,10 +1,13 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional } from 'class-validator';
 
 export class ClientsMailingDto {
   @IsNotEmpty()
   @IsNumber({}, { each: true })
   readonly telegramIds: number[];
   @IsNotEmpty()
-  @IsString()
-  readonly message: string;
+  @IsObject()
+  readonly message: Record<string, string>;
+  @IsBoolean()
+  @IsOptional()
+  readonly sendToEveryone?: boolean;
 }

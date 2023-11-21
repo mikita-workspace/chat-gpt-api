@@ -57,12 +57,12 @@ import { AppService } from './app.service';
       inject: [ConfigService],
       isGlobal: true,
       useFactory: async (configService: ConfigService) => {
-        const redis = await redisStore({
-          url: configService.get('cache.redisUrl'),
-          ttl: configService.get('cache.ttl'),
-        });
-
         if (process.env.NODE_ENV === 'production') {
+          const redis = await redisStore({
+            url: configService.get('cache.redisUrl'),
+            ttl: configService.get('cache.ttl'),
+          });
+
           return <{ store: () => Awaited<ReturnType<typeof redisStore>> }>{
             store: () => redis,
           };

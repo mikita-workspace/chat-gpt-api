@@ -44,6 +44,7 @@ export const configuration = () => ({
     timeout: parseInt(process.env.HTTP_TIMEOUT, 10) || 60000,
   },
   cache: {
+    redisUrl: process.env.REDIS_URL || '',
     ttl: parseInt(process.env.CACHE_TTL, 10) || 60000,
   },
 });

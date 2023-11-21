@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { redisStore } from 'cache-manager-redis-yet';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 
@@ -55,9 +56,22 @@ import { AppService } from './app.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       isGlobal: true,
-      useFactory: async (configService: ConfigService) => ({
-        ttl: configService.get('cache.ttl'),
-      }),
+      useFactory: async (configService: ConfigService) => {
+        if (process.env.NODE_ENV === 'production') {
+          const redis = await redisStore({
+            url: configService.get('cache.redisUrl'),
+            ttl: configService.get('cache.ttl'),
+          });
+
+          return <{ store: () => Awaited<ReturnType<typeof redisStore>> }>{
+            store: () => redis,
+          };
+        }
+
+        return {
+          ttl: configService.get('cache.ttl'),
+        };
+      },
     }),
     AdminsModule,
     AuthModule,

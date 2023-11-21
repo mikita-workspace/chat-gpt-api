@@ -1,14 +1,14 @@
-version: '3.5' 
+version: '3.9' 
 
 services:
   main:
     build:
       dockerfile: Dockerfile
       context: ./
+    command: yarn start:prod
     volumes:
       - .:/usr/src/app
     env_file:
     - .env.production
-    command: yarn start
     ports:
       - 80:80

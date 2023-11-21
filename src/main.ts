@@ -1,6 +1,7 @@
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import * as compression from 'compression';
 import helmet from 'helmet';
 import { WinstonModule } from 'nest-winston';
 
@@ -29,6 +30,8 @@ async function bootstrap() {
   });
 
   app.enableCors();
+
+  app.use(compression());
 
   await app.listen(port, '0.0.0.0');
 

@@ -16,6 +16,7 @@ import { AdminsModule } from '@/modules/admins/admins.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { ClientsModule } from '@/modules/clients/clients.module';
 import { CloudinaryModule } from '@/modules/cloudinary/cloudinary.module';
+import { CsmModule } from '@/modules/csm/csm.module';
 import { GithubModule } from '@/modules/github/github.module';
 import { GptModule } from '@/modules/gpt/gpt.module';
 import { OpenAiModule } from '@/modules/openai/openai.module';
@@ -77,6 +78,7 @@ import { AppService } from './app.service';
     AuthModule,
     ClientsModule,
     CloudinaryModule,
+    CsmModule,
     GithubModule,
     GptModule,
     MongoDBModule,

@@ -182,6 +182,8 @@ export class ClientsService {
 
     const client = await this.findOne(telegramId, 'state metadata');
 
+    const prevState = copyObject(client.state);
+
     client.state = {
       blockReason,
       isApproved:
@@ -194,20 +196,31 @@ export class ClientsService {
 
     await client.save();
 
-    if (isApproved && enableNotification) {
+    if (enableNotification) {
       const lang = getAvailableLocale(client.metadata.languageCode);
 
-      const expiresIn = expiresInFormat(
-        getTimestampPlusMilliseconds(this.configService.get('cache.ttl')),
-        lang,
-      );
+      if (prevState.isApproved !== isApproved && isApproved) {
+        const expiresIn = expiresInFormat(
+          getTimestampPlusMilliseconds(this.configService.get('cache.ttl')),
+          lang,
+        );
 
-      const message = this.i18n.t('locale.client.auth-approved', {
-        args: { expiresIn },
-        lang,
-      });
+        const message = this.i18n.t('locale.client.auth-approved', {
+          args: { expiresIn },
+          lang,
+        });
 
-      await this.telegramService.sendMessageToChat(telegramId, message, {});
+        await this.telegramService.sendMessageToChat(telegramId, message, {});
+      }
+
+      if (prevState.isBlocked !== isBlocked && isBlocked) {
+        const message = this.i18n.t('locale.client.auth-blocked', {
+          args: { reason: blockReason },
+          lang,
+        });
+
+        await this.telegramService.sendMessageToChat(telegramId, message, {});
+      }
     }
 
     return client.state;

@@ -17,12 +17,13 @@ import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 import { v4 as uuidv4 } from 'uuid';
 
-import { LocaleCodes, MONTH_IN_DAYS } from '@/common/constants';
+import { MONTH_IN_DAYS } from '@/common/constants';
 import {
   copyObject,
   expiresInFormat,
   expiresInMs,
   getAvailableLocale,
+  getMessageByAvailableLocale,
   getTimestampPlusDays,
   getTimestampPlusMilliseconds,
   getTimestampUnix,
@@ -31,12 +32,7 @@ import {
 } from '@/common/utils';
 
 import { AdminRoles } from '../admins/constants';
-import {
-  GET_GPT_MODELS_CACHE_KEY,
-  gptModelsBase,
-  gptModelsPremium,
-  gptModelsPromo,
-} from '../gpt/constants';
+import { GET_GPT_MODELS_CACHE_KEY, gptModelsBase } from '../gpt/constants';
 import { ChannelIds } from '../slack/constants';
 import { newClientPayload } from '../slack/payloads';
 import { SlackService } from '../slack/slack.service';
@@ -45,7 +41,6 @@ import {
   ClientFeedback,
   ClientImagesLevel,
   ClientNamesLevel,
-  ClientSymbolLevel,
   ClientTokensLevel,
 } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
@@ -55,6 +50,11 @@ import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientAccountLevelNameDto } from './dto/update-client-account-level-name.dto';
 import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
+import {
+  getClientAccountLevel,
+  getClientUpdatedImageFeedback,
+  getClientUpdatedMessageFeedback,
+} from './helpers';
 import { Client, ClientImages, ClientMessages } from './schemas';
 
 @Injectable()
@@ -352,32 +352,7 @@ export class ClientsService {
 
     await this.cacheManager.del(`${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`);
 
-    const clientAccountLevel = (() => {
-      if (name === ClientNamesLevel.PREMIUM) {
-        return {
-          images: ClientImagesLevel.PREMIUM,
-          gptModels: gptModelsPremium,
-          gptTokens: ClientTokensLevel.PREMIUM,
-          symbol: ClientSymbolLevel.PREMIUM,
-        };
-      }
-
-      if (name === ClientNamesLevel.PROMO) {
-        return {
-          images: ClientImagesLevel.PROMO,
-          gptModels: gptModelsPromo,
-          gptTokens: ClientTokensLevel.PROMO,
-          symbol: '',
-        };
-      }
-
-      return {
-        images: ClientImagesLevel.BASE,
-        gptModels: gptModelsBase,
-        gptTokens: ClientTokensLevel.BASE,
-        symbol: '',
-      };
-    })();
+    const clientAccountLevel = getClientAccountLevel(name);
 
     if (name === ClientNamesLevel.PROMO) {
       client.accountLevel = {
@@ -417,44 +392,33 @@ export class ClientsService {
       throw new NotFoundException(`GPT messages and images for ${telegramId} not found`);
     }
 
-    const messagesIndex = clientMessages.messages.findIndex(
-      (message) => message.messageId === messageId,
+    const { messages, index: messageIndex } = getClientUpdatedMessageFeedback(
+      clientMessages,
+      messageId,
+      feedback,
     );
-    const imagesIndex = clientImages.images.findIndex((image) => image.messageId === messageId);
 
-    if (messagesIndex > -1) {
-      const messagesCopy = copyObject(clientMessages.messages[messagesIndex]);
+    const { images, index: imageIndex } = getClientUpdatedImageFeedback(
+      clientImages,
+      messageId,
+      feedback,
+    );
 
-      messagesCopy.feedback = feedback;
-      messagesCopy.updatedAt = getTimestampUnix();
-
-      clientMessages.messages = [
-        ...clientMessages.messages.filter(
-          (message) => message.messageId !== messagesCopy.messageId,
-        ),
-        messagesCopy,
-      ];
+    if (messages.length) {
+      clientMessages.messages = messages;
 
       await clientMessages.save();
     }
 
-    if (imagesIndex > -1) {
-      const imagesCopy = copyObject(clientImages.images[imagesIndex]);
-
-      imagesCopy.feedback = feedback;
-      imagesCopy.updatedAt = getTimestampUnix();
-
-      clientImages.images = [
-        ...clientImages.images.filter((image) => image.messageId !== imagesCopy.messageId),
-        imagesCopy,
-      ];
+    if (images.length) {
+      clientImages.images = images;
 
       await clientImages.save();
     }
 
     return {
-      messages: clientMessages.messages[messagesIndex] ?? [],
-      images: clientImages.images[imagesIndex] ?? [],
+      messages: clientMessages.messages[messageIndex] ?? [],
+      images: clientImages.images[imageIndex] ?? [],
     };
   }
 
@@ -473,10 +437,7 @@ export class ClientsService {
       } = client;
 
       const clientLang = getAvailableLocale(languageCode);
-
-      const text = Object.keys(message).includes(clientLang)
-        ? message[clientLang]
-        : message[LocaleCodes.ENGLISH];
+      const text = getMessageByAvailableLocale(message, clientLang);
 
       await this.telegramService.sendMessageToChat(telegramId, text, {
         parsedMode: 'HTML',

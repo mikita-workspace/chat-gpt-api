@@ -5,3 +5,11 @@ export const getAvailableLocale = (locale: string): LocaleCodes => {
 
   return isLocaleAvailable ? (locale as LocaleCodes) : LocaleCodes.ENGLISH;
 };
+
+export const getMessageByAvailableLocale = (
+  message: Record<string, string>,
+  targetLocale: string,
+) =>
+  Object.keys(message).includes(targetLocale)
+    ? message[targetLocale]
+    : message[LocaleCodes.ENGLISH];

@@ -1,12 +1,12 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
-import { AdminRoles } from '../constants';
+import { AdminRole } from '../constants';
 
 export class ChangeRoleAdminDto {
-  @IsEnum(AdminRoles)
+  @IsEnum(AdminRole)
   @IsNotEmpty()
   @IsString()
-  readonly role: AdminRoles;
+  readonly role: AdminRole;
   @IsNotEmpty()
   @IsString()
   readonly adminId: string;

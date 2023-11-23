@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 
-import { AdminRoles } from '../admins/constants';
+import { AdminRole } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
 import { RolesAuthGuard } from '../auth/guard';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
@@ -15,7 +15,7 @@ import { GptService } from './gpt.service';
 export class GptController {
   constructor(private readonly gptService: GptService) {}
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN)
   @Post('models')
   async createModel(@Body() createModelDto: CreateModelDto) {
     return this.gptService.createModel(createModelDto);

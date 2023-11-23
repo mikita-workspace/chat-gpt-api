@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 
-import { LocaleCodes, MONTH_IN_DAYS } from '@/common/constants';
+import { LocaleCode, MONTH_IN_DAYS } from '@/common/constants';
 import { getTimestampPlusDays, getTimestampUnix } from '@/common/utils';
 import { gptModelsBase } from '@/modules/gpt/constants';
 
-import { ClientImagesLevel, ClientNamesLevel, ClientTokensLevel } from '../constants';
+import { ClientImageLevel, ClientNameLevel, ClientTokenLevel } from '../constants';
 import { ClientAccountLevel } from '../types';
 import { ClientImages } from './client-images.schema';
 import { ClientMessages } from './client-messages.schema';
@@ -22,7 +22,7 @@ export class Client {
 
   @Prop({
     type: Object,
-    default: { username: '', firstname: '', lastname: '', languageCode: LocaleCodes.ENGLISH },
+    default: { username: '', firstname: '', lastname: '', languageCode: LocaleCode.ENGLISH },
     required: true,
   })
   metadata: {
@@ -37,9 +37,9 @@ export class Client {
     default: {
       expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
       gptModels: gptModelsBase,
-      gptTokens: ClientTokensLevel.BASE,
-      images: ClientImagesLevel.BASE,
-      name: ClientNamesLevel.BASE,
+      gptTokens: ClientTokenLevel.BASE,
+      images: ClientImageLevel.BASE,
+      name: ClientNameLevel.BASE,
       symbol: '',
     },
     required: true,

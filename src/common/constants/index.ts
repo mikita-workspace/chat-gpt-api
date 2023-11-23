@@ -6,7 +6,7 @@ export const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export const DATE_FORMAT = 'dd LLL YYY, HH:mm';
 
-export enum LocaleCodes {
+export enum LocaleCode {
   BELORUSSIAN = 'be',
   ENGLISH = 'en',
   RUSSIAN = 'ru',

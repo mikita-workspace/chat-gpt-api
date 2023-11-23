@@ -8,7 +8,7 @@ import { redisStore } from 'cache-manager-redis-yet';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 
-import { LocaleCodes } from '@/common/constants';
+import { LocaleCode } from '@/common/constants';
 import { HttpExceptionFilter } from '@/common/exceptions';
 import { configuration } from '@/config';
 import { MongoDBModule } from '@/database';
@@ -35,7 +35,7 @@ import { AppService } from './app.service';
       load: [configuration],
     }),
     I18nModule.forRoot({
-      fallbackLanguage: LocaleCodes.ENGLISH,
+      fallbackLanguage: LocaleCode.ENGLISH,
       loaderOptions: {
         path: path.join(__dirname, '../i18n/'),
         watch: true,

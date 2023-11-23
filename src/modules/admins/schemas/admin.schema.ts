@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getTimestampUnix } from '@/common/utils';
 
-import { AdminRoles } from '../constants';
+import { AdminRole } from '../constants';
 
 export type AdminDocument = HydratedDocument<Admin>;
 
@@ -24,11 +24,11 @@ export class Admin {
 
   @Prop({
     type: String,
-    enum: AdminRoles,
-    default: AdminRoles.MODERATOR,
+    enum: AdminRole,
+    default: AdminRole.MODERATOR,
     required: true,
   })
-  role: AdminRoles;
+  role: AdminRole;
 
   @Prop({ type: String, default: '' })
   username: string;

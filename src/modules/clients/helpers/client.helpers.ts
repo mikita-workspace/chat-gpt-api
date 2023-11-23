@@ -3,36 +3,36 @@ import { gptModelsBase, gptModelsPremium, gptModelsPromo } from '@/modules/gpt/c
 
 import {
   ClientFeedback,
-  ClientImagesLevel,
-  ClientNamesLevel,
+  ClientImageLevel,
+  ClientNameLevel,
   ClientSymbolLevel,
-  ClientTokensLevel,
+  ClientTokenLevel,
 } from '../constants';
 import { ClientImages, ClientMessages } from '../schemas';
 
 export const getClientAccountLevel = (name: string) => {
-  if (name === ClientNamesLevel.PREMIUM) {
+  if (name === ClientNameLevel.PREMIUM) {
     return {
-      images: ClientImagesLevel.PREMIUM,
+      images: ClientImageLevel.PREMIUM,
       gptModels: gptModelsPremium,
-      gptTokens: ClientTokensLevel.PREMIUM,
+      gptTokens: ClientTokenLevel.PREMIUM,
       symbol: ClientSymbolLevel.PREMIUM,
     };
   }
 
-  if (name === ClientNamesLevel.PROMO) {
+  if (name === ClientNameLevel.PROMO) {
     return {
-      images: ClientImagesLevel.PROMO,
+      images: ClientImageLevel.PROMO,
       gptModels: gptModelsPromo,
-      gptTokens: ClientTokensLevel.PROMO,
+      gptTokens: ClientTokenLevel.PROMO,
       symbol: '',
     };
   }
 
   return {
-    images: ClientImagesLevel.BASE,
+    images: ClientImageLevel.BASE,
     gptModels: gptModelsBase,
-    gptTokens: ClientTokensLevel.BASE,
+    gptTokens: ClientTokenLevel.BASE,
     symbol: '',
   };
 };

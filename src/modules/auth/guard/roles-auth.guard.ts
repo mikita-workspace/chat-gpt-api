@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 
-import { ROLES_KEY, TokenTypes } from '../constants';
+import { ROLES_KEY, TokenType } from '../constants';
 
 @Injectable()
 export class RolesAuthGuard extends AuthGuard('jwt') {
@@ -38,7 +38,7 @@ export class RolesAuthGuard extends AuthGuard('jwt') {
       const bearer = authHeader.split(' ')[0];
       const token = authHeader.split(' ')[1];
 
-      if (bearer !== TokenTypes.BEARER || !token) {
+      if (bearer !== TokenType.BEARER || !token) {
         throw new UnauthorizedException();
       }
 

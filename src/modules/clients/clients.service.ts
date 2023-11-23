@@ -31,18 +31,13 @@ import {
   isExpiredDate,
 } from '@/common/utils';
 
-import { AdminRoles } from '../admins/constants';
+import { AdminRole } from '../admins/constants';
 import { GET_GPT_MODELS_CACHE_KEY, gptModelsBase } from '../gpt/constants';
-import { ChannelIds } from '../slack/constants';
+import { ChannelId } from '../slack/constants';
 import { newClientPayload } from '../slack/payloads';
 import { SlackService } from '../slack/slack.service';
 import { TelegramService } from '../telegram/telegram.service';
-import {
-  ClientFeedback,
-  ClientImagesLevel,
-  ClientNamesLevel,
-  ClientTokensLevel,
-} from './constants';
+import { ClientFeedback, ClientImageLevel, ClientNameLevel, ClientTokenLevel } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
@@ -102,7 +97,7 @@ export class ClientsService {
       newClientPayload(newClient),
     ];
 
-    await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelIds.NEW_CLIENTS);
+    await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelId.NEW_CLIENTS);
 
     await newClient.save();
 
@@ -171,7 +166,7 @@ export class ClientsService {
     return { accountLevel: client.accountLevel, state: client.state };
   }
 
-  async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {
+  async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRole) {
     const {
       blockReason = '',
       isApproved,
@@ -187,7 +182,7 @@ export class ClientsService {
     client.state = {
       blockReason,
       isApproved:
-        isBoolean(isApproved) && role !== AdminRoles.MODERATOR
+        isBoolean(isApproved) && role !== AdminRole.MODERATOR
           ? isApproved
           : client.state.isApproved,
       isBlocked: isBoolean(isBlocked) ? isBlocked : client.state.isBlocked,
@@ -290,26 +285,26 @@ export class ClientsService {
   ) {
     const client = await this.findOne(telegramId, 'accountLevel');
 
-    const isPremiumClient = client.accountLevel.name === ClientNamesLevel.PREMIUM;
+    const isPremiumClient = client.accountLevel.name === ClientNameLevel.PREMIUM;
 
     if (isExpiredDate(client.accountLevel.expiresAt)) {
       client.accountLevel = {
         ...client.accountLevel,
         name:
-          client.accountLevel.name === ClientNamesLevel.PROMO
-            ? ClientNamesLevel.BASE
+          client.accountLevel.name === ClientNameLevel.PROMO
+            ? ClientNameLevel.BASE
             : client.accountLevel.name,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
         gptModels:
-          client.accountLevel.name === ClientNamesLevel.PROMO
+          client.accountLevel.name === ClientNameLevel.PROMO
             ? gptModelsBase
             : client.accountLevel.gptModels,
         gptTokens: Math.max(
-          isPremiumClient ? ClientTokensLevel.PREMIUM : ClientTokensLevel.BASE - usedTokens,
+          isPremiumClient ? ClientTokenLevel.PREMIUM : ClientTokenLevel.BASE - usedTokens,
           0,
         ),
         images: Math.max(
-          isPremiumClient ? ClientImagesLevel.PREMIUM : ClientImagesLevel.BASE - usedImages,
+          isPremiumClient ? ClientImageLevel.PREMIUM : ClientImageLevel.BASE - usedImages,
           0,
         ),
       };
@@ -354,7 +349,7 @@ export class ClientsService {
 
     const clientAccountLevel = getClientAccountLevel(name);
 
-    if (name === ClientNamesLevel.PROMO) {
+    if (name === ClientNameLevel.PROMO) {
       client.accountLevel = {
         ...clientAccountLevel,
         expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 3),

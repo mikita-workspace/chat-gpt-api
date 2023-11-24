@@ -12,6 +12,7 @@ import { LocaleCodes } from '@/common/constants';
 import { HttpExceptionFilter } from '@/common/exceptions';
 import { configuration } from '@/config';
 import { PrismaModule } from '@/database';
+import { MongoDBModule } from '@/database/mongo-db.module';
 import { AdminsModule } from '@/modules/admins/admins.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { ClientsModule } from '@/modules/clients/clients.module';
@@ -79,6 +80,7 @@ import { AppService } from './app.service';
     CloudinaryModule,
     GithubModule,
     GptModule,
+    MongoDBModule,
     OpenAiModule,
     PrismaModule,
     SberModule,

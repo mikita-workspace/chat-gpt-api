@@ -7,13 +7,13 @@ datasource db {
   url      = env("MONGODB_URI")
 }
 
-type AdminsState {
+type AdminState {
   blockReason String   @default("")
   isBlocked   Boolean  @default(false)
   updatedAt   DateTime @default(now())
 }
 
-type ClientimagesImages {
+type Images {
   createdAt     DateTime
   feedback      String
   messageId     Int
@@ -23,20 +23,20 @@ type ClientimagesImages {
   urls          String[]
 }
 
-type ClientmessagesMessages {
-  createdAt DateTime                         @default(now())
+type Messages {
+  createdAt DateTime  @default(now())
   feedback  String
   messageId Int
-  messages  ClientmessagesMessagesMessages[]
-  updatedAt DateTime                         @default(now())
+  messages  Message[]
+  updatedAt DateTime  @default(now())
 }
 
-type ClientmessagesMessagesMessages {
+type Message {
   content String
   role    String
 }
 
-type ClientsAccountLevel {
+type ClientAccountLevel {
   expiresAt DateTime
   gptModels String[]
   gptTokens Int
@@ -45,58 +45,66 @@ type ClientsAccountLevel {
   symbol    String
 }
 
-type ClientsMetadata {
+type ClientMetadata {
   firstname    String  @default("en")
   languageCode String  @default("")
   lastname     String?
   username     String?
 }
 
-type ClientsState {
+type ClientState {
   blockReason String   @default("")
   isApproved  Boolean  @default(false)
   isBlocked   Boolean  @default(false)
   updatedAt   DateTime @default(now())
 }
 
-model admins {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime    @default(now())
-  email     String      @unique
+model Admin {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime   @default(now())
+  email     String     @unique
   password  String
-  role      String      @default("moderator")
-  state     AdminsState
+  role      String     @default("moderator")
+  state     AdminState
   username  String
+
+  @@map("admins")
 }
 
-model clientimages {
-  id         String               @id @default(auto()) @map("_id") @db.ObjectId
-  images     ClientimagesImages[]
-  telegramId Int                  @unique
-  client     clients              @relation(fields: [clientId], references: [id])
-  clientId   String               @unique @map("client") @db.ObjectId
+model ClientImages {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  images     Images[]
+  telegramId Int      @unique
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String   @unique @map("client") @db.ObjectId
+
+  @@map("clientimages")
 }
 
-model clientmessages {
-  id         String                   @id @default(auto()) @map("_id") @db.ObjectId
-  messages   ClientmessagesMessages[]
-  telegramId Int                      @unique
-  client     clients                  @relation(fields: [clientId], references: [id])
-  clientId   String                   @unique @map("client") @db.ObjectId
+model ClientMessages {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  messages   Messages[]
+  telegramId Int        @unique
+  client     Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String     @unique @map("client") @db.ObjectId
+
+  @@map("clientmessages")
 }
 
-model clients {
-  id           String              @id @default(auto()) @map("_id") @db.ObjectId
-  accountLevel ClientsAccountLevel
-  createdAt    DateTime            @default(now())
-  images       clientimages?
-  messages     clientmessages?
-  metadata     ClientsMetadata
-  state        ClientsState?
-  telegramId   Int                 @unique
+model Client {
+  id           String             @id @default(auto()) @map("_id") @db.ObjectId
+  accountLevel ClientAccountLevel
+  createdAt    DateTime           @default(now())
+  images       ClientImages?
+  messages     ClientMessages?
+  metadata     ClientMetadata
+  state        ClientState
+  telegramId   Int                @unique
+
+  @@map("clients")
 }
 
-model gptmodels {
+model GptModels {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   associated  String[]
   creator     String
@@ -105,4 +113,6 @@ model gptmodels {
   model       String   @unique
   title       String
   type        String   @default("text")
+
+  @@map("gptmodels")
 }

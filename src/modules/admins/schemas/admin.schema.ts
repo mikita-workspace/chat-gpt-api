@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getTimestampUnix } from '@/common/utils';
+import { getTimestampUtc } from '@/common/utils';
 
 import { AdminRoles } from '../constants';
 
@@ -19,7 +19,7 @@ export class Admin {
   @Prop({ type: String, required: true })
   password: string;
 
-  @Prop({ type: Number, default: getTimestampUnix(), required: true })
+  @Prop({ type: Number, default: getTimestampUtc(), required: true })
   createdAt: number;
 
   @Prop({
@@ -35,7 +35,7 @@ export class Admin {
 
   @Prop({
     type: Object,
-    default: { blockReason: '', updatedAt: getTimestampUnix(), isBlocked: false },
+    default: { blockReason: '', updatedAt: getTimestampUtc(), isBlocked: false },
     required: true,
   })
   state: {

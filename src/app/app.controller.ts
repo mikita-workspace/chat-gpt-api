@@ -1,6 +1,6 @@
 import { Controller, Get, HttpStatus, Req } from '@nestjs/common';
 
-import { getTimestampUnix } from '@/common/utils';
+import { getTimestampUtc } from '@/common/utils';
 
 import { AppService } from './app.service';
 
@@ -13,7 +13,7 @@ export class AppController {
     return {
       statusCode: HttpStatus.OK,
       message: this.appService.getInitial(),
-      timestamp: getTimestampUnix(),
+      timestamp: getTimestampUtc(),
       path: req.url,
     };
   }

@@ -3,8 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { FilterQuery, Model } from 'mongoose';
 
-import { getTimestampUnix } from '@/common/utils';
-
+// import { getTimestampUtc } from '@/common/utils';
 import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
 import { ChangeStateAdminDto } from './dto/change-state-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -100,7 +99,7 @@ export class AdminsService {
       ...admin.state,
       blockReason,
       isBlocked,
-      updatedAt: getTimestampUnix(),
+      // updatedAt: getTimestampUtc(),
     };
 
     await admin.save();

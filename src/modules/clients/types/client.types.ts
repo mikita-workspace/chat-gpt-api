@@ -1,5 +1,5 @@
 export type ClientAccountLevel = {
-  expiresAt: number;
+  expiresAt: Date;
   gptModels: string[];
   gptTokens: number;
   images: number;

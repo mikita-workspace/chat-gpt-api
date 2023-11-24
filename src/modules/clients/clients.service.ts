@@ -7,15 +7,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Prisma } from '@prisma/client';
 import { HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
 import { differenceInCalendarDays } from 'date-fns';
-import { FilterQuery, Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
-import { v4 as uuidv4 } from 'uuid';
 
 import { LocaleCodes, MONTH_IN_DAYS } from '@/common/constants';
 import {
@@ -25,10 +23,11 @@ import {
   getAvailableLocale,
   getTimestampPlusDays,
   getTimestampPlusMilliseconds,
-  getTimestampUnix,
+  getTimestampUtc,
   isBoolean,
   isExpiredDate,
 } from '@/common/utils';
+import { PrismaService } from '@/database';
 
 import { AdminRoles } from '../admins/constants';
 import {
@@ -52,48 +51,59 @@ import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { ClientsMailingDto } from './dto/mailing-clients.dto';
-import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientAccountLevelNameDto } from './dto/update-client-account-level-name.dto';
 import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
-import { Client, ClientImages, ClientMessages } from './schemas';
 
 @Injectable()
 export class ClientsService {
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
-    @InjectModel(Client.name) private readonly clientModel: Model<Client>,
-    @InjectModel(ClientMessages.name) private readonly clientMessagesModel: Model<ClientMessages>,
-    @InjectModel(ClientImages.name)
-    private readonly clientImagesModel: Model<ClientImages>,
     private readonly configService: ConfigService,
     private readonly i18n: I18nService,
+    private readonly prismaService: PrismaService,
     private readonly slackService: SlackService,
     private readonly telegramService: TelegramService,
   ) {}
 
-  async create(createClientDto: CreateClientDto): Promise<Partial<Client>> {
+  async create(createClientDto: CreateClientDto) {
     const { telegramId, metadata } = createClientDto;
 
-    const client = await this.clientModel.findOne({ telegramId }).exec();
+    const client = await this.prismaService.client.findFirst({ where: { telegramId } });
 
     if (client) {
       throw new ConflictException(`${telegramId} already exist`);
     }
 
-    const newClientMessages = await this.clientMessagesModel.create({
-      telegramId,
-      clientMessagesId: uuidv4(),
+    const newClient = await this.prismaService.client.create({
+      data: {
+        telegramId,
+        metadata,
+        messages: {
+          create: {
+            telegramId,
+          },
+        },
+        images: {
+          create: {
+            telegramId,
+          },
+        },
+        accountLevel: {
+          expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
+          gptModels: gptModelsBase,
+          gptTokens: ClientTokensLevel.BASE,
+          images: ClientImagesLevel.BASE,
+          name: ClientNamesLevel.BASE,
+          symbol: '',
+        },
+        state: {
+          blockReason: '',
+          isApproved: false,
+          isBlocked: false,
+          updatedAt: getTimestampUtc(),
+        },
+      },
     });
-
-    const newClientImages = await this.clientImagesModel.create({
-      telegramId,
-      clientImagesId: uuidv4(),
-    });
-
-    const newClient = new this.clientModel({ telegramId, metadata });
-
-    newClient.set('messages', newClientMessages._id);
-    newClient.set('images', newClientImages._id);
 
     const [slackMessage, slackBlocks] = [
       `${newClient.metadata.firstname}${
@@ -104,8 +114,6 @@ export class ClientsService {
 
     await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelIds.NEW_CLIENTS);
 
-    await newClient.save();
-
     return {
       createdAt: newClient.createdAt,
       metadata: newClient.metadata,
@@ -113,16 +121,16 @@ export class ClientsService {
     };
   }
 
-  async findAll(filter: FilterQuery<Client>, projection: string | null = null) {
-    return this.clientModel.find(filter, projection).exec();
+  async findAll<T extends Prisma.ClientFindManyArgs>(args?: T) {
+    return await this.prismaService.client.findMany(args as unknown);
   }
 
-  async findOne(telegramId: number, projection: string | null = null) {
+  async findOne<T extends Prisma.ClientFindFirstArgs['select']>(telegramId: number, select?: T) {
     if (Number.isNaN(telegramId)) {
       throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
-    const client = await this.clientModel.findOne({ telegramId }, projection).exec();
+    const client = await this.prismaService.client.findFirst({ where: { telegramId }, select });
 
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
@@ -131,14 +139,19 @@ export class ClientsService {
     return client;
   }
 
-  async update(telegramId: number, updateClientDto: UpdateClientDto) {
+  async update<
+    T extends Prisma.ClientUpdateArgs['data'],
+    K extends Prisma.ClientUpdateArgs['select'],
+  >(telegramId: number, data: T, select?: K) {
     if (Number.isNaN(telegramId)) {
       throw new BadRequestException('The Telegram ID does not match the numeric type');
     }
 
-    const client = await this.clientModel
-      .findOneAndUpdate({ telegramId }, updateClientDto, { new: true })
-      .exec();
+    const client = await this.prismaService.client.update({
+      where: { telegramId },
+      data,
+      select,
+    });
 
     if (!client) {
       throw new NotFoundException(`${telegramId} not found`);
@@ -148,25 +161,17 @@ export class ClientsService {
   }
 
   async remove(telegramId: number) {
-    const client = await this.clientModel.findOneAndDelete({ telegramId }, { new: true }).exec();
-
-    await this.clientMessagesModel.deleteOne({ telegramId });
-    await this.clientImagesModel.deleteOne({ telegramId });
-
-    return client;
+    return await this.prismaService.client.delete({ where: { telegramId } });
   }
 
   async removeMultiple(telegramIds: number[]) {
-    const clients = await this.clientModel.deleteMany({ telegramId: { $in: telegramIds } });
-
-    await this.clientMessagesModel.deleteMany({ telegramId: { $in: telegramIds } });
-    await this.clientImagesModel.deleteMany({ telegramId: { $in: telegramIds } });
-
-    return clients;
+    return await this.prismaService.client.deleteMany({
+      where: { telegramId: { in: telegramIds } },
+    });
   }
 
   async availability(telegramId: number) {
-    const client = await this.findOne(telegramId, 'accountLevel state');
+    const client = await this.findOne(telegramId, { accountLevel: true, state: true });
 
     return { accountLevel: client.accountLevel, state: client.state };
   }
@@ -180,19 +185,23 @@ export class ClientsService {
       enableNotification = false,
     } = changeStateClientDto;
 
-    const client = await this.findOne(telegramId, 'state metadata');
+    const existingClient = await this.findOne(telegramId, { state: true });
 
-    client.state = {
-      blockReason,
-      isApproved:
-        isBoolean(isApproved) && role !== AdminRoles.MODERATOR
-          ? isApproved
-          : client.state.isApproved,
-      isBlocked: isBoolean(isBlocked) ? isBlocked : client.state.isBlocked,
-      updatedAt: getTimestampUnix(),
-    };
-
-    await client.save();
+    const client = await this.update(
+      telegramId,
+      {
+        state: {
+          blockReason,
+          isApproved:
+            isBoolean(isApproved) && role !== AdminRoles.MODERATOR
+              ? isApproved
+              : existingClient.state.isApproved,
+          isBlocked: isBoolean(isBlocked) ? isBlocked : existingClient.state.isBlocked,
+          updatedAt: getTimestampUtc(),
+        },
+      },
+      { state: true, metadata: true },
+    );
 
     if (isApproved && enableNotification) {
       const lang = getAvailableLocale(client.metadata.languageCode);
@@ -218,24 +227,32 @@ export class ClientsService {
     messageId: number,
     messages: ChatCompletionMessage[],
   ) {
-    const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();
+    const existingMessages = await this.prismaService.clientMessages.findFirst({
+      where: { telegramId },
+      select: { messages: true },
+    });
 
-    if (!clientMessages) {
+    if (!existingMessages) {
       throw new NotFoundException(`GPT messages for ${telegramId} not found`);
     }
 
-    clientMessages.messages = [
-      ...clientMessages.messages,
-      {
-        createdAt: getTimestampUnix(),
-        updatedAt: getTimestampUnix(),
-        feedback: ClientFeedback.NONE,
-        messageId,
-        messages,
+    const clientMessages = await this.prismaService.clientMessages.update({
+      where: { telegramId },
+      data: {
+        messages: {
+          set: [
+            ...existingMessages.messages,
+            {
+              createdAt: getTimestampUtc(),
+              feedback: ClientFeedback.NONE,
+              messageId,
+              messages,
+              updatedAt: getTimestampUtc(),
+            },
+          ],
+        },
       },
-    ];
-
-    await clientMessages.save();
+    });
 
     return clientMessages;
   }
@@ -247,26 +264,34 @@ export class ClientsService {
   ) {
     const { urls, prompt, revisedPrompt } = images;
 
-    const clientImages = await this.clientImagesModel.findOne({ telegramId }).exec();
+    const existingImages = await this.prismaService.clientImages.findFirst({
+      where: { telegramId },
+      select: { images: true },
+    });
 
-    if (!clientImages) {
+    if (!existingImages) {
       throw new NotFoundException(`GPT images for ${telegramId} not found`);
     }
 
-    clientImages.images = [
-      ...clientImages.images,
-      {
-        createdAt: getTimestampUnix(),
-        feedback: ClientFeedback.NONE,
-        messageId,
-        prompt,
-        revisedPrompt,
-        updatedAt: getTimestampUnix(),
-        urls,
+    const clientImages = await this.prismaService.clientImages.update({
+      where: { telegramId },
+      data: {
+        images: {
+          set: [
+            ...existingImages.images,
+            {
+              createdAt: getTimestampUtc(),
+              feedback: ClientFeedback.NONE,
+              messageId,
+              prompt,
+              revisedPrompt,
+              updatedAt: getTimestampUtc(),
+              urls,
+            },
+          ],
+        },
       },
-    ];
-
-    await clientImages.save();
+    });
 
     return clientImages;
   }
@@ -275,40 +300,56 @@ export class ClientsService {
     telegramId: number,
     { usedTokens = 0, usedImages = 0 }: { usedTokens?: number; usedImages?: number },
   ) {
-    const client = await this.findOne(telegramId, 'accountLevel');
+    const existingClient = await this.findOne(telegramId, { accountLevel: true });
 
-    const isPremiumClient = client.accountLevel.name === ClientNamesLevel.PREMIUM;
+    const isPremiumClient = existingClient.accountLevel.name === ClientNamesLevel.PREMIUM;
 
-    if (isExpiredDate(client.accountLevel.expiresAt)) {
-      client.accountLevel = {
-        ...client.accountLevel,
-        name:
-          client.accountLevel.name === ClientNamesLevel.PROMO
-            ? ClientNamesLevel.BASE
-            : client.accountLevel.name,
-        expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
-        gptModels:
-          client.accountLevel.name === ClientNamesLevel.PROMO
-            ? gptModelsBase
-            : client.accountLevel.gptModels,
-        gptTokens: Math.max(
-          isPremiumClient ? ClientTokensLevel.PREMIUM : ClientTokensLevel.BASE - usedTokens,
-          0,
-        ),
-        images: Math.max(
-          isPremiumClient ? ClientImagesLevel.PREMIUM : ClientImagesLevel.BASE - usedImages,
-          0,
-        ),
-      };
-    } else {
-      client.accountLevel = {
-        ...client.accountLevel,
-        gptTokens: Math.max(client.accountLevel.gptTokens - usedTokens, 0),
-        images: Math.max(client.accountLevel.images - usedImages, 0),
-      };
+    if (isExpiredDate(existingClient.accountLevel.expiresAt)) {
+      const client = await this.update(
+        telegramId,
+        {
+          accountLevel: {
+            set: {
+              ...existingClient.accountLevel,
+              name:
+                existingClient.accountLevel.name === ClientNamesLevel.PROMO
+                  ? ClientNamesLevel.BASE
+                  : existingClient.accountLevel.name,
+              expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
+              gptModels:
+                existingClient.accountLevel.name === ClientNamesLevel.PROMO
+                  ? gptModelsBase
+                  : existingClient.accountLevel.gptModels,
+              gptTokens: Math.max(
+                isPremiumClient ? ClientTokensLevel.PREMIUM : ClientTokensLevel.BASE - usedTokens,
+                0,
+              ),
+              images: Math.max(
+                isPremiumClient ? ClientImagesLevel.PREMIUM : ClientImagesLevel.BASE - usedImages,
+                0,
+              ),
+            },
+          },
+        },
+        { accountLevel: true },
+      );
+
+      return client.accountLevel;
     }
 
-    await client.save();
+    const client = await this.update(
+      telegramId,
+      {
+        accountLevel: {
+          set: {
+            ...existingClient.accountLevel,
+            gptTokens: Math.max(existingClient.accountLevel.gptTokens - usedTokens, 0),
+            images: Math.max(existingClient.accountLevel.images - usedImages, 0),
+          },
+        },
+      },
+      { accountLevel: true },
+    );
 
     return client.accountLevel;
   }
@@ -316,14 +357,11 @@ export class ClientsService {
   async updateClientMetadata(updateClientMetadataDto: UpdateClientMetadataDto) {
     const { telegramId, metadata } = updateClientMetadataDto;
 
-    const client = await this.findOne(telegramId, 'metadata');
+    const existingClient = await this.findOne(telegramId, { metadata: true });
 
-    client.metadata = {
-      ...client.metadata,
-      ...metadata,
-    };
-
-    await client.save();
+    const client = await this.update(telegramId, {
+      metadata: { set: { ...existingClient.metadata, ...metadata } },
+    });
 
     return client.metadata;
   }
@@ -331,10 +369,10 @@ export class ClientsService {
   async updateClientAccountLevelName(updateAccountLevelNameDto: UpdateClientAccountLevelNameDto) {
     const { telegramId, name } = updateAccountLevelNameDto;
 
-    const client = await this.findOne(telegramId, 'accountLevel');
+    const existingClient = await this.findOne(telegramId, { accountLevel: true });
 
-    if (client.accountLevel.name === name) {
-      return client.accountLevel;
+    if (existingClient.accountLevel.name === name) {
+      return existingClient.accountLevel;
     }
 
     await this.cacheManager.del(`${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`);
@@ -367,29 +405,45 @@ export class ClientsService {
     })();
 
     if (name === ClientNamesLevel.PROMO) {
-      client.accountLevel = {
-        ...clientAccountLevel,
-        expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 3),
-        name,
-      };
-    } else {
-      const expiresIn = expiresInMs(client.accountLevel.expiresAt);
-      const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
+      const client = await this.update(
+        telegramId,
+        {
+          accountLevel: {
+            set: {
+              ...clientAccountLevel,
+              expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 3),
+              name,
+            },
+          },
+        },
+        { accountLevel: true },
+      );
 
-      const remainTokens = Math.floor((clientAccountLevel.gptTokens / MONTH_IN_DAYS) * remainDays);
-      const remainImages = Math.floor((clientAccountLevel.images / MONTH_IN_DAYS) * remainDays);
-
-      client.accountLevel = {
-        ...client.accountLevel,
-        gptModels: clientAccountLevel.gptModels,
-        gptTokens: remainTokens,
-        images: remainImages,
-        name,
-        symbol: clientAccountLevel.symbol,
-      };
+      return client.accountLevel;
     }
 
-    await client.save();
+    const expiresIn = expiresInMs(existingClient.accountLevel.expiresAt);
+    const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
+
+    const remainTokens = Math.floor((clientAccountLevel.gptTokens / MONTH_IN_DAYS) * remainDays);
+    const remainImages = Math.floor((clientAccountLevel.images / MONTH_IN_DAYS) * remainDays);
+
+    const client = await this.update(
+      telegramId,
+      {
+        accountLevel: {
+          set: {
+            ...existingClient.accountLevel,
+            gptModels: clientAccountLevel.gptModels,
+            gptTokens: remainTokens,
+            images: remainImages,
+            name,
+            symbol: clientAccountLevel.symbol,
+          },
+        },
+      },
+      { accountLevel: true },
+    );
 
     return client.accountLevel;
   }
@@ -397,61 +451,94 @@ export class ClientsService {
   async setClientFeedback(feedbackClientDto: FeedbackClientDto) {
     const { telegramId, messageId, feedback } = feedbackClientDto;
 
-    const clientMessages = await this.clientMessagesModel.findOne({ telegramId }).exec();
-    const clientImages = await this.clientImagesModel.findOne({ telegramId }).exec();
+    const existingClientMessages = await this.prismaService.clientMessages.findFirst({
+      where: { telegramId },
+    });
+    const existingClientImages = await this.prismaService.clientImages.findFirst({
+      where: { telegramId },
+    });
 
-    if (!clientMessages && !clientImages) {
+    if (!existingClientMessages && !existingClientImages) {
       throw new NotFoundException(`GPT messages and images for ${telegramId} not found`);
     }
 
-    const messagesIndex = clientMessages.messages.findIndex(
+    const messagesIndex = existingClientMessages.messages.findIndex(
       (message) => message.messageId === messageId,
     );
-    const imagesIndex = clientImages.images.findIndex((image) => image.messageId === messageId);
+    const imagesIndex = existingClientImages.images.findIndex(
+      (image) => image.messageId === messageId,
+    );
+
+    const result = {
+      messages: null,
+      images: null,
+    };
 
     if (messagesIndex > -1) {
-      const messagesCopy = copyObject(clientMessages.messages[messagesIndex]);
+      const messagesCopy = copyObject(existingClientMessages.messages[messagesIndex]);
 
       messagesCopy.feedback = feedback;
-      messagesCopy.updatedAt = getTimestampUnix();
+      messagesCopy.updatedAt = getTimestampUtc();
 
-      clientMessages.messages = [
-        ...clientMessages.messages.filter(
-          (message) => message.messageId !== messagesCopy.messageId,
-        ),
-        messagesCopy,
-      ];
+      const clientMessages = await this.prismaService.clientMessages.update({
+        where: { telegramId },
+        data: {
+          messages: {
+            set: [
+              ...existingClientMessages.messages.filter(
+                (message) => message.messageId !== messagesCopy.messageId,
+              ),
+              messagesCopy,
+            ],
+          },
+        },
+        select: { messages: true },
+      });
 
-      await clientMessages.save();
+      result.messages = clientMessages.messages[messagesIndex] ?? [];
     }
 
     if (imagesIndex > -1) {
-      const imagesCopy = copyObject(clientImages.images[imagesIndex]);
+      const imagesCopy = copyObject(existingClientImages.images[imagesIndex]);
 
       imagesCopy.feedback = feedback;
-      imagesCopy.updatedAt = getTimestampUnix();
+      imagesCopy.updatedAt = getTimestampUtc();
 
-      clientImages.images = [
-        ...clientImages.images.filter((image) => image.messageId !== imagesCopy.messageId),
-        imagesCopy,
-      ];
+      const clientImages = await this.prismaService.clientImages.update({
+        where: {
+          telegramId,
+        },
+        data: {
+          images: {
+            set: [
+              ...existingClientImages.images.filter(
+                (image) => image.messageId !== imagesCopy.messageId,
+              ),
+              imagesCopy,
+            ],
+          },
+        },
+        select: { images: true },
+      });
 
-      await clientImages.save();
+      result.images = clientImages.images[imagesIndex] ?? [];
     }
 
-    return {
-      messages: clientMessages.messages[messagesIndex] ?? [],
-      images: clientImages.images[imagesIndex] ?? [],
-    };
+    return result;
   }
 
   async clientsMailing(clientsMailingDto: ClientsMailingDto) {
     const { telegramIds, message, sendToEveryone } = clientsMailingDto;
 
-    const filter = sendToEveryone
-      ? { 'state.isApproved': true }
-      : { telegramId: { $in: telegramIds } };
-    const clients = await this.findAll(filter, 'telegramId metadata');
+    const clients = await this.findAll({
+      where: sendToEveryone
+        ? { state: { is: { isApproved: true } } }
+        : { telegramId: { in: telegramIds } },
+      select: { telegramId: true, metadata: true },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
     for (const client of clients) {
       const {
@@ -477,13 +564,19 @@ export class ClientsService {
     };
   }
 
-  // NOTE: Unauthorized clients will be deleted from DB every 24 hours
+  /**
+   * @summary
+   * Unauthorized clients will be deleted from DB every 24 hours
+   */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleCronRemoveClients() {
-    const filter = {
-      'state.isApproved': false,
-    };
-    const unauthorizedClients = await this.findAll(filter, 'telegramId');
+    const unauthorizedClients = await this.findAll({
+      where: { state: { is: { isApproved: false } } },
+      select: { telegramId: true },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
     if (unauthorizedClients.length) {
       const ids = unauthorizedClients.map((client) => client.telegramId);

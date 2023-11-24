@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+type AdminsState {
+  blockReason String   @default("")
+  isBlocked   Boolean  @default(false)
+  updatedAt   DateTime @default(now())
+}
+
+type ClientimagesImages {
+  createdAt     DateTime
+  feedback      String
+  messageId     Int
+  prompt        String
+  revisedPrompt String?
+  updatedAt     DateTime
+  urls          String[]
+}
+
+type ClientmessagesMessages {
+  createdAt DateTime                         @default(now())
+  feedback  String
+  messageId Int
+  messages  ClientmessagesMessagesMessages[]
+  updatedAt DateTime                         @default(now())
+}
+
+type ClientmessagesMessagesMessages {
+  content String
+  role    String
+}
+
+type ClientsAccountLevel {
+  expiresAt DateTime
+  gptModels String[]
+  gptTokens Int
+  images    Int
+  name      String
+  symbol    String
+}
+
+type ClientsMetadata {
+  firstname    String  @default("en")
+  languageCode String  @default("")
+  lastname     String?
+  username     String?
+}
+
+type ClientsState {
+  blockReason String   @default("")
+  isApproved  Boolean  @default(false)
+  isBlocked   Boolean  @default(false)
+  updatedAt   DateTime @default(now())
+}
+
+model admins {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime    @default(now())
+  email     String      @unique
+  password  String
+  role      String      @default("moderator")
+  state     AdminsState
+  username  String
+}
+
+model clientimages {
+  id         String               @id @default(auto()) @map("_id") @db.ObjectId
+  images     ClientimagesImages[]
+  telegramId Int                  @unique
+  client     clients              @relation(fields: [clientId], references: [id])
+  clientId   String               @unique @map("client") @db.ObjectId
+}
+
+model clientmessages {
+  id         String                   @id @default(auto()) @map("_id") @db.ObjectId
+  messages   ClientmessagesMessages[]
+  telegramId Int                      @unique
+  client     clients                  @relation(fields: [clientId], references: [id])
+  clientId   String                   @unique @map("client") @db.ObjectId
+}
+
+model clients {
+  id           String              @id @default(auto()) @map("_id") @db.ObjectId
+  accountLevel ClientsAccountLevel
+  createdAt    DateTime            @default(now())
+  images       clientimages?
+  messages     clientmessages?
+  metadata     ClientsMetadata
+  state        ClientsState?
+  telegramId   Int                 @unique
+}
+
+model gptmodels {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  associated  String[]
+  creator     String
+  description String
+  max         Int?
+  model       String   @unique
+  title       String
+  type        String   @default("text")
+}

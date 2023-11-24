@@ -32,7 +32,6 @@ export const configuration = () => ({
   mongodb: {
     database: {
       connectionString: process.env.MONGODB_URI || 'mongodb://localhost:27017',
-      databaseName: process.env.MONGODB_NAME || 'local',
     },
   },
   jwt: {

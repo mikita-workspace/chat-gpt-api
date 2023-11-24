@@ -42,11 +42,7 @@ export const getTimestampPlusSeconds = (sec = 0, startDate = new Date()) => {
   return getTimestampUnix(newDate);
 };
 
-export const getTimestampPlusDays = (days = 0, startDate = new Date()) => {
-  const newDate = addDays(startDate, days);
-
-  return getTimestampUnix(newDate);
-};
+export const getTimestampPlusDays = (days = 0, startDate = new Date()) => addDays(startDate, days);
 
 export const isExpiredDate = (expiredAt: number) =>
   compareAsc(new Date(), fromUnixTime(expiredAt)) > 0;

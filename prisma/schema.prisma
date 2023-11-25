@@ -17,6 +17,7 @@ type AdminState {
 
 model Admin {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  Csm       Csm[]
   createdAt DateTime   @default(now())
   email     String     @unique
   password  String
@@ -76,20 +77,20 @@ type ClientState {
 
 model ClientImages {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String   @unique @db.ObjectId
   images     Images[]
   telegramId Int      @unique
-  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId   String   @unique @map("client") @db.ObjectId
 
   @@map("clientimages")
 }
 
 model ClientMessages {
   id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  client     Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String     @unique @db.ObjectId
   messages   Messages[]
   telegramId Int        @unique
-  client     Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId   String     @unique @map("client") @db.ObjectId
 
   @@map("clientmessages")
 }
@@ -122,3 +123,24 @@ model GptModel {
 }
 
 // CSM (Cleint Service Managment)
+model Csm {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  adminId      String    @unique @db.ObjectId
+  assigned     Admin     @relation(fields: [adminId], references: [id])
+  createAt     DateTime  @default(now())
+  description  String    @default("")
+  status       String    @default("new")
+  ticketNumber String    @unique
+  topic        CsmTopic? @relation(fields: [topicId], references: [id])
+  topicId      String?   @unique @db.ObjectId
+  updatedAt    DateTime  @default(now())
+}
+
+model CsmTopic {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  Csm  Csm[]
+  key  String
+  name Json
+
+  @@map("csmtopics")
+}

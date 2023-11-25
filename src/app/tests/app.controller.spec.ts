@@ -1,6 +1,6 @@
+import { UTCDate } from '@date-fns/utc';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getUnixTime } from 'date-fns';
 
 import { AppController } from '../app.controller';
 import { AppService } from '../app.service';
@@ -9,6 +9,8 @@ describe('AppController', () => {
   let appController: AppController;
 
   beforeEach(async () => {
+    jest.spyOn(global, 'Date').mockImplementationOnce(() => new Date('2021-09-12T11:01:58.135Z'));
+
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [AppService],
@@ -24,6 +26,10 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
+  afterEach(async () => {
+    jest.useRealTimers();
+  });
+
   describe('Controller >> getInitial', () => {
     const mockRequest = {
       url: 'api/v1',
@@ -32,7 +38,7 @@ describe('AppController', () => {
     const mockInitialJson = {
       statusCode: 200,
       message: 'NovaChat | GPT API',
-      timestamp: getUnixTime(new Date()),
+      timestamp: new UTCDate(),
       path: 'api/v1',
     };
 

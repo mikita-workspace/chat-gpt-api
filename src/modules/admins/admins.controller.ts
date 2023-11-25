@@ -39,19 +39,19 @@ export class AdminsController {
     return this.adminsService.findAll({});
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Get(':email')
   async findOne(@Param('email') email: string) {
     return this.adminsService.findOne(email);
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN)
   @Patch(':email')
   async update(@Param('email') email: string, @Body() updateAdminDto: UpdateAdminDto) {
     return this.adminsService.update(email, updateAdminDto);
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN)
   @Delete(':email')
   async remove(@Param('email') email: string) {
     return this.adminsService.remove(email);

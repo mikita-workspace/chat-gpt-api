@@ -85,9 +85,9 @@ export class ClientsService {
         accountLevel: {
           expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
           gptModels: gptModelsBase,
-          gptTokens: ClientTokensLevel.BASE,
-          images: ClientImagesLevel.BASE,
-          name: ClientNamesLevel.BASE,
+          gptTokens: ClientTokenLevel.BASE,
+          images: ClientImageLevel.BASE,
+          name: ClientNameLevel.BASE,
           symbol: '',
         },
         state: {
@@ -107,8 +107,6 @@ export class ClientsService {
     ];
 
     await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelId.NEW_CLIENTS);
-
-    await newClient.save();
 
     return {
       createdAt: newClient.createdAt,

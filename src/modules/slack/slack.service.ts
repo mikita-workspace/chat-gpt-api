@@ -46,7 +46,7 @@ export class SlackService {
     channel: string,
   ) {
     try {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV === 'production') {
         const data = await this.slackClient.chat.postMessage({
           text,
           channel,

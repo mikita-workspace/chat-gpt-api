@@ -6,16 +6,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { GptModels } from '@prisma/client';
 import { HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
-import { Model } from 'mongoose';
 import { I18nService } from 'nestjs-i18n';
 import { Image as ImageAi } from 'openai/resources';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getTranslation } from '@/common/helpers';
 import { getAvailableLocale, isExpiredDate, removeFile } from '@/common/utils';
+import { PrismaService } from '@/database';
 
 import { ClientsService } from '../clients/clients.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
@@ -28,35 +28,34 @@ import { CreateModelDto } from './dto/create-model.dto';
 import { GenerateImagesDto } from './dto/generate-images.dto';
 import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
-import { GptModels } from './schemas';
 import { ChatCompletions, ImagesGenerate, Transcriptions } from './types';
 
 @Injectable()
 export class GptService {
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
-    @InjectModel(GptModels.name) private readonly gptModels: Model<GptModels>,
     private readonly clientsService: ClientsService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly i18n: I18nService,
     private readonly openAiService: OpenAiService,
+    private readonly prismaService: PrismaService,
     private readonly sberService: SberService,
     private readonly telegramService: TelegramService,
   ) {}
 
-  async createModel(createModelDto: CreateModelDto): Promise<GptModels> {
+  async createModel(createModelDto: CreateModelDto) {
     const { model } = createModelDto;
 
-    const isModelExist = await this.gptModels.findOne({ model }).exec();
+    const isModelExist = await this.prismaService.gptModels.findFirst({ where: { model } });
 
     if (isModelExist) {
       throw new ConflictException(`${model} already exist`);
     }
 
-    return new this.gptModels(createModelDto).save();
+    return await this.prismaService.gptModels.create({ data: createModelDto });
   }
 
-  async findAll(getModelsDto: GetModelsDto): Promise<GptModels[]> {
+  async findAll(getModelsDto: GetModelsDto) {
     const { telegramId } = getModelsDto;
 
     const cache = await this.cacheManager.get<GptModels[]>(
@@ -71,7 +70,12 @@ export class GptService {
       accountLevel: { gptModels: clientModels },
     } = await this.clientsService.availability(telegramId);
 
-    const models = await this.gptModels.find({ model: { $in: clientModels } }).exec();
+    const models = await this.prismaService.gptModels.findMany({
+      where: { model: { in: clientModels } },
+      orderBy: {
+        creator: 'asc',
+      },
+    });
 
     await this.cacheManager.set(`${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`, models);
 
@@ -90,7 +94,7 @@ export class GptService {
         throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
       }
 
-      const isModelExist = await this.gptModels.findOne({ model }).exec();
+      const isModelExist = await this.prismaService.gptModels.findFirst({ where: { model } });
 
       if (!isModelExist) {
         throw new NotFoundException(`${model} not found`);
@@ -152,7 +156,7 @@ export class GptService {
         throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
       }
 
-      const isModelExist = await this.gptModels.findOne({ model }).exec();
+      const isModelExist = await this.prismaService.gptModels.findFirst({ where: { model } });
 
       if (!isModelExist) {
         throw new NotFoundException(`${model} not found`);
@@ -204,7 +208,7 @@ export class GptService {
         throw new BadRequestException(`All images for the ${telegramId} have been used up`);
       }
 
-      const isModelExist = await this.gptModels.findOne({ model }).exec();
+      const isModelExist = await this.prismaService.gptModels.findFirst({ where: { model } });
 
       if (!isModelExist) {
         throw new NotFoundException(`${model} not found`);

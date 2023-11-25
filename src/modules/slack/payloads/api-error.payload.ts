@@ -1,7 +1,7 @@
 import * as json2md from 'json2md';
 
 import { DATE_FORMAT } from '@/common/constants';
-import { formatDate, getTimestampUnix } from '@/common/utils';
+import { formatDate, getTimestampUtc } from '@/common/utils';
 
 export const apiErrorPayload = (error: any) => {
   const { level, timestamp, context, message, stack } = error;
@@ -16,7 +16,7 @@ export const apiErrorPayload = (error: any) => {
             text: {
               type: 'mrkdwn',
               text: `*Level:*\n${level.toUpperCase()}\n\n*Source:*\n${context}\n\n*Happened at:*\n${formatDate(
-                getTimestampUnix(timestamp),
+                getTimestampUtc(timestamp),
                 DATE_FORMAT,
               )}`,
             },

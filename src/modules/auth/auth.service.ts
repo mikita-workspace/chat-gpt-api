@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Admin } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { getTimestampPlusSeconds } from '@/common/utils';
 import { AdminsService } from '@/modules/admins/admins.service';
-import { Admin } from '@/modules/admins/schemas';
 
 @Injectable()
 export class AuthService {
@@ -15,8 +15,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateAdmin(email: string, password: string): Promise<Admin | null> {
-    const admin = await this.adminsService.findOneByEmail(email);
+  async validateAdmin(email: string, password: string) {
+    const admin = await this.adminsService.findOne(email);
 
     const isPasswordMatch = await bcrypt.compare(password, admin.password);
 
@@ -28,7 +28,7 @@ export class AuthService {
   }
 
   async login(admin: Admin) {
-    const payload = { email: admin.email, sub: admin.adminId, role: admin.role };
+    const payload = { email: admin.email, sub: admin.id, role: admin.role };
 
     return {
       access_token: this.jwtService.sign(payload),

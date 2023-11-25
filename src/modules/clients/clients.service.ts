@@ -526,7 +526,6 @@ export class ClientsService {
     }
 
     return {
-      result: 'ok',
       sentToClients: clients.map(({ telegramId }) => telegramId),
       status: HttpStatusCode.Ok,
     };

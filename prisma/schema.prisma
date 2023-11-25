@@ -124,25 +124,27 @@ model GptModel {
 
 // CSM (Cleint Service Managment)
 model Csm {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  adminId      String    @unique @db.ObjectId
-  assigned     Admin     @relation(fields: [adminId], references: [id])
-  createAt     DateTime  @default(now())
-  description  String    @default("")
-  status       String    @default("new")
-  ticketNumber String    @unique
-  topic        CsmTopic? @relation(fields: [topicId], references: [id])
-  topicId      String?   @unique @db.ObjectId
-  updatedAt    DateTime  @default(now())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  assignedId   String?  @unique @db.ObjectId
+  assigned     Admin?   @relation(fields: [assignedId], references: [id])
+  createAt     DateTime @default(now())
+  description  String   @default("")
+  status       String   @default("new")
+  telegramId   Int
+  ticketNumber String   @unique
+  topic        CsmTopic @relation(fields: [topicId], references: [id])
+  topicId      String   @unique @db.ObjectId
+  updatedAt    DateTime @default(now())
 
   @@map("csm")
 }
 
 model CsmTopic {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
-  Csm  Csm[]
-  key  String
-  name Json
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  Csm       Csm[]
+  isPrivate Boolean @default(false)
+  key       String  @unique
+  name      Json
 
   @@map("csmtopics")
 }

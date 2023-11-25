@@ -62,7 +62,10 @@ export class ClientsService {
   async create(createClientDto: CreateClientDto) {
     const { telegramId, metadata } = createClientDto;
 
-    const existingClient = await this.prismaService.client.findFirst({ where: { telegramId } });
+    const existingClient = await this.prismaService.client.findFirst({
+      where: { telegramId },
+      select: { telegramId: true },
+    });
 
     if (existingClient) {
       throw new ConflictException(`${telegramId} already exist`);

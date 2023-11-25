@@ -1,4 +1,4 @@
-export enum TokenTypes {
+export enum TokenType {
   BEARER = 'Bearer',
 }
 

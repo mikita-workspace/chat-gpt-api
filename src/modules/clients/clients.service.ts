@@ -15,12 +15,12 @@ import { differenceInCalendarDays } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 
-import { LocaleCodes, MONTH_IN_DAYS } from '@/common/constants';
+import { MONTH_IN_DAYS } from '@/common/constants';
 import {
-  copyObject,
   expiresInFormat,
   expiresInMs,
   getAvailableLocale,
+  getMessageByAvailableLocale,
   getTimestampPlusDays,
   getTimestampPlusMilliseconds,
   getTimestampUtc,
@@ -29,30 +29,24 @@ import {
 } from '@/common/utils';
 import { PrismaService } from '@/database';
 
-import { AdminRoles } from '../admins/constants';
-import {
-  GET_GPT_MODELS_CACHE_KEY,
-  gptModelsBase,
-  gptModelsPremium,
-  gptModelsPromo,
-} from '../gpt/constants';
-import { ChannelIds } from '../slack/constants';
+import { AdminRole } from '../admins/constants';
+import { GET_GPT_MODELS_CACHE_KEY, gptModelsBase } from '../gpt/constants';
+import { ChannelId } from '../slack/constants';
 import { newClientPayload } from '../slack/payloads';
 import { SlackService } from '../slack/slack.service';
 import { TelegramService } from '../telegram/telegram.service';
-import {
-  ClientFeedback,
-  ClientImagesLevel,
-  ClientNamesLevel,
-  ClientSymbolLevel,
-  ClientTokensLevel,
-} from './constants';
+import { ClientFeedback, ClientImageLevel, ClientNameLevel, ClientTokenLevel } from './constants';
 import { ChangeStateClientDto } from './dto/change-state-client.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { FeedbackClientDto } from './dto/feedback-client.dto';
 import { ClientsMailingDto } from './dto/mailing-clients.dto';
 import { UpdateClientAccountLevelNameDto } from './dto/update-client-account-level-name.dto';
 import { UpdateClientMetadataDto } from './dto/update-metadata-client.dto';
+import {
+  getClientAccountLevel,
+  getClientUpdatedImageFeedback,
+  getClientUpdatedMessageFeedback,
+} from './helpers';
 
 @Injectable()
 export class ClientsService {
@@ -68,7 +62,10 @@ export class ClientsService {
   async create(createClientDto: CreateClientDto) {
     const { telegramId, metadata } = createClientDto;
 
-    const existingClient = await this.prismaService.client.findFirst({ where: { telegramId } });
+    const existingClient = await this.prismaService.client.findFirst({
+      where: { telegramId },
+      select: { telegramId: true },
+    });
 
     if (existingClient) {
       throw new ConflictException(`${telegramId} already exist`);
@@ -91,9 +88,9 @@ export class ClientsService {
         accountLevel: {
           expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
           gptModels: gptModelsBase,
-          gptTokens: ClientTokensLevel.BASE,
-          images: ClientImagesLevel.BASE,
-          name: ClientNamesLevel.BASE,
+          gptTokens: ClientTokenLevel.BASE,
+          images: ClientImageLevel.BASE,
+          name: ClientNameLevel.BASE,
           symbol: '',
         },
         state: {
@@ -112,7 +109,7 @@ export class ClientsService {
       newClientPayload(newClient),
     ];
 
-    await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelIds.NEW_CLIENTS);
+    await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelId.NEW_CLIENTS);
 
     return {
       createdAt: newClient.createdAt,
@@ -176,7 +173,7 @@ export class ClientsService {
     return { accountLevel: client.accountLevel, state: client.state };
   }
 
-  async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRoles) {
+  async changeState(changeStateClientDto: ChangeStateClientDto, role: AdminRole) {
     const {
       blockReason = '',
       isApproved,
@@ -194,7 +191,7 @@ export class ClientsService {
           set: {
             blockReason,
             isApproved:
-              isBoolean(isApproved) && role !== AdminRoles.MODERATOR
+              isBoolean(isApproved) && role !== AdminRole.MODERATOR
                 ? isApproved
                 : existingClient.state.isApproved,
             isBlocked: isBoolean(isBlocked) ? isBlocked : existingClient.state.isBlocked,
@@ -205,22 +202,31 @@ export class ClientsService {
       { state: true, metadata: true },
     );
 
-    if (isApproved && enableNotification) {
+    if (enableNotification) {
       const lang = getAvailableLocale(client.metadata.languageCode);
 
-      const expiresIn = expiresInFormat(
-        getTimestampPlusMilliseconds(this.configService.get('cache.ttl')),
-        lang,
-      );
+      if (existingClient.state.isApproved !== isApproved && isApproved) {
+        const expiresIn = expiresInFormat(
+          getTimestampPlusMilliseconds(this.configService.get('cache.ttl')),
+          lang,
+        );
 
-      const message = this.i18n.t('locale.client.auth-approved', {
-        args: { expiresIn },
-        lang,
-      });
+        const message = this.i18n.t('locale.client.auth-approved', {
+          args: { expiresIn },
+          lang,
+        });
 
-      await this.telegramService.sendMessageToChat(telegramId, message, {
-        disableNotification: false,
-      });
+        await this.telegramService.sendMessageToChat(telegramId, message, {});
+      }
+
+      if (existingClient.state.isBlocked !== isBlocked && isBlocked) {
+        const message = this.i18n.t('locale.client.auth-blocked', {
+          args: { reason: blockReason },
+          lang,
+        });
+
+        await this.telegramService.sendMessageToChat(telegramId, message, {});
+      }
     }
 
     return client.state;
@@ -308,7 +314,7 @@ export class ClientsService {
   ) {
     const existingClient = await this.findOne(telegramId, { accountLevel: true });
 
-    const isPremiumClient = existingClient.accountLevel.name === ClientNamesLevel.PREMIUM;
+    const isPremiumClient = existingClient.accountLevel.name === ClientNameLevel.PREMIUM;
 
     if (isExpiredDate(existingClient.accountLevel.expiresAt)) {
       const client = await this.update(
@@ -318,20 +324,20 @@ export class ClientsService {
             set: {
               ...existingClient.accountLevel,
               name:
-                existingClient.accountLevel.name === ClientNamesLevel.PROMO
-                  ? ClientNamesLevel.BASE
+                existingClient.accountLevel.name === ClientNameLevel.PROMO
+                  ? ClientNameLevel.BASE
                   : existingClient.accountLevel.name,
               expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
               gptModels:
-                existingClient.accountLevel.name === ClientNamesLevel.PROMO
+                existingClient.accountLevel.name === ClientNameLevel.PROMO
                   ? gptModelsBase
                   : existingClient.accountLevel.gptModels,
               gptTokens: Math.max(
-                isPremiumClient ? ClientTokensLevel.PREMIUM : ClientTokensLevel.BASE - usedTokens,
+                isPremiumClient ? ClientTokenLevel.PREMIUM : ClientTokenLevel.BASE - usedTokens,
                 0,
               ),
               images: Math.max(
-                isPremiumClient ? ClientImagesLevel.PREMIUM : ClientImagesLevel.BASE - usedImages,
+                isPremiumClient ? ClientImageLevel.PREMIUM : ClientImageLevel.BASE - usedImages,
                 0,
               ),
             },
@@ -383,34 +389,9 @@ export class ClientsService {
 
     await this.cacheManager.del(`${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`);
 
-    const clientAccountLevel = (() => {
-      if (name === ClientNamesLevel.PREMIUM) {
-        return {
-          images: ClientImagesLevel.PREMIUM,
-          gptModels: gptModelsPremium,
-          gptTokens: ClientTokensLevel.PREMIUM,
-          symbol: ClientSymbolLevel.PREMIUM,
-        };
-      }
+    const clientAccountLevel = getClientAccountLevel(name);
 
-      if (name === ClientNamesLevel.PROMO) {
-        return {
-          images: ClientImagesLevel.PROMO,
-          gptModels: gptModelsPromo,
-          gptTokens: ClientTokensLevel.PROMO,
-          symbol: '',
-        };
-      }
-
-      return {
-        images: ClientImagesLevel.BASE,
-        gptModels: gptModelsBase,
-        gptTokens: ClientTokensLevel.BASE,
-        symbol: '',
-      };
-    })();
-
-    if (name === ClientNamesLevel.PROMO) {
+    if (name === ClientNameLevel.PROMO) {
       const client = await this.update(
         telegramId,
         {
@@ -468,47 +449,41 @@ export class ClientsService {
       throw new NotFoundException(`GPT messages and images for ${telegramId} not found`);
     }
 
-    const messagesIndex = existingClientMessages.messages.findIndex(
-      (message) => message.messageId === messageId,
-    );
-    const imagesIndex = existingClientImages.images.findIndex(
-      (image) => image.messageId === messageId,
-    );
-
     const result = {
-      messages: null,
-      images: null,
+      message: null,
+      image: null,
     };
 
-    if (messagesIndex > -1) {
-      const messagesCopy = copyObject(existingClientMessages.messages[messagesIndex]);
+    const updatedMessageFeedback = getClientUpdatedMessageFeedback(
+      existingClientMessages,
+      messageId,
+      feedback,
+    );
 
-      messagesCopy.feedback = feedback;
-      messagesCopy.updatedAt = getTimestampUtc();
+    const updatedImageFeedback = getClientUpdatedImageFeedback(
+      existingClientImages,
+      messageId,
+      feedback,
+    );
+
+    if (updatedMessageFeedback) {
+      const { messages, index } = updatedMessageFeedback;
 
       const clientMessages = await this.prismaService.clientMessages.update({
         where: { telegramId },
         data: {
           messages: {
-            set: [
-              ...existingClientMessages.messages.filter(
-                (message) => message.messageId !== messagesCopy.messageId,
-              ),
-              messagesCopy,
-            ],
+            set: messages,
           },
         },
         select: { messages: true },
       });
 
-      result.messages = clientMessages.messages[messagesIndex] ?? [];
+      result.message = clientMessages.messages[index] || null;
     }
 
-    if (imagesIndex > -1) {
-      const imagesCopy = copyObject(existingClientImages.images[imagesIndex]);
-
-      imagesCopy.feedback = feedback;
-      imagesCopy.updatedAt = getTimestampUtc();
+    if (updatedImageFeedback) {
+      const { images, index } = updatedImageFeedback;
 
       const clientImages = await this.prismaService.clientImages.update({
         where: {
@@ -516,30 +491,25 @@ export class ClientsService {
         },
         data: {
           images: {
-            set: [
-              ...existingClientImages.images.filter(
-                (image) => image.messageId !== imagesCopy.messageId,
-              ),
-              imagesCopy,
-            ],
+            set: images,
           },
         },
         select: { images: true },
       });
 
-      result.images = clientImages.images[imagesIndex] ?? [];
+      result.image = clientImages.images[index] || null;
     }
 
     return result;
   }
 
   async clientsMailing(clientsMailingDto: ClientsMailingDto) {
-    const { telegramIds, message, sendToEveryone } = clientsMailingDto;
+    const { telegramIds, message } = clientsMailingDto;
 
     const clients = await this.findAll({
-      where: sendToEveryone
-        ? { state: { is: { isApproved: true } } }
-        : { telegramId: { in: telegramIds } },
+      where: telegramIds.length
+        ? { telegramId: { in: telegramIds } }
+        : { state: { is: { isApproved: true } } },
       select: { telegramId: true, metadata: true },
     });
 
@@ -550,10 +520,7 @@ export class ClientsService {
       } = client;
 
       const clientLang = getAvailableLocale(languageCode);
-
-      const text = Object.keys(message).includes(clientLang)
-        ? message[clientLang]
-        : message[LocaleCodes.ENGLISH];
+      const text = getMessageByAvailableLocale(message, clientLang);
 
       await this.telegramService.sendMessageToChat(telegramId, text, {
         parsedMode: 'HTML',
@@ -562,7 +529,6 @@ export class ClientsService {
     }
 
     return {
-      result: 'ok',
       sentToClients: clients.map(({ telegramId }) => telegramId),
       status: HttpStatusCode.Ok,
     };

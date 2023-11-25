@@ -1,6 +1,7 @@
 {
   "client": {
     "auth-approved": "Your account has been approved by the administrator. Changes will take effect {expiresIn}.",
+    "auth-blocked": "Your account has been blocked. The reason is {reason}.",
     "translated-by": "Translated by"
   }
 }

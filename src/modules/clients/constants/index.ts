@@ -1,16 +1,16 @@
-export enum ClientTokensLevel {
+export enum ClientTokenLevel {
   BASE = 32768,
   PREMIUM = 98304,
   PROMO = 65536,
 }
 
-export enum ClientImagesLevel {
+export enum ClientImageLevel {
   BASE = 10,
   PREMIUM = 20,
   PROMO = 15,
 }
 
-export enum ClientNamesLevel {
+export enum ClientNameLevel {
   BASE = 'Base',
   PREMIUM = 'Premium',
   PROMO = 'Promo',

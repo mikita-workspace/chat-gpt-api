@@ -2,7 +2,7 @@ import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/com
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 
-import { TokenTypes } from '../constants';
+import { TokenType } from '../constants';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -20,7 +20,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       const bearer = authHeader.split(' ')[0];
       const token = authHeader.split(' ')[1];
 
-      if (bearer !== TokenTypes.BEARER || !token) {
+      if (bearer !== TokenType.BEARER || !token) {
         throw new UnauthorizedException();
       }
 

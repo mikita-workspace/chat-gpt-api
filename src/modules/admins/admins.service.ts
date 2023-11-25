@@ -1,53 +1,45 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { FilterQuery, Model } from 'mongoose';
 
-// import { getTimestampUtc } from '@/common/utils';
+import { getTimestampUtc } from '@/common/utils';
+import { PrismaService } from '@/database';
+
 import { ChangeRoleAdminDto } from './dto/change-role-admin.dto';
 import { ChangeStateAdminDto } from './dto/change-state-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
-import { Admin } from './schemas';
 
 @Injectable()
 export class AdminsService {
-  constructor(@InjectModel(Admin.name) private readonly adminModel: Model<Admin>) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
-  async create(createAdminDto: CreateAdminDto): Promise<Admin> {
+  async create(createAdminDto: CreateAdminDto) {
     const { email } = createAdminDto;
 
-    const admin = await this.adminModel.findOne({ email }).exec();
+    const existingAdmin = await this.prismaService.admin.findFirst({ where: { email } });
 
-    if (admin) {
-      throw new ConflictException(`${admin.adminId} already exist`);
+    if (existingAdmin) {
+      throw new ConflictException(`${existingAdmin.email} already exist`);
     }
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(createAdminDto.password, salt);
 
-    return new this.adminModel({
-      ...createAdminDto,
-      password: hashedPassword,
-    }).save();
+    return await this.prismaService.admin.create({
+      data: {
+        ...createAdminDto,
+        password: hashedPassword,
+        state: { blockReason: '', isBlocked: false, updatedAt: getTimestampUtc() },
+      },
+    });
   }
 
-  async findAll(filter: FilterQuery<Admin>, projection: string | null = null) {
-    return this.adminModel.find(filter, projection).exec();
+  async findAll<T extends Prisma.AdminFindManyArgs>(args?: T) {
+    return await this.prismaService.admin.findMany(args);
   }
 
-  async findOne(adminId: string, projection: string | null = null) {
-    const admin = await this.adminModel.findOne({ adminId }, projection).exec();
-
-    if (!admin) {
-      throw new NotFoundException(`${adminId} not found`);
-    }
-
-    return admin;
-  }
-
-  async findOneByEmail(email: string, projection: string | null = null): Promise<Admin> {
-    const admin = await this.adminModel.findOne({ email }, projection).exec();
+  async findOne<T extends Prisma.AdminFindFirstArgs['select']>(email: string, select?: T) {
+    const admin = await this.prismaService.admin.findFirst({ where: { email }, select });
 
     if (!admin) {
       throw new NotFoundException(`${email} not found`);
@@ -56,54 +48,42 @@ export class AdminsService {
     return admin;
   }
 
-  async update(adminId: string, updateAdminDto: UpdateAdminDto): Promise<Admin> {
-    const admin = await this.adminModel
-      .findOneAndUpdate({ adminId }, updateAdminDto, { new: true })
-      .exec();
+  async update<
+    T extends Prisma.AdminUpdateArgs['data'],
+    K extends Prisma.AdminUpdateArgs['select'],
+  >(email: string, data: T, select?: K) {
+    const admin = await this.prismaService.admin.update({ where: { email }, data, select });
 
     if (!admin) {
-      throw new NotFoundException(`${adminId} not found`);
+      throw new NotFoundException(`${email} not found`);
     }
 
     return admin;
   }
 
-  async remove(adminId: string) {
-    const admin = await this.adminModel.findOneAndDelete({ adminId }, { new: true }).exec();
-
-    if (!admin) {
-      throw new NotFoundException(`${adminId} not found`);
-    }
-
-    return admin;
+  async remove(email: string) {
+    return await this.prismaService.admin.delete({ where: { email } });
   }
 
   async changeRole(changeRoleAdminDto: ChangeRoleAdminDto) {
-    const { adminId, role } = changeRoleAdminDto;
+    const { email, role } = changeRoleAdminDto;
 
-    const admin = await this.findOne(adminId, 'role');
-
-    admin.role = role;
-
-    await admin.save();
-
-    return admin;
+    return await this.update(email, { role }, { role: true });
   }
 
   async changeState(changeStateAdminDto: ChangeStateAdminDto) {
-    const { adminId, blockReason = '', isBlocked } = changeStateAdminDto;
+    const { email, blockReason = '', isBlocked } = changeStateAdminDto;
 
-    const admin = await this.findOne(adminId, 'state');
+    const existingAdmin = await this.findOne(email, { state: true });
 
-    admin.state = {
-      ...admin.state,
-      blockReason,
-      isBlocked,
-      // updatedAt: getTimestampUtc(),
-    };
-
-    await admin.save();
-
-    return admin.state;
+    return await this.update(
+      email,
+      {
+        state: {
+          set: { ...existingAdmin.state, blockReason, isBlocked, updatedAt: getTimestampUtc() },
+        },
+      },
+      { state: true },
+    );
   }
 }

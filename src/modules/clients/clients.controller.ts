@@ -82,7 +82,7 @@ export class ClientsController {
     @Body() changeStateClientDto: ChangeStateClientDto,
     @Req() req: RequestWithAdmin,
   ) {
-    return this.clientsService.changeState(changeStateClientDto, req.admin.role);
+    return this.clientsService.changeState(changeStateClientDto, req.admin.role as AdminRoles);
   }
 
   @Post('feedback')

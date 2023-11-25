@@ -68,9 +68,9 @@ export class ClientsService {
   async create(createClientDto: CreateClientDto) {
     const { telegramId, metadata } = createClientDto;
 
-    const client = await this.prismaService.client.findFirst({ where: { telegramId } });
+    const existingClient = await this.prismaService.client.findFirst({ where: { telegramId } });
 
-    if (client) {
+    if (existingClient) {
       throw new ConflictException(`${telegramId} already exist`);
     }
 
@@ -122,7 +122,7 @@ export class ClientsService {
   }
 
   async findAll<T extends Prisma.ClientFindManyArgs>(args?: T) {
-    return await this.prismaService.client.findMany(args as unknown);
+    return await this.prismaService.client.findMany(args);
   }
 
   async findOne<T extends Prisma.ClientFindFirstArgs['select']>(telegramId: number, select?: T) {
@@ -191,13 +191,15 @@ export class ClientsService {
       telegramId,
       {
         state: {
-          blockReason,
-          isApproved:
-            isBoolean(isApproved) && role !== AdminRoles.MODERATOR
-              ? isApproved
-              : existingClient.state.isApproved,
-          isBlocked: isBoolean(isBlocked) ? isBlocked : existingClient.state.isBlocked,
-          updatedAt: getTimestampUtc(),
+          set: {
+            blockReason,
+            isApproved:
+              isBoolean(isApproved) && role !== AdminRoles.MODERATOR
+                ? isApproved
+                : existingClient.state.isApproved,
+            isBlocked: isBoolean(isBlocked) ? isBlocked : existingClient.state.isBlocked,
+            updatedAt: getTimestampUtc(),
+          },
         },
       },
       { state: true, metadata: true },

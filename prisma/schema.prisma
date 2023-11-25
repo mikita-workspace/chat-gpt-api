@@ -8,9 +8,9 @@ datasource db {
 }
 
 type AdminState {
-  blockReason String   @default("")
-  isBlocked   Boolean  @default(false)
-  updatedAt   DateTime @default(now())
+  blockReason String
+  isBlocked   Boolean
+  updatedAt   DateTime
 }
 
 type Images {
@@ -24,11 +24,11 @@ type Images {
 }
 
 type Messages {
-  createdAt DateTime  @default(now())
+  createdAt DateTime
   feedback  String
   messageId Int
   messages  Message[]
-  updatedAt DateTime  @default(now())
+  updatedAt DateTime
 }
 
 type Message {
@@ -46,17 +46,17 @@ type ClientAccountLevel {
 }
 
 type ClientMetadata {
-  firstname    String  @default("en")
-  languageCode String  @default("")
+  firstname    String
+  languageCode String
   lastname     String?
   username     String?
 }
 
 type ClientState {
-  blockReason String   @default("")
-  isApproved  Boolean  @default(false)
-  isBlocked   Boolean  @default(false)
-  updatedAt   DateTime @default(now())
+  blockReason String
+  isApproved  Boolean
+  isBlocked   Boolean
+  updatedAt   DateTime
 }
 
 model Admin {
@@ -66,7 +66,7 @@ model Admin {
   password  String
   role      String     @default("moderator")
   state     AdminState
-  username  String
+  username  String     @default("")
 
   @@map("admins")
 }

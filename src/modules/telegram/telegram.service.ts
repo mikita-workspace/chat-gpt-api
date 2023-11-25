@@ -28,15 +28,17 @@ export class TelegramService {
     message: string,
     options: { parsedMode?: 'HTML' | 'Markdown'; disableNotification?: boolean },
   ) {
+    const { disableNotification = true, parsedMode } = options;
+
     const url = `${this.commonUrl}/sendMessage`;
 
     await firstValueFrom(
       this.httpService
         .post(url, {
           chat_id: telegramId,
-          disable_notification: options?.disableNotification ?? true,
+          disable_notification: disableNotification,
           disable_web_page_preview: true,
-          parse_mode: options?.parsedMode,
+          parse_mode: parsedMode,
           text: message,
         })
         .pipe(

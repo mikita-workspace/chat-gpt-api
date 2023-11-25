@@ -1,4 +1,4 @@
-import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import * as compression from 'compression';
@@ -35,6 +35,7 @@ async function bootstrap() {
 
   await app.listen(port, '0.0.0.0');
 
-  Logger.log(`API is running on: ${await app.getUrl()}`, 'src/main.ts');
+  // eslint-disable-next-line no-console
+  console.log(`API is running on: ${await app.getUrl()}`, 'src/main.ts');
 }
 bootstrap();

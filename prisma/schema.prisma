@@ -1,3 +1,4 @@
+// Connection and settings
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,20 +8,30 @@ datasource db {
   url      = env("MONGODB_URI")
 }
 
+// Admin
 type AdminState {
   blockReason String
   isBlocked   Boolean
   updatedAt   DateTime
 }
 
-type Images {
-  createdAt     DateTime
-  feedback      String
-  messageId     Int
-  prompt        String
-  revisedPrompt String?
-  updatedAt     DateTime
-  urls          String[]
+model Admin {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  Csm       Csm[]
+  createdAt DateTime   @default(now())
+  email     String     @unique
+  password  String
+  role      String     @default("moderator")
+  state     AdminState
+  username  String     @default("")
+
+  @@map("admins")
+}
+
+// Client
+type Message {
+  content String
+  role    String
 }
 
 type Messages {
@@ -31,9 +42,14 @@ type Messages {
   updatedAt DateTime
 }
 
-type Message {
-  content String
-  role    String
+type Images {
+  createdAt     DateTime
+  feedback      String
+  messageId     Int
+  prompt        String
+  revisedPrompt String?
+  updatedAt     DateTime
+  urls          String[]
 }
 
 type ClientAccountLevel {
@@ -59,34 +75,22 @@ type ClientState {
   updatedAt   DateTime
 }
 
-model Admin {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime   @default(now())
-  email     String     @unique
-  password  String
-  role      String     @default("moderator")
-  state     AdminState
-  username  String     @default("")
-
-  @@map("admins")
-}
-
 model ClientImages {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String   @unique @db.ObjectId
   images     Images[]
   telegramId Int      @unique
-  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId   String   @unique @map("client") @db.ObjectId
 
   @@map("clientimages")
 }
 
 model ClientMessages {
   id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  client     Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String     @unique @db.ObjectId
   messages   Messages[]
   telegramId Int        @unique
-  client     Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId   String     @unique @map("client") @db.ObjectId
 
   @@map("clientmessages")
 }
@@ -104,7 +108,8 @@ model Client {
   @@map("clients")
 }
 
-model GptModels {
+// GPT
+model GptModel {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   associated  String[]
   creator     String
@@ -115,4 +120,31 @@ model GptModels {
   type        String   @default("text")
 
   @@map("gptmodels")
+}
+
+// CSM (Cleint Service Managment)
+model Csm {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  assignedId   String?  @unique @db.ObjectId
+  assigned     Admin?   @relation(fields: [assignedId], references: [id])
+  createdAt    DateTime @default(now())
+  description  String   @default("")
+  status       String   @default("new")
+  telegramId   Int
+  ticketNumber String   @unique
+  topic        CsmTopic @relation(fields: [topicId], references: [id])
+  topicId      String   @unique @db.ObjectId
+  updatedAt    DateTime @default(now())
+
+  @@map("csm")
+}
+
+model CsmTopic {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  Csm       Csm[]
+  isPrivate Boolean @default(false)
+  key       String  @unique
+  name      Json
+
+  @@map("csmtopics")
 }

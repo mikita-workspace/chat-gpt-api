@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { AdminRoles } from '../admins/constants';
+import { AdminRole } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
 import { JwtAuthGuard, RolesAuthGuard } from '../auth/guard';
 import { RequestWithAdmin } from '../auth/types';
@@ -41,13 +41,13 @@ export class ClientsController {
   @Get()
   async findAll(@Req() req: RequestWithAdmin) {
     return this.clientsService.findAll(
-      req.admin.role === AdminRoles.MODERATOR
+      req.admin.role === AdminRole.MODERATOR
         ? { where: { state: { is: { isApproved: true } } } }
         : {},
     );
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Get('unauthorized')
   async findUnauthorized() {
     return this.clientsService.findAll({ where: { state: { is: { isApproved: false } } } });
@@ -59,13 +59,13 @@ export class ClientsController {
     return this.clientsService.findOne(Number(id));
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateClientDto: UpdateClientDto) {
     return this.clientsService.update(Number(id), updateClientDto);
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.clientsService.remove(Number(id));
@@ -82,7 +82,7 @@ export class ClientsController {
     @Body() changeStateClientDto: ChangeStateClientDto,
     @Req() req: RequestWithAdmin,
   ) {
-    return this.clientsService.changeState(changeStateClientDto, req.admin.role as AdminRoles);
+    return this.clientsService.changeState(changeStateClientDto, req.admin.role as AdminRole);
   }
 
   @Post('feedback')
@@ -100,7 +100,7 @@ export class ClientsController {
     return this.clientsService.updateClientMetadata(updateClientMetadataDto);
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Post('accountLevel/name')
   async updateClientClientAccountLevelName(
     @Body() updateClientAccountLevelNameDto: UpdateClientAccountLevelNameDto,
@@ -108,7 +108,7 @@ export class ClientsController {
     return this.clientsService.updateClientAccountLevelName(updateClientAccountLevelNameDto);
   }
 
-  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @RolesAuth(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
   @Post('mailing')
   async clientsMailing(@Body() clientsMailingDto: ClientsMailingDto) {
     return this.clientsService.clientsMailing(clientsMailingDto);

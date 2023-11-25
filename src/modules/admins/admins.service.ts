@@ -16,7 +16,10 @@ export class AdminsService {
   async create(createAdminDto: CreateAdminDto) {
     const { email } = createAdminDto;
 
-    const existingAdmin = await this.prismaService.admin.findFirst({ where: { email } });
+    const existingAdmin = await this.prismaService.admin.findFirst({
+      where: { email },
+      select: { email: true },
+    });
 
     if (existingAdmin) {
       throw new ConflictException(`${existingAdmin.email} already exist`);

@@ -10,13 +10,13 @@ import {
 } from 'date-fns';
 import { be, enUS, ru } from 'date-fns/locale';
 
-import { LocaleCodes, MIN_IN_MS } from '../constants';
+import { LocaleCode, MIN_IN_MS } from '../constants';
 
 export const convertLocale = (locale: string) => {
   switch (locale) {
-    case LocaleCodes.RUSSIAN:
+    case LocaleCode.RUSSIAN:
       return ru;
-    case LocaleCodes.BELORUSSIAN:
+    case LocaleCode.BELORUSSIAN:
       return be;
     default:
       return enUS;

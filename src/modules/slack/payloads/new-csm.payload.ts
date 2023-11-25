@@ -1,27 +1,45 @@
-import { Client } from '@prisma/client';
+import { Client, Csm, CsmTopic } from '@prisma/client';
 
 import { DATE_FORMAT } from '@/common/constants';
 import { formatDate } from '@/common/utils';
 
-export const newClientPayload = (client: Client) => {
-  const { createdAt, metadata, telegramId } = client;
+export const newCsmPayload = (csm: Csm, csmTopic: CsmTopic, metadata?: Client['metadata']) => {
+  const { ticketNumber, status, description, createdAt, telegramId } = csm;
 
   const username = metadata?.username || 'username';
-  const firstname = metadata.firstname;
+  const firstname = metadata?.firstname || '';
   const lastname = metadata?.lastname || '';
   const createdAtFormat = formatDate(createdAt, DATE_FORMAT);
+
+  const createdBy = metadata
+    ? `*${firstname} ${lastname}*\n<https://t.me/${username}|*@${username}*>`
+    : `Telegram ID: *${telegramId}*`;
 
   return {
     attachments: [
       {
-        color: '#6200EE',
+        color: '#64FFDA',
         blocks: [
           {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*ID:*\n${telegramId}\n\n*Created at:*\n${createdAtFormat}\n\n*Language code:*\n${metadata.languageCode}`,
+              text: `*${ticketNumber}*\n\n*Status:*\n${status}\n\n*Topic:*\n${csmTopic.name['en']}\n\n*Created at:*\n${createdAtFormat}\n\n`,
             },
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: description,
+                  },
+                ],
+              },
+            ],
           },
           {
             type: 'actions',
@@ -39,27 +57,6 @@ export const newClientPayload = (client: Client) => {
               },
             ],
           },
-          {
-            type: 'rich_text',
-            elements: [
-              {
-                type: 'rich_text_section',
-                elements: [
-                  {
-                    type: 'text',
-                    text: 'Note: ',
-                    style: {
-                      bold: true,
-                    },
-                  },
-                  {
-                    type: 'text',
-                    text: 'Unauthorized accounts are deleted every 24 hours.',
-                  },
-                ],
-              },
-            ],
-          },
         ],
       },
     ],
@@ -68,7 +65,7 @@ export const newClientPayload = (client: Client) => {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `New client awaiting approval.\n*${firstname} ${lastname}*\n<https://t.me/${username}|*@${username}*>`,
+          text: `A new CSM issue has been created.\n${createdBy}`,
         },
       },
     ],

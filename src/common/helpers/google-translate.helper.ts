@@ -1,10 +1,10 @@
 import * as Translate from 'translate-google';
 
-import { LocaleCodes } from '../constants';
+import { LocaleCode } from '../constants';
 
 export const getTranslation = async (
   text: string,
-  to: `${LocaleCodes}` = LocaleCodes.ENGLISH,
+  to: `${LocaleCode}` = LocaleCode.ENGLISH,
 ): Promise<{ text: string; provider: { name: string; url: string } }> => {
   const translatedText = await Translate(text, { to });
 

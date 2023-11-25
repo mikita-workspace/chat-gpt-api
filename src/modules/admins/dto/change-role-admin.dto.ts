@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 import { AdminRole } from '../constants';
 
@@ -8,6 +8,6 @@ export class ChangeRoleAdminDto {
   @IsString()
   readonly role: AdminRole;
   @IsNotEmpty()
-  @IsString()
-  readonly adminId: string;
+  @IsEmail()
+  readonly email: string;
 }

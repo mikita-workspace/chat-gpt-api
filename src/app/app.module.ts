@@ -11,7 +11,7 @@ import * as path from 'path';
 import { LocaleCode } from '@/common/constants';
 import { HttpExceptionFilter } from '@/common/exceptions';
 import { configuration } from '@/config';
-import { MongoDBModule } from '@/database';
+import { PrismaModule } from '@/database';
 import { AdminsModule } from '@/modules/admins/admins.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { ClientsModule } from '@/modules/clients/clients.module';
@@ -81,8 +81,8 @@ import { AppService } from './app.service';
     CsmModule,
     GithubModule,
     GptModule,
-    MongoDBModule,
     OpenAiModule,
+    PrismaModule,
     SberModule,
     SlackModule,
     TelegramModule,
@@ -96,6 +96,6 @@ import { AppService } from './app.service';
       useClass: HttpExceptionFilter,
     },
   ],
-  exports: [CacheModule],
+  exports: [CacheModule, PrismaModule],
 })
 export class AppModule {}

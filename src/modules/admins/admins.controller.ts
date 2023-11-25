@@ -39,28 +39,22 @@ export class AdminsController {
     return this.adminsService.findAll({});
   }
 
-  @RolesAuth(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.adminsService.findOne(id);
+  @RolesAuth(AdminRoles.SUPER_ADMIN, AdminRoles.ADMIN)
+  @Get(':email')
+  async findOne(@Param('email') email: string) {
+    return this.adminsService.findOne(email);
   }
 
-  @RolesAuth(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
-  @Get('email/:email')
-  async findOneByEmail(@Param('email') email: string) {
-    return this.adminsService.findOneByEmail(email);
+  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @Patch(':email')
+  async update(@Param('email') email: string, @Body() updateAdminDto: UpdateAdminDto) {
+    return this.adminsService.update(email, updateAdminDto);
   }
 
-  @RolesAuth(AdminRole.SUPER_ADMIN)
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateAdminDto: UpdateAdminDto) {
-    return this.adminsService.update(id, updateAdminDto);
-  }
-
-  @RolesAuth(AdminRole.SUPER_ADMIN)
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.adminsService.remove(id);
+  @RolesAuth(AdminRoles.SUPER_ADMIN)
+  @Delete(':email')
+  async remove(@Param('email') email: string) {
+    return this.adminsService.remove(email);
   }
 
   @RolesAuth(AdminRole.SUPER_ADMIN)

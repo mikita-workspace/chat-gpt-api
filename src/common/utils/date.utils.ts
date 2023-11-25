@@ -1,3 +1,4 @@
+import { UTCDate } from '@date-fns/utc';
 import {
   addDays,
   addMilliseconds,
@@ -6,8 +7,6 @@ import {
   differenceInMilliseconds,
   format,
   formatDistance,
-  fromUnixTime,
-  getUnixTime,
 } from 'date-fns';
 import { be, enUS, ru } from 'date-fns/locale';
 
@@ -24,49 +23,45 @@ export const convertLocale = (locale: string) => {
   }
 };
 
-export const getTimestampUnix = (timestamp: number | string | Date = Date.now()) => {
-  const date = new Date(timestamp);
+export const getTimestampUtc = (timestamp: number | string | Date = new UTCDate()) =>
+  new UTCDate(timestamp);
 
-  return getUnixTime(date);
-};
-
-export const getTimestampPlusMilliseconds = (ms = 0, startDate = new Date()) => {
+export const getTimestampPlusMilliseconds = (ms = 0, startDate = getTimestampUtc()) => {
   const newDate = addMilliseconds(startDate, ms);
 
-  return getTimestampUnix(newDate);
+  return getTimestampUtc(newDate);
 };
 
-export const getTimestampPlusSeconds = (sec = 0, startDate = new Date()) => {
+export const getTimestampPlusSeconds = (sec = 0, startDate = getTimestampUtc()) => {
   const newDate = addSeconds(startDate, sec);
 
-  return getTimestampUnix(newDate);
+  return getTimestampUtc(newDate);
 };
 
-export const getTimestampPlusDays = (days = 0, startDate = new Date()) => {
+export const getTimestampPlusDays = (days = 0, startDate = getTimestampUtc()) => {
   const newDate = addDays(startDate, days);
 
-  return getTimestampUnix(newDate);
+  return getTimestampUtc(newDate);
 };
 
-export const isExpiredDate = (expiredAt: number) =>
-  compareAsc(new Date(), fromUnixTime(expiredAt)) > 0;
+export const isExpiredDate = (expiresAt: Date) => compareAsc(getTimestampUtc(), expiresAt) > 0;
 
-export const expiresInMs = (expiredAt: number) =>
-  Math.abs(differenceInMilliseconds(new Date(), expiredAt));
+export const expiresInMs = (expiresAt: Date) =>
+  Math.abs(differenceInMilliseconds(getTimestampUtc(), expiresAt));
 
-export const fromMsToMins = (ms: number | string) => parseInt(String(ms), 10) / MIN_IN_MS;
-
-export const expiresInFormat = (expiredAt: number, locale = 'en') => {
+export const expiresInFormat = (expiresAt: Date, locale = 'en') => {
   const clientLocale = convertLocale(locale);
 
-  return formatDistance(fromUnixTime(expiredAt), new Date(), {
+  return formatDistance(expiresAt, getTimestampUtc(), {
     addSuffix: true,
     locale: clientLocale,
   });
 };
 
-export const formatDate = (date: number, template: string, locale = 'en') => {
+export const fromMsToMins = (ms: number | string) => parseInt(String(ms), 10) / MIN_IN_MS;
+
+export const formatDate = (date: Date, template: string, locale = 'en') => {
   const clientLocale = convertLocale(locale);
 
-  return format(fromUnixTime(date), template, { locale: clientLocale });
+  return format(date, template, { locale: clientLocale });
 };

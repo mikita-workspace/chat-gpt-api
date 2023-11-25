@@ -1,1 +1,2 @@
-export * from './mongo-db.module';
+export * from './prisma.module';
+export * from './prisma.service';

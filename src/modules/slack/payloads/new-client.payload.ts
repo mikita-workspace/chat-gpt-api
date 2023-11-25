@@ -1,6 +1,7 @@
+import { Client } from '@prisma/client';
+
 import { DATE_FORMAT } from '@/common/constants';
 import { formatDate } from '@/common/utils';
-import { Client } from '@/modules/clients/schemas';
 
 export const newClientPayload = (client: Client) => {
   const { createdAt, metadata, telegramId } = client;

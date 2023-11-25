@@ -26,7 +26,7 @@ export class TelegramService {
   async sendMessageToChat(
     telegramId: number,
     message: string,
-    options: { parsedMode?: 'HTML' | 'Markdown' },
+    options: { parsedMode?: 'HTML' | 'Markdown'; disableNotification?: boolean },
   ) {
     const url = `${this.commonUrl}/sendMessage`;
 
@@ -34,7 +34,7 @@ export class TelegramService {
       this.httpService
         .post(url, {
           chat_id: telegramId,
-          disable_notification: false,
+          disable_notification: options?.disableNotification ?? true,
           disable_web_page_preview: true,
           parse_mode: options?.parsedMode,
           text: message,

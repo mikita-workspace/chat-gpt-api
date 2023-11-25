@@ -1,9 +1,9 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ChangeStateAdminDto {
   @IsNotEmpty()
-  @IsString()
-  readonly adminId: string;
+  @IsEmail()
+  readonly email: string;
   @IsOptional()
   @IsString()
   readonly blockReason?: string;

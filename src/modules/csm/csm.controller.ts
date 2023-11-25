@@ -47,7 +47,6 @@ export class CsmController {
     return this.csmService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('topic')
   async findTopicAll() {
     return this.csmTopicService.findAll();

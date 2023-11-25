@@ -216,7 +216,9 @@ export class ClientsService {
         lang,
       });
 
-      await this.telegramService.sendMessageToChat(telegramId, message, {});
+      await this.telegramService.sendMessageToChat(telegramId, message, {
+        disableNotification: false,
+      });
     }
 
     return client.state;
@@ -535,9 +537,6 @@ export class ClientsService {
         ? { state: { is: { isApproved: true } } }
         : { telegramId: { in: telegramIds } },
       select: { telegramId: true, metadata: true },
-      orderBy: {
-        createdAt: 'desc',
-      },
     });
 
     for (const client of clients) {
@@ -554,6 +553,7 @@ export class ClientsService {
 
       await this.telegramService.sendMessageToChat(telegramId, text, {
         parsedMode: 'HTML',
+        disableNotification: true,
       });
     }
 

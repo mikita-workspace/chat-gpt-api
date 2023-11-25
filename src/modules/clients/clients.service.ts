@@ -501,12 +501,12 @@ export class ClientsService {
   }
 
   async clientsMailing(clientsMailingDto: ClientsMailingDto) {
-    const { telegramIds, message, sendToEveryone } = clientsMailingDto;
+    const { telegramIds, message } = clientsMailingDto;
 
     const clients = await this.findAll({
-      where: sendToEveryone
-        ? { state: { is: { isApproved: true } } }
-        : { telegramId: { in: telegramIds } },
+      where: telegramIds.length
+        ? { telegramId: { in: telegramIds } }
+        : { state: { is: { isApproved: true } } },
       select: { telegramId: true, metadata: true },
     });
 

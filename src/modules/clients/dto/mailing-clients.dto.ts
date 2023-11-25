@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsObject } from 'class-validator';
 
 export class ClientsMailingDto {
   @IsNotEmpty()
@@ -7,7 +7,4 @@ export class ClientsMailingDto {
   @IsNotEmpty()
   @IsObject()
   readonly message: Record<string, string>;
-  @IsBoolean()
-  @IsOptional()
-  readonly sendToEveryone?: boolean;
 }

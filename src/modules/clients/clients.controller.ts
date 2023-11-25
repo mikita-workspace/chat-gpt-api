@@ -41,7 +41,7 @@ export class ClientsController {
   @Get()
   async findAll(@Req() req: RequestWithAdmin) {
     return this.clientsService.findAll(
-      req.admin.role === AdminRoles.MODERATOR
+      req.admin.role === AdminRole.MODERATOR
         ? { where: { state: { is: { isApproved: true } } } }
         : {},
     );
@@ -82,7 +82,7 @@ export class ClientsController {
     @Body() changeStateClientDto: ChangeStateClientDto,
     @Req() req: RequestWithAdmin,
   ) {
-    return this.clientsService.changeState(changeStateClientDto, req.admin.role as AdminRoles);
+    return this.clientsService.changeState(changeStateClientDto, req.admin.role as AdminRole);
   }
 
   @Post('feedback')

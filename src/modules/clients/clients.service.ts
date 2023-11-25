@@ -17,7 +17,6 @@ import { ChatCompletionMessage } from 'openai/resources/chat';
 
 import { MONTH_IN_DAYS } from '@/common/constants';
 import {
-  copyObject,
   expiresInFormat,
   expiresInMs,
   getAvailableLocale,
@@ -48,7 +47,6 @@ import {
   getClientUpdatedImageFeedback,
   getClientUpdatedMessageFeedback,
 } from './helpers';
-import { Client, ClientImages, ClientMessages } from './schemas';
 
 @Injectable()
 export class ClientsService {
@@ -192,7 +190,7 @@ export class ClientsService {
           set: {
             blockReason,
             isApproved:
-              isBoolean(isApproved) && role !== AdminRoles.MODERATOR
+              isBoolean(isApproved) && role !== AdminRole.MODERATOR
                 ? isApproved
                 : existingClient.state.isApproved,
             isBlocked: isBoolean(isBlocked) ? isBlocked : existingClient.state.isBlocked,
@@ -206,7 +204,7 @@ export class ClientsService {
     if (enableNotification) {
       const lang = getAvailableLocale(client.metadata.languageCode);
 
-      if (prevState.isApproved !== isApproved && isApproved) {
+      if (existingClient.state.isApproved !== isApproved && isApproved) {
         const expiresIn = expiresInFormat(
           getTimestampPlusMilliseconds(this.configService.get('cache.ttl')),
           lang,
@@ -220,7 +218,7 @@ export class ClientsService {
         await this.telegramService.sendMessageToChat(telegramId, message, {});
       }
 
-      if (prevState.isBlocked !== isBlocked && isBlocked) {
+      if (existingClient.state.isBlocked !== isBlocked && isBlocked) {
         const message = this.i18n.t('locale.client.auth-blocked', {
           args: { reason: blockReason },
           lang,
@@ -315,7 +313,7 @@ export class ClientsService {
   ) {
     const existingClient = await this.findOne(telegramId, { accountLevel: true });
 
-    const isPremiumClient = existingClient.accountLevel.name === ClientNamesLevel.PREMIUM;
+    const isPremiumClient = existingClient.accountLevel.name === ClientNameLevel.PREMIUM;
 
     if (isExpiredDate(existingClient.accountLevel.expiresAt)) {
       const client = await this.update(
@@ -325,20 +323,20 @@ export class ClientsService {
             set: {
               ...existingClient.accountLevel,
               name:
-                existingClient.accountLevel.name === ClientNamesLevel.PROMO
-                  ? ClientNamesLevel.BASE
+                existingClient.accountLevel.name === ClientNameLevel.PROMO
+                  ? ClientNameLevel.BASE
                   : existingClient.accountLevel.name,
               expiresAt: getTimestampPlusDays(MONTH_IN_DAYS),
               gptModels:
-                existingClient.accountLevel.name === ClientNamesLevel.PROMO
+                existingClient.accountLevel.name === ClientNameLevel.PROMO
                   ? gptModelsBase
                   : existingClient.accountLevel.gptModels,
               gptTokens: Math.max(
-                isPremiumClient ? ClientTokensLevel.PREMIUM : ClientTokensLevel.BASE - usedTokens,
+                isPremiumClient ? ClientTokenLevel.PREMIUM : ClientTokenLevel.BASE - usedTokens,
                 0,
               ),
               images: Math.max(
-                isPremiumClient ? ClientImagesLevel.PREMIUM : ClientImagesLevel.BASE - usedImages,
+                isPremiumClient ? ClientImageLevel.PREMIUM : ClientImageLevel.BASE - usedImages,
                 0,
               ),
             },
@@ -392,7 +390,7 @@ export class ClientsService {
 
     const clientAccountLevel = getClientAccountLevel(name);
 
-    if (name === ClientNamesLevel.PROMO) {
+    if (name === ClientNameLevel.PROMO) {
       const client = await this.update(
         telegramId,
         {
@@ -450,47 +448,41 @@ export class ClientsService {
       throw new NotFoundException(`GPT messages and images for ${telegramId} not found`);
     }
 
-    const messagesIndex = existingClientMessages.messages.findIndex(
-      (message) => message.messageId === messageId,
-    );
-    const imagesIndex = existingClientImages.images.findIndex(
-      (image) => image.messageId === messageId,
-    );
-
     const result = {
-      messages: null,
-      images: null,
+      message: null,
+      image: null,
     };
 
-    if (messagesIndex > -1) {
-      const messagesCopy = copyObject(existingClientMessages.messages[messagesIndex]);
+    const updatedMessageFeedback = getClientUpdatedMessageFeedback(
+      existingClientMessages,
+      messageId,
+      feedback,
+    );
 
-      messagesCopy.feedback = feedback;
-      messagesCopy.updatedAt = getTimestampUtc();
+    const updatedImageFeedback = getClientUpdatedImageFeedback(
+      existingClientImages,
+      messageId,
+      feedback,
+    );
+
+    if (updatedMessageFeedback) {
+      const { messages, index } = updatedMessageFeedback;
 
       const clientMessages = await this.prismaService.clientMessages.update({
         where: { telegramId },
         data: {
           messages: {
-            set: [
-              ...existingClientMessages.messages.filter(
-                (message) => message.messageId !== messagesCopy.messageId,
-              ),
-              messagesCopy,
-            ],
+            set: messages,
           },
         },
         select: { messages: true },
       });
 
-      result.messages = clientMessages.messages[messagesIndex] ?? [];
+      result.message = clientMessages.messages[index] || null;
     }
 
-    if (imagesIndex > -1) {
-      const imagesCopy = copyObject(existingClientImages.images[imagesIndex]);
-
-      imagesCopy.feedback = feedback;
-      imagesCopy.updatedAt = getTimestampUtc();
+    if (updatedImageFeedback) {
+      const { images, index } = updatedImageFeedback;
 
       const clientImages = await this.prismaService.clientImages.update({
         where: {
@@ -498,18 +490,13 @@ export class ClientsService {
         },
         data: {
           images: {
-            set: [
-              ...existingClientImages.images.filter(
-                (image) => image.messageId !== imagesCopy.messageId,
-              ),
-              imagesCopy,
-            ],
+            set: images,
           },
         },
         select: { images: true },
       });
 
-      result.images = clientImages.images[imagesIndex] ?? [];
+      result.image = clientImages.images[index] || null;
     }
 
     return result;

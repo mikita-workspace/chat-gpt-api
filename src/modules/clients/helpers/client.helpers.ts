@@ -1,4 +1,6 @@
-import { copyObject, getTimestampUnix } from '@/common/utils';
+import { ClientImages, ClientMessages } from '@prisma/client';
+
+import { copyObject, getTimestampUtc } from '@/common/utils';
 import { gptModelsBase, gptModelsPremium, gptModelsPromo } from '@/modules/gpt/constants';
 
 import {
@@ -8,7 +10,6 @@ import {
   ClientSymbolLevel,
   ClientTokenLevel,
 } from '../constants';
-import { ClientImages, ClientMessages } from '../schemas';
 
 export const getClientAccountLevel = (name: string) => {
   if (name === ClientNameLevel.PREMIUM) {
@@ -50,7 +51,7 @@ export const getClientUpdatedMessageFeedback = (
     const messagesCopy = copyObject(clientMessages.messages[messagesIndex]);
 
     messagesCopy.feedback = feedback;
-    messagesCopy.updatedAt = getTimestampUnix();
+    messagesCopy.updatedAt = getTimestampUtc();
 
     return {
       messages: [
@@ -63,7 +64,7 @@ export const getClientUpdatedMessageFeedback = (
     };
   }
 
-  return {};
+  return null;
 };
 
 export const getClientUpdatedImageFeedback = (
@@ -77,7 +78,7 @@ export const getClientUpdatedImageFeedback = (
     const imagesCopy = copyObject(clientImages.images[imagesIndex]);
 
     imagesCopy.feedback = feedback;
-    imagesCopy.updatedAt = getTimestampUnix();
+    imagesCopy.updatedAt = getTimestampUtc();
 
     return {
       images: [
@@ -88,5 +89,5 @@ export const getClientUpdatedImageFeedback = (
     };
   }
 
-  return {};
+  return null;
 };

@@ -256,6 +256,7 @@ export class ClientsService {
           ],
         },
       },
+      select: { messages: true },
     });
 
     return clientMessages;
@@ -295,6 +296,7 @@ export class ClientsService {
           ],
         },
       },
+      select: { images: true },
     });
 
     return clientImages;

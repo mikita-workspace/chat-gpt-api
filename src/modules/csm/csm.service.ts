@@ -3,12 +3,20 @@ import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/database';
 
+import { ClientsService } from '../clients/clients.service';
+import { ChannelId } from '../slack/constants';
+import { newCsmPayload } from '../slack/payloads';
+import { SlackService } from '../slack/slack.service';
 import { CSM } from './constants';
 import { CreateCsmDto } from './dto/create-csm.dto';
 
 @Injectable()
 export class CsmService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly clientService: ClientsService,
+    private readonly prismaService: PrismaService,
+    private readonly slackService: SlackService,
+  ) {}
 
   async create(createCsmDto: CreateCsmDto) {
     const { telegramId, description, key } = createCsmDto;
@@ -30,20 +38,19 @@ export class CsmService {
         telegramId,
         topic: { connect: { key } },
       },
-      select: { ticketNumber: true, status: true, description: true },
+      include: { topic: true },
     });
 
-    // TODO: Slack service here
-    // const [slackMessage, slackBlocks] = [
-    //   `${newClient.metadata.firstname}${
-    //     newClient.metadata?.lastname ? ` ${newClient.metadata?.lastname}` : ''
-    //   } is awaiting approval`,
-    //   newClientPayload(newClient),
-    // ];
+    const client = await this.clientService.findOne(telegramId, { metadata: true });
 
-    // await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelId.NEW_CLIENTS);
+    const [slackMessage, slackBlocks] = [
+      'A new CSM issue has been created',
+      newCsmPayload(newCsm, newCsm.topic, client.metadata),
+    ];
 
-    return newCsm;
+    await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelId.CSM_ISSUES);
+
+    return { ticketNumber: newCsm.ticketNumber, status: newCsm.status };
   }
 
   async findAll<T extends Prisma.CsmFindFirstArgs>(args?: T) {

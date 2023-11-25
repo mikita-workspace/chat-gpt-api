@@ -127,7 +127,7 @@ model Csm {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   assignedId   String?  @unique @db.ObjectId
   assigned     Admin?   @relation(fields: [assignedId], references: [id])
-  createAt     DateTime @default(now())
+  createdAt    DateTime @default(now())
   description  String   @default("")
   status       String   @default("new")
   telegramId   Int

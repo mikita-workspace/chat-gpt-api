@@ -134,6 +134,8 @@ model Csm {
   topic        CsmTopic? @relation(fields: [topicId], references: [id])
   topicId      String?   @unique @db.ObjectId
   updatedAt    DateTime  @default(now())
+
+  @@map("csm")
 }
 
 model CsmTopic {

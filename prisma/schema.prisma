@@ -1,3 +1,4 @@
+// Connection and settings
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,20 +8,29 @@ datasource db {
   url      = env("MONGODB_URI")
 }
 
+// Admin
 type AdminState {
   blockReason String
   isBlocked   Boolean
   updatedAt   DateTime
 }
 
-type Images {
-  createdAt     DateTime
-  feedback      String
-  messageId     Int
-  prompt        String
-  revisedPrompt String?
-  updatedAt     DateTime
-  urls          String[]
+model Admin {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime   @default(now())
+  email     String     @unique
+  password  String
+  role      String     @default("moderator")
+  state     AdminState
+  username  String     @default("")
+
+  @@map("admins")
+}
+
+// Client
+type Message {
+  content String
+  role    String
 }
 
 type Messages {
@@ -31,9 +41,14 @@ type Messages {
   updatedAt DateTime
 }
 
-type Message {
-  content String
-  role    String
+type Images {
+  createdAt     DateTime
+  feedback      String
+  messageId     Int
+  prompt        String
+  revisedPrompt String?
+  updatedAt     DateTime
+  urls          String[]
 }
 
 type ClientAccountLevel {
@@ -57,18 +72,6 @@ type ClientState {
   isApproved  Boolean
   isBlocked   Boolean
   updatedAt   DateTime
-}
-
-model Admin {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime   @default(now())
-  email     String     @unique
-  password  String
-  role      String     @default("moderator")
-  state     AdminState
-  username  String     @default("")
-
-  @@map("admins")
 }
 
 model ClientImages {
@@ -104,7 +107,8 @@ model Client {
   @@map("clients")
 }
 
-model GptModels {
+// GPT
+model GptModel {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   associated  String[]
   creator     String
@@ -116,3 +120,5 @@ model GptModels {
 
   @@map("gptmodels")
 }
+
+// CSM (Cleint Service Managment)

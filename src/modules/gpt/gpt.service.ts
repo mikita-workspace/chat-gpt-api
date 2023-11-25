@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { GptModels } from '@prisma/client';
+import { GptModel } from '@prisma/client';
 import { HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
 import { I18nService } from 'nestjs-i18n';
@@ -46,19 +46,19 @@ export class GptService {
   async createModel(createModelDto: CreateModelDto) {
     const { model } = createModelDto;
 
-    const isModelExist = await this.prismaService.gptModels.findFirst({ where: { model } });
+    const isModelExist = await this.prismaService.gptModel.findFirst({ where: { model } });
 
     if (isModelExist) {
       throw new ConflictException(`${model} already exist`);
     }
 
-    return await this.prismaService.gptModels.create({ data: createModelDto });
+    return await this.prismaService.gptModel.create({ data: createModelDto });
   }
 
   async findAll(getModelsDto: GetModelsDto) {
     const { telegramId } = getModelsDto;
 
-    const cache = await this.cacheManager.get<GptModels[]>(
+    const cache = await this.cacheManager.get<GptModel[]>(
       `${GET_GPT_MODELS_CACHE_KEY}-${telegramId}`,
     );
 
@@ -70,7 +70,7 @@ export class GptService {
       accountLevel: { gptModels: clientModels },
     } = await this.clientsService.availability(telegramId);
 
-    const models = await this.prismaService.gptModels.findMany({
+    const models = await this.prismaService.gptModel.findMany({
       where: { model: { in: clientModels } },
       orderBy: {
         creator: 'asc',
@@ -94,7 +94,7 @@ export class GptService {
         throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
       }
 
-      const isModelExist = await this.prismaService.gptModels.findFirst({ where: { model } });
+      const isModelExist = await this.prismaService.gptModel.findFirst({ where: { model } });
 
       if (!isModelExist) {
         throw new NotFoundException(`${model} not found`);
@@ -156,7 +156,7 @@ export class GptService {
         throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
       }
 
-      const isModelExist = await this.prismaService.gptModels.findFirst({ where: { model } });
+      const isModelExist = await this.prismaService.gptModel.findFirst({ where: { model } });
 
       if (!isModelExist) {
         throw new NotFoundException(`${model} not found`);
@@ -208,7 +208,7 @@ export class GptService {
         throw new BadRequestException(`All images for the ${telegramId} have been used up`);
       }
 
-      const isModelExist = await this.prismaService.gptModels.findFirst({ where: { model } });
+      const isModelExist = await this.prismaService.gptModel.findFirst({ where: { model } });
 
       if (!isModelExist) {
         throw new NotFoundException(`${model} not found`);

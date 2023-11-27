@@ -28,6 +28,9 @@ export const newCsmPayload = (csm: Csm, csmTopic: CsmTopic, metadata?: Client['m
             },
           },
           {
+            type: 'divider',
+          },
+          {
             type: 'rich_text',
             elements: [
               {

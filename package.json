@@ -1,6 +1,6 @@
 {
   "name": "chat-gpt-api",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "repository": "git@github.com:mikita-workspace/chat-gpt-api.git",
   "description": "NovaChat | GPT API",
   "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",

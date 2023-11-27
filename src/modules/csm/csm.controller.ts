@@ -1,4 +1,4 @@
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import {
   Body,
   Controller,
@@ -10,6 +10,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+
+import { TTL_CONFIG_CACHE_MS } from '@/common/constants';
 
 import { AdminRole } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';
@@ -47,6 +49,7 @@ export class CsmController {
     return this.csmService.findAll();
   }
 
+  @CacheTTL(TTL_CONFIG_CACHE_MS)
   @Get('topic')
   async findTopicAll() {
     return this.csmTopicService.findAll();

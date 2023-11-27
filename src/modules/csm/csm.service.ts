@@ -41,11 +41,14 @@ export class CsmService {
       include: { topic: true },
     });
 
-    const client = await this.clientService.findOne(telegramId, { metadata: true });
+    const client = await this.prismaService.client.findFirst({
+      where: { telegramId },
+      select: { metadata: true },
+    });
 
     const [slackMessage, slackBlocks] = [
       'A new CSM issue has been created',
-      newCsmPayload(newCsm, newCsm.topic, client.metadata),
+      newCsmPayload(newCsm, newCsm.topic, client?.metadata),
     ];
 
     await this.slackService.sendCustomMessage(slackMessage, slackBlocks, ChannelId.CSM_ISSUES);

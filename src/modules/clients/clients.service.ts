@@ -11,14 +11,12 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
 import { HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
-import { differenceInCalendarDays } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
 import { ChatCompletionMessage } from 'openai/resources/chat';
 
 import { MONTH_IN_DAYS } from '@/common/constants';
 import {
   expiresInFormat,
-  expiresInMs,
   getAvailableLocale,
   getMessageByAvailableLocale,
   getTimestampPlusDays,
@@ -391,41 +389,16 @@ export class ClientsService {
 
     const clientAccountLevel = getClientAccountLevel(name);
 
-    if (name === ClientNameLevel.PROMO) {
-      const client = await this.update(
-        telegramId,
-        {
-          accountLevel: {
-            set: {
-              ...clientAccountLevel,
-              expiresAt: getTimestampPlusDays(MONTH_IN_DAYS / 3),
-              name,
-            },
-          },
-        },
-        { accountLevel: true },
-      );
-
-      return client.accountLevel;
-    }
-
-    const expiresIn = expiresInMs(existingClient.accountLevel.expiresAt);
-    const remainDays = differenceInCalendarDays(new Date(), expiresIn) || MONTH_IN_DAYS;
-
-    const remainTokens = Math.floor((clientAccountLevel.gptTokens / MONTH_IN_DAYS) * remainDays);
-    const remainImages = Math.floor((clientAccountLevel.images / MONTH_IN_DAYS) * remainDays);
-
     const client = await this.update(
       telegramId,
       {
         accountLevel: {
           set: {
-            ...existingClient.accountLevel,
-            gptModels: clientAccountLevel.gptModels,
-            gptTokens: remainTokens,
-            images: remainImages,
+            ...clientAccountLevel,
+            expiresAt: getTimestampPlusDays(
+              name === ClientNameLevel.PROMO ? MONTH_IN_DAYS / 3 : MONTH_IN_DAYS,
+            ),
             name,
-            symbol: clientAccountLevel.symbol,
           },
         },
       },

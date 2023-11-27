@@ -21,6 +21,8 @@ async function bootstrap() {
 
   app.use(helmet());
 
+  app.use(compression());
+
   app.useGlobalPipes(new ValidationPipe());
 
   app.enableVersioning({
@@ -30,8 +32,6 @@ async function bootstrap() {
   });
 
   app.enableCors();
-
-  app.use(compression());
 
   await app.listen(port, '0.0.0.0');
 

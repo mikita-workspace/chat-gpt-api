@@ -21,7 +21,11 @@ export enum ClientSymbolLevel {
 }
 
 export enum ClientFeedback {
-  LIKE = 'like',
+  CRY = 'cry',
   DISLIKE = 'dislike',
+  LIKE = 'like',
+  NEUTRAL = 'neutral',
   NONE = 'none',
+  SMILE = 'smile',
+  ZANY = 'zany',
 }

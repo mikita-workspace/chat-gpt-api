@@ -35,6 +35,23 @@ export class OpenAiService {
     }
   }
 
+  async visionCompletions(messages: ChatCompletionMessageParam[], options: { model: string }) {
+    const { model } = options;
+
+    try {
+      const visionCompletion = await this.openAI.chat.completions.create({
+        max_tokens: 1000,
+        messages,
+        model,
+      });
+      return visionCompletion;
+    } catch (error) {
+      if (error instanceof OpenAI.APIError) {
+        throw new BadRequestException(error.message);
+      }
+    }
+  }
+
   async transcriptions(filePath: string, options: { model: string }) {
     const { model } = options;
 

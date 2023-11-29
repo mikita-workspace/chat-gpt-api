@@ -8,6 +8,8 @@ export type ChatCompletions = {
   usage: CompletionUsage;
 };
 
+export type VisionCompletions = ChatCompletions;
+
 export type Transcriptions = { text: string };
 
 export type ImagesGenerate = {

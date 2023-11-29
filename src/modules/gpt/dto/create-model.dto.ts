@@ -1,4 +1,6 @@
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+
+import { TypeGPT } from '../constants';
 
 export class CreateModelDto {
   @IsNotEmpty()
@@ -17,9 +19,9 @@ export class CreateModelDto {
   @IsNotEmpty()
   @IsString()
   readonly creator: string;
-  @IsOptional()
-  @IsString()
-  readonly input: string;
+  @IsNotEmpty()
+  @IsEnum(TypeGPT)
+  readonly type: string;
   @IsOptional()
   @IsNumber()
   readonly max: number;

@@ -29,8 +29,8 @@ export const convertToMp3 = async (input: string, output: string) => {
   }
 };
 
-export const createOgg = async (url: string, filename: string) => {
-  const oggPath = path.resolve(__dirname, '../../../assets', `${filename}.ogg`);
+export const downloadFile = async (url: string, filename: string, extension: string) => {
+  const pathFile = path.resolve(__dirname, '../../../assets', `${filename}.${extension}`);
 
   try {
     const response = await axios({
@@ -40,10 +40,10 @@ export const createOgg = async (url: string, filename: string) => {
     });
 
     return await new Promise<string>((resolve) => {
-      const stream = createWriteStream(oggPath);
+      const stream = createWriteStream(pathFile);
 
       response.data.pipe(stream);
-      stream.on('finish', () => resolve(oggPath));
+      stream.on('finish', () => resolve(pathFile));
     });
   } catch (error) {
     if (error instanceof AxiosError) {

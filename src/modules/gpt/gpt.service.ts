@@ -9,8 +9,9 @@ import {
 import { GptModel } from '@prisma/client';
 import { HttpStatusCode } from 'axios';
 import { Cache as CacheManager } from 'cache-manager';
+import { readFile } from 'fs/promises';
 import { I18nService } from 'nestjs-i18n';
-import { Image as ImageAi } from 'openai/resources';
+import { ChatCompletionUserMessageParam, Image as ImageAi } from 'openai/resources';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getTranslation } from '@/common/helpers';
@@ -22,13 +23,20 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { OpenAiService } from '../openai/openai.service';
 import { SberService } from '../sber/sber.service';
 import { TelegramService } from '../telegram/telegram.service';
-import { GET_GPT_MODELS_CACHE_KEY, ModelGPT, ModelImage, ModelSpeech } from './constants';
+import {
+  GET_GPT_MODELS_CACHE_KEY,
+  ModelGPT,
+  ModelImage,
+  ModelSpeech,
+  ModelVision,
+} from './constants';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { GenerateImagesDto } from './dto/generate-images.dto';
 import { GetModelsDto } from './dto/get-models.dto';
 import { GetTranslationDto } from './dto/get-translation.dto';
-import { ChatCompletions, ImagesGenerate, Transcriptions } from './types';
+import { VisionCompletionDto } from './dto/vision-completion.dto';
+import { ChatCompletions, ImagesGenerate, Transcriptions, VisionCompletions } from './types';
 
 @Injectable()
 export class GptService {
@@ -144,6 +152,102 @@ export class GptService {
     }
   }
 
+  async visionCompletions(
+    visionCompletionDto: VisionCompletionDto,
+  ): Promise<VisionCompletions | null> {
+    const {
+      filename,
+      message,
+      messageId,
+      model,
+      telegramId,
+      useCloudinary = false,
+    } = visionCompletionDto;
+
+    let visionCompletionsResponse = { message: null, usage: null };
+    let cloudImages = [];
+
+    try {
+      const { accountLevel } = await this.clientsService.availability(telegramId);
+
+      if (!isExpiredDate(accountLevel.expiresAt) && !accountLevel.gptTokens) {
+        throw new BadRequestException(`All tokens for the ${telegramId} have been used up`);
+      }
+
+      const isModelExist = await this.prismaService.gptModel.findFirst({ where: { model } });
+
+      if (!isModelExist) {
+        throw new NotFoundException(`${model} not found`);
+      }
+
+      const { filePath } = await this.telegramService.getFileInJpg(filename, telegramId);
+
+      const base64 = await readFile(filePath, { encoding: 'base64' });
+
+      if (model === ModelVision.GPT_4_VISION) {
+        const messages = [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: message,
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64}`,
+                },
+              },
+            ],
+          },
+        ] as ChatCompletionUserMessageParam[];
+
+        const completion = await this.openAiService.visionCompletions(messages, { model });
+
+        visionCompletionsResponse = {
+          message: completion.choices[0].message,
+          usage: completion.usage,
+        };
+      }
+
+      if (useCloudinary) {
+        const cloudinary = await this.cloudinaryService.uploadBase64([base64], {
+          folder: `vision/${telegramId}`,
+          public_id: `${telegramId}-${model}-${uuidv4()}`,
+        });
+
+        cloudImages = cloudinary;
+      }
+
+      await removeFile(filePath);
+
+      const clientMessage = { role: 'user', content: message, url: cloudImages?.[0]?.url ?? null };
+      const assistantMessage = visionCompletionsResponse.message;
+
+      if (clientMessage && assistantMessage) {
+        await this.clientsService.updateClientMessages(telegramId, messageId, [
+          clientMessage,
+          assistantMessage,
+        ]);
+
+        const clientAccountLevel = await this.clientsService.updateClientAccountLevel(telegramId, {
+          usedTokens: visionCompletionsResponse.usage.total_tokens,
+        });
+
+        return { ...visionCompletionsResponse, clientAccountLevel };
+      }
+
+      return null;
+    } catch (error) {
+      const statusCode = error?.response?.statusCode;
+
+      if (statusCode && statusCode === HttpStatusCode.NotFound) {
+        throw new NotFoundException(error.message);
+      }
+    }
+  }
+
   async transcriptions(getTranslationDto: GetTranslationDto): Promise<Transcriptions | null> {
     const { filename, telegramId, model } = getTranslationDto;
 
@@ -162,7 +266,7 @@ export class GptService {
         throw new NotFoundException(`${model} not found`);
       }
 
-      const { filePath, duration } = await this.telegramService.getFile(filename, telegramId);
+      const { filePath, duration } = await this.telegramService.getFileInMp3(filename, telegramId);
 
       if (model === ModelSpeech.WHISPER_1) {
         const transcription = await this.openAiService.transcriptions(filePath, { model });

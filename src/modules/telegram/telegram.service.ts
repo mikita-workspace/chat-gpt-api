@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 import { getAudioDurationInSeconds } from 'get-audio-duration';
 import { catchError, firstValueFrom } from 'rxjs';
 
-import { convertToMp3, createOgg } from '@/common/helpers';
+import { convertToMp3, downloadFile } from '@/common/helpers';
 
 import { TELEGRAM_API } from './constants';
 
@@ -128,10 +128,18 @@ export class TelegramService {
     return data;
   }
 
-  async getFile(filename: string, telegramId: number) {
+  async getFileInJpg(filename: string, telegramId: number) {
     const url = `${this.fileUrl}/${filename}`;
 
-    const oggPath = await createOgg(url, String(telegramId));
+    const imagePath = await downloadFile(url, String(telegramId), 'jpg');
+
+    return { filePath: imagePath };
+  }
+
+  async getFileInMp3(filename: string, telegramId: number) {
+    const url = `${this.fileUrl}/${filename}`;
+
+    const oggPath = await downloadFile(url, String(telegramId), 'ogg');
     const mp3Path = await convertToMp3(oggPath, String(telegramId));
 
     const duration = await getAudioDurationInSeconds(mp3Path);

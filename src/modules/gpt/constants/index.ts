@@ -10,6 +10,7 @@ export enum TypeGPT {
   AUDIO = 'audio',
   IMAGE = 'image',
   TEXT = 'text',
+  VISION = 'vision',
 }
 
 export enum ModelSpeech {
@@ -22,6 +23,12 @@ export enum ModelImage {
   DALL_E_3 = 'dall-e-3',
 }
 
+export enum ModelVision {
+  GPT_4_VISION = 'gpt-4-vision-preview',
+}
+
 export const gptModelsBase = [ModelGPT.GPT_3_5_TURBO, ModelSpeech.WHISPER_1, ModelImage.DALL_E_2];
 export const gptModelsPromo = [...gptModelsBase, ModelGPT.GPT_4_TURBO, ModelImage.DALL_E_3];
-export const gptModelsPremium = [...Object.values({ ...ModelGPT, ...ModelSpeech, ...ModelImage })];
+export const gptModelsPremium = [
+  ...Object.values({ ...ModelGPT, ...ModelSpeech, ...ModelImage, ...ModelVision }),
+];

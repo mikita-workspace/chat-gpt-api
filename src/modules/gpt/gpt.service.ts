@@ -383,8 +383,6 @@ export class GptService {
 
       return null;
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log(error);
       const statusCode = error?.response?.statusCode;
 
       if (statusCode && statusCode === HttpStatusCode.NotFound) {

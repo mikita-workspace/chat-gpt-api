@@ -8,7 +8,6 @@ import { SetWebhookDto } from './dto/set-webhook.dto';
 import { TelegramService } from './telegram.service';
 
 @UseGuards(RolesAuthGuard)
-@UseInterceptors(CacheInterceptor)
 @Controller('telegram')
 export class TelegramController {
   constructor(private readonly telegramService: TelegramService) {}

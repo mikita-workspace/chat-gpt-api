@@ -2,6 +2,7 @@ export const GET_GPT_MODELS_CACHE_KEY = 'get-gpt-models-cache-key';
 
 export enum ModelGPT {
   GIGA_CHAT = 'GigaChat:latest',
+  GIGA_CHAT_PRO = 'GigaChat-Pro',
   GPT_3_5_TURBO = 'gpt-3.5-turbo-1106',
   GPT_4_TURBO = 'gpt-4-1106-preview',
 }

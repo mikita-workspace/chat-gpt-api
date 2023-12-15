@@ -1,5 +1,4 @@
-import { CacheInterceptor } from '@nestjs/cache-manager';
-import { Body, Controller, Delete, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
 
 import { AdminRole } from '../admins/constants';
 import { RolesAuth } from '../auth/decorators';

@@ -117,7 +117,7 @@ export class GptService {
         };
       }
 
-      if (model === ModelGPT.GIGA_CHAT) {
+      if ([ModelGPT.GIGA_CHAT, ModelGPT.GIGA_CHAT_PRO].includes(model as ModelGPT)) {
         const completion = await this.sberService.completions(messages, { model });
 
         chatCompletionsResponse = {

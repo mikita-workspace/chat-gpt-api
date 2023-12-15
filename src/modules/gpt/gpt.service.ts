@@ -144,6 +144,7 @@ export class GptService {
 
       return null;
     } catch (error) {
+      console.log(error);
       const statusCode = error?.response?.statusCode;
 
       if (statusCode && statusCode === HttpStatusCode.NotFound) {
